@@ -118,6 +118,9 @@ class WindexAI {
         this.loadConversations();
         this.updateModelInfo();
         this.initializeTheme();
+        
+        // Debug: Check if theme toggle button is found
+        console.log('Theme toggle button:', this.themeToggle);
     }
 
     initializeElements() {
@@ -133,6 +136,22 @@ class WindexAI {
         this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
         this.themeToggle = document.getElementById('theme-toggle');
+        
+        // Debug: Check if all elements are found
+        console.log('Elements found:', {
+            modelSelect: !!this.modelSelect,
+            messageInput: !!this.messageInput,
+            sendBtn: !!this.sendBtn,
+            chatContainer: !!this.chatContainer,
+            conversationsList: !!this.conversationsList,
+            newChatBtn: !!this.newChatBtn,
+            clearHistoryBtn: !!this.clearHistoryBtn,
+            loadingOverlay: !!this.loadingOverlay,
+            currentModelSpan: !!this.currentModelSpan,
+            charCount: !!this.charCount,
+            modelCards: this.modelCards.length,
+            themeToggle: !!this.themeToggle
+        });
     }
 
     bindEvents() {
@@ -183,9 +202,15 @@ class WindexAI {
         });
 
         // Theme toggle button
-        this.themeToggle.addEventListener('click', () => {
-            this.toggleTheme();
-        });
+        if (this.themeToggle) {
+            this.themeToggle.addEventListener('click', () => {
+                console.log('Theme toggle clicked');
+                this.toggleTheme();
+            });
+            console.log('Theme toggle event listener added');
+        } else {
+            console.error('Theme toggle button not found!');
+        }
     }
 
     async sendMessage() {
@@ -321,12 +346,39 @@ class WindexAI {
         const body = document.body;
         const isDark = body.classList.contains('dark-theme');
         
+        console.log('Current theme:', isDark ? 'dark' : 'light');
+        
         if (isDark) {
             body.classList.remove('dark-theme');
             localStorage.setItem('windexai_theme', 'light');
+            console.log('Switched to light theme');
         } else {
             body.classList.add('dark-theme');
             localStorage.setItem('windexai_theme', 'dark');
+            console.log('Switched to dark theme');
+        }
+        
+        // Update button icon
+        this.updateThemeButtonIcon();
+    }
+
+    updateThemeButtonIcon() {
+        if (!this.themeToggle) return;
+        
+        const isDark = document.body.classList.contains('dark-theme');
+        const icon = this.themeToggle.querySelector('svg');
+        
+        if (isDark) {
+            // Dark theme - show sun icon
+            icon.innerHTML = `
+                <circle cx="12" cy="12" r="5"></circle>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+            `;
+        } else {
+            // Light theme - show moon icon
+            icon.innerHTML = `
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            `;
         }
     }
 
@@ -334,9 +386,21 @@ class WindexAI {
         const savedTheme = localStorage.getItem('windexai_theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
+        console.log('Saved theme:', savedTheme);
+        console.log('Prefers dark:', prefersDark);
+        
         if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
             document.body.classList.add('dark-theme');
+            console.log('Applied dark theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+            console.log('Applied light theme');
         }
+        
+        // Update button icon after theme is set
+        setTimeout(() => {
+            this.updateThemeButtonIcon();
+        }, 100);
     }
 
     async loadConversations() {
