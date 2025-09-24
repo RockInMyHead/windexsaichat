@@ -1,1 +1,1 @@
-from .ai_editor import router
+# Routes package
