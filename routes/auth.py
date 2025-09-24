@@ -5,6 +5,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 
 from utils.auth_utils import verify_password, get_password_hash, create_access_token, decode_token
+from utils.auth_utils import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 security = HTTPBearer()

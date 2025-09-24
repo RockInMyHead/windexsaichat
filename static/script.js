@@ -177,6 +177,16 @@ class WindexAI {
             this.sendMessage();
         });
 
+        // Model cards
+        this.modelCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const model = card.dataset.model;
+                this.currentModel = model;
+                this.hideWelcomeMessage();
+                showNotification(`Выбрана модель: ${model === 'windexai-lite' ? 'WIndexAI Lite' : 'WIndexAI Pro'}`, 'success');
+            });
+        });
+
         // New chat button
         this.newChatBtn.addEventListener('click', () => {
             this.startNewChat();
