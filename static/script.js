@@ -134,6 +134,9 @@ class WindexAI {
         this.modelCards = document.querySelectorAll('.model-card');
         this.themeToggle = document.getElementById('theme-toggle');
         this.authThemeToggle = document.getElementById('auth-theme-toggle');
+        this.profileBtn = document.getElementById('profile-btn');
+        this.profileModal = document.getElementById('profile-modal');
+        this.closeProfileBtn = document.querySelector('.close-profile');
         
         // Debug: Check if all elements are found
         console.log('Elements found:', {
@@ -147,7 +150,10 @@ class WindexAI {
             charCount: !!this.charCount,
             modelCards: this.modelCards.length,
             themeToggle: !!this.themeToggle,
-            authThemeToggle: !!this.authThemeToggle
+            authThemeToggle: !!this.authThemeToggle,
+            profileBtn: !!this.profileBtn,
+            profileModal: !!this.profileModal,
+            closeProfileBtn: !!this.closeProfileBtn
         });
     }
 
@@ -206,6 +212,26 @@ class WindexAI {
             console.log('Auth theme toggle event listener added');
         } else {
             console.error('Auth theme toggle button not found!');
+        }
+
+        // Profile button
+        if (this.profileBtn) {
+            this.profileBtn.addEventListener('click', () => {
+                // Populate profile data
+                const usernameSpan = document.getElementById('profile-username');
+                const emailSpan = document.getElementById('profile-email');
+                if (this.authManager.user) {
+                    usernameSpan.textContent = this.authManager.user.username;
+                    emailSpan.textContent = this.authManager.user.email;
+                }
+                this.profileModal.classList.remove('hidden');
+            });
+        }
+        // Close profile modal
+        if (this.closeProfileBtn) {
+            this.closeProfileBtn.addEventListener('click', () => {
+                this.profileModal.classList.add('hidden');
+            });
         }
     }
 

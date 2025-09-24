@@ -89,6 +89,12 @@
                             <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
                         </svg>
                     </button>
+                    <button id="profile-btn" class="profile-btn" title="Личный кабинет">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"></path>
+                            <path d="M4 20v-1c0-2.21 3.58-4 8-4s8 1.79 8 4v1"></path>
+                        </svg>
+                    </button>
                     <button id="new-chat-btn" class="new-chat-btn">Новый чат</button>
                 </div>
             </div>
@@ -170,6 +176,15 @@
             <p>WindexAI думает...</p>
         </div>
         </div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="profile-modal hidden">
+        <div class="profile-modal-content">
+            <button class="close-profile" title="Закрыть">×</button>
+            <h2>Личный кабинет</h2>
+            <p>Имя пользователя: <span id="profile-username"></span></p>
+            <p>Email: <span id="profile-email"></span></p>
         </div>
     </div>
 
