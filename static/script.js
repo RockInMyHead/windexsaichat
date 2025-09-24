@@ -405,12 +405,20 @@ class WindexAI {
 
     async loadConversations() {
         try {
-            // In a real app, you would fetch conversations from the server
-            // For now, we'll simulate with localStorage
-            const conversations = JSON.parse(localStorage.getItem('windexai_conversations') || '[]');
-            this.renderConversations(conversations);
+            const response = await fetch('/api/conversations', {
+                headers: this.authManager.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.renderConversations(data.conversations);
+            } else {
+                console.error('Failed to load conversations:', response.status);
+                this.renderConversations([]);
+            }
         } catch (error) {
             console.error('Error loading conversations:', error);
+            this.renderConversations([]);
         }
     }
 
@@ -453,14 +461,42 @@ class WindexAI {
         });
     }
 
-    loadConversation(conversationId) {
+    async loadConversation(conversationId) {
         this.currentConversationId = conversationId;
         this.loadConversations(); // Refresh to show active state
         
-        // In a real app, you would fetch the conversation from the server
-        // For now, we'll just clear the chat and show welcome message
+        try {
+            const response = await fetch(`/api/conversations/${conversationId}`, {
+                headers: this.authManager.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.displayConversation(data.conversation);
+            } else {
+                console.error('Failed to load conversation:', response.status);
+                this.chatContainer.innerHTML = '';
+                this.showWelcomeMessage();
+            }
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+            this.chatContainer.innerHTML = '';
+            this.showWelcomeMessage();
+        }
+    }
+
+    displayConversation(conversation) {
         this.chatContainer.innerHTML = '';
-        this.showWelcomeMessage();
+        
+        if (conversation.messages && conversation.messages.length > 0) {
+            conversation.messages.forEach(message => {
+                this.addMessageToChat(message.role, message.content);
+            });
+        } else {
+            this.showWelcomeMessage();
+        }
+        
+        this.scrollToBottom();
     }
 
     startNewChat() {
@@ -470,10 +506,24 @@ class WindexAI {
         this.loadConversations();
     }
 
-    clearHistory() {
+    async clearHistory() {
         if (confirm('Вы уверены, что хотите очистить всю историю чатов?')) {
-            localStorage.removeItem('windexai_conversations');
-            this.startNewChat();
+            try {
+                const response = await fetch('/api/conversations', {
+                    method: 'DELETE',
+                    headers: this.authManager.getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    this.startNewChat();
+                    showNotification('История чатов очищена', 'success');
+                } else {
+                    showNotification('Ошибка при очистке истории', 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing history:', error);
+                showNotification('Ошибка при очистке истории', 'error');
+            }
         }
     }
 

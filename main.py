@@ -256,7 +256,12 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
     
     # Initialize conversation if new
     if conversation_id not in conversations:
-        conversations[conversation_id] = []
+        conversations[conversation_id] = {
+            "id": conversation_id,
+            "title": "Новый чат",
+            "timestamp": datetime.now().isoformat(),
+            "messages": []
+        }
     
     # Add user message
     user_message = ChatMessage(
@@ -264,9 +269,9 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
         content=request.message,
         timestamp=datetime.now().isoformat()
     )
-    conversations[conversation_id].append(user_message)
+    conversations[conversation_id]["messages"].append(user_message)
     
-    # Simulate AI response (в реальном проекте здесь будет вызов AI API)
+    # Generate AI response
     ai_response = generate_ai_response(request.message, request.model)
     
     # Add AI response
@@ -275,7 +280,12 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
         content=ai_response,
         timestamp=datetime.now().isoformat()
     )
-    conversations[conversation_id].append(ai_message)
+    conversations[conversation_id]["messages"].append(ai_message)
+    
+    # Update conversation title based on first user message
+    if len(conversations[conversation_id]["messages"]) == 2:  # First exchange
+        title = request.message[:50] + "..." if len(request.message) > 50 else request.message
+        conversations[conversation_id]["title"] = title
     
     return ChatResponse(
         response=ai_response,
@@ -298,6 +308,59 @@ async def delete_conversation(conversation_id: str):
         del conversations[conversation_id]
         return {"message": "Conversation deleted"}
     raise HTTPException(status_code=404, detail="Conversation not found")
+
+@app.get("/api/conversations")
+async def get_user_conversations(current_user: User = Depends(get_current_user)):
+    """Get all conversations for current user"""
+    user_conversations = []
+    for conv_id, conv_data in conversations.items():
+        if conv_id.startswith(f"conv_{current_user.username}_"):
+            user_conversations.append({
+                "id": conv_id,
+                "title": conv_data.get("title", "Новый чат"),
+                "timestamp": conv_data.get("timestamp", ""),
+                "message_count": len(conv_data.get("messages", []))
+            })
+    
+    # Sort by timestamp (newest first)
+    user_conversations.sort(key=lambda x: x["timestamp"], reverse=True)
+    return {"conversations": user_conversations}
+
+@app.post("/api/conversations")
+async def create_conversation(current_user: User = Depends(get_current_user)):
+    """Create a new conversation"""
+    conversation_id = f"conv_{current_user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    conversations[conversation_id] = {
+        "id": conversation_id,
+        "title": "Новый чат",
+        "timestamp": datetime.now().isoformat(),
+        "messages": []
+    }
+    return {"conversation_id": conversation_id}
+
+@app.put("/api/conversations/{conversation_id}")
+async def update_conversation(conversation_id: str, title: str, current_user: User = Depends(get_current_user)):
+    """Update conversation title"""
+    if conversation_id not in conversations:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Check if user owns this conversation
+    if not conversation_id.startswith(f"conv_{current_user.username}_"):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    conversations[conversation_id]["title"] = title
+    return {"message": "Conversation updated"}
+
+@app.delete("/api/conversations")
+async def clear_all_conversations(current_user: User = Depends(get_current_user)):
+    """Clear all conversations for current user"""
+    user_conversations = [conv_id for conv_id in conversations.keys() 
+                         if conv_id.startswith(f"conv_{current_user.username}_")]
+    
+    for conv_id in user_conversations:
+        del conversations[conv_id]
+    
+    return {"message": f"Deleted {len(user_conversations)} conversations"}
 
 def generate_ai_response(message: str, model: str) -> str:
     """Generate AI response using WIndexAI API with fallback"""
