@@ -55,6 +55,7 @@ class User(BaseModel):
     username: str
     email: str
     created_at: str
+    role: str  # 'user' or 'admin'
 
 class UserCreate(BaseModel):
     username: str
@@ -182,7 +183,6 @@ async def register(user: UserCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
-    
     # Check if email is already used
     for existing_user in users_db.values():
         if existing_user["email"] == user.email:
@@ -193,21 +193,39 @@ async def register(user: UserCreate):
     
     hashed_password = get_password_hash(user.password)
     user_id = f"user_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    # First registered user becomes admin
+    role = "admin" if not users_db else "user"
     
     users_db[user.username] = {
         "id": user_id,
         "username": user.username,
         "email": user.email,
         "hashed_password": hashed_password,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
+        "role": role
     }
     
-    return User(
-        id=user_id,
-        username=user.username,
-        email=user.email,
-        created_at=users_db[user.username]["created_at"]
-    )
+    return User(**users_db[user.username])
+
+# Admin panel endpoints
+@app.get("/api/admin/users")
+async def list_users(current_user: User = Depends(get_current_user)):
+    """List all registered users (admin only)"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    return {"users": [u for u in users_db.values()]}  
+
+@app.put("/api/admin/users/{username}/role")
+async def update_user_role(username: str, role: str, current_user: User = Depends(get_current_user)):
+    """Update a user's role (admin only)"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    if username not in users_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if role not in ('user', 'admin'):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
+    users_db[username]['role'] = role
+    return {"message": f"Role for {username} updated to {role}"}
 
 @app.post("/api/auth/login", response_model=Token)
 async def login(user_credentials: UserLogin):
