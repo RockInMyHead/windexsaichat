@@ -116,7 +116,6 @@ class WindexAI {
         this.initializeElements();
         this.bindEvents();
         this.loadConversations();
-        this.updateModelInfo();
         this.initializeTheme();
         
         // Debug: Check if theme toggle button is found
@@ -124,7 +123,6 @@ class WindexAI {
     }
 
     initializeElements() {
-        this.modelSelect = document.getElementById('model-select');
         this.messageInput = document.getElementById('message-input');
         this.sendBtn = document.getElementById('send-btn');
         this.chatContainer = document.getElementById('chat-container');
@@ -132,14 +130,12 @@ class WindexAI {
         this.newChatBtn = document.getElementById('new-chat-btn');
         this.clearHistoryBtn = document.getElementById('clear-history-btn');
         this.loadingOverlay = document.getElementById('loading-overlay');
-        this.currentModelSpan = document.getElementById('current-model');
         this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
         this.themeToggle = document.getElementById('theme-toggle');
         
         // Debug: Check if all elements are found
         console.log('Elements found:', {
-            modelSelect: !!this.modelSelect,
             messageInput: !!this.messageInput,
             sendBtn: !!this.sendBtn,
             chatContainer: !!this.chatContainer,
@@ -147,7 +143,6 @@ class WindexAI {
             newChatBtn: !!this.newChatBtn,
             clearHistoryBtn: !!this.clearHistoryBtn,
             loadingOverlay: !!this.loadingOverlay,
-            currentModelSpan: !!this.currentModelSpan,
             charCount: !!this.charCount,
             modelCards: this.modelCards.length,
             themeToggle: !!this.themeToggle
@@ -155,23 +150,6 @@ class WindexAI {
     }
 
     bindEvents() {
-        // Model selection
-        this.modelSelect.addEventListener('change', (e) => {
-            this.currentModel = e.target.value;
-            this.updateModelInfo();
-        });
-
-        // Model cards
-        this.modelCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const model = card.dataset.model;
-                this.modelSelect.value = model;
-                this.currentModel = model;
-                this.updateModelInfo();
-                this.hideWelcomeMessage();
-            });
-        });
-
         // Message input
         this.messageInput.addEventListener('input', () => {
             this.updateCharCount();
@@ -581,10 +559,6 @@ class WindexAI {
         }
     }
 
-    updateModelInfo() {
-        const modelName = this.currentModel === 'windexai-lite' ? 'WIndexAI Lite' : 'WIndexAI Pro';
-        this.currentModelSpan.textContent = modelName;
-    }
 
     updateCharCount() {
         const count = this.messageInput.value.length;
