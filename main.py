@@ -14,6 +14,7 @@ from openai import OpenAI
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from dotenv import load_dotenv
+from routes import ai_editor
 
 # Load environment variables
 load_dotenv()
@@ -547,6 +548,8 @@ def generate_fallback_response(message: str, model: str) -> str:
         return f"Сейчас {current_time}. Время на сервере может отличаться от вашего местного времени."
     else:
         return f"Я получил ваше сообщение: '{message}'. Это демонстрационный ответ, так как API временно недоступен. В реальном приложении здесь был бы ответ от WIndexAI, созданного командой разработчиков компании Windex."
+
+app.include_router(ai_editor.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8003)
