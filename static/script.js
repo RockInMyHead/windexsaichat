@@ -133,6 +133,7 @@ class WindexAI {
         this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
         this.themeToggle = document.getElementById('theme-toggle');
+        this.authThemeToggle = document.getElementById('auth-theme-toggle');
         
         // Debug: Check if all elements are found
         console.log('Elements found:', {
@@ -145,7 +146,8 @@ class WindexAI {
             loadingOverlay: !!this.loadingOverlay,
             charCount: !!this.charCount,
             modelCards: this.modelCards.length,
-            themeToggle: !!this.themeToggle
+            themeToggle: !!this.themeToggle,
+            authThemeToggle: !!this.authThemeToggle
         });
     }
 
@@ -179,15 +181,31 @@ class WindexAI {
             this.clearHistory();
         });
 
-        // Theme toggle button
+        // Theme toggle buttons
         if (this.themeToggle) {
-            this.themeToggle.addEventListener('click', () => {
-                console.log('Theme toggle clicked');
+            console.log('Main theme toggle button found:', this.themeToggle);
+            this.themeToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Main theme toggle clicked');
                 this.toggleTheme();
             });
-            console.log('Theme toggle event listener added');
+            console.log('Main theme toggle event listener added');
         } else {
-            console.error('Theme toggle button not found!');
+            console.error('Main theme toggle button not found!');
+        }
+
+        if (this.authThemeToggle) {
+            console.log('Auth theme toggle button found:', this.authThemeToggle);
+            this.authThemeToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Auth theme toggle clicked');
+                this.toggleTheme();
+            });
+            console.log('Auth theme toggle event listener added');
+        } else {
+            console.error('Auth theme toggle button not found!');
         }
     }
 
@@ -321,10 +339,12 @@ class WindexAI {
     }
 
     toggleTheme() {
+        console.log('toggleTheme called');
         const body = document.body;
         const isDark = body.classList.contains('dark-theme');
         
         console.log('Current theme:', isDark ? 'dark' : 'light');
+        console.log('Body classes:', body.className);
         
         if (isDark) {
             body.classList.remove('dark-theme');
@@ -336,28 +356,44 @@ class WindexAI {
             console.log('Switched to dark theme');
         }
         
+        console.log('Body classes after change:', body.className);
+        
         // Update button icon
         this.updateThemeButtonIcon();
     }
 
     updateThemeButtonIcon() {
-        if (!this.themeToggle) return;
+        const buttons = [this.themeToggle, this.authThemeToggle].filter(Boolean);
+        
+        if (buttons.length === 0) {
+            console.log('No theme toggle buttons found in updateThemeButtonIcon');
+            return;
+        }
         
         const isDark = document.body.classList.contains('dark-theme');
-        const icon = this.themeToggle.querySelector('svg');
         
-        if (isDark) {
-            // Dark theme - show sun icon
-            icon.innerHTML = `
-                <circle cx="12" cy="12" r="5"></circle>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-            `;
-        } else {
-            // Light theme - show moon icon
-            icon.innerHTML = `
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            `;
-        }
+        console.log('Updating theme button icons, isDark:', isDark);
+        console.log('Found buttons:', buttons.length);
+        
+        buttons.forEach((button, index) => {
+            const icon = button.querySelector('svg');
+            console.log(`Button ${index + 1} icon element:`, icon);
+            
+            if (isDark) {
+                // Dark theme - show sun icon
+                icon.innerHTML = `
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                `;
+                console.log(`Set sun icon for button ${index + 1}`);
+            } else {
+                // Light theme - show moon icon
+                icon.innerHTML = `
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                `;
+                console.log(`Set moon icon for button ${index + 1}`);
+            }
+        });
     }
 
     initializeTheme() {
