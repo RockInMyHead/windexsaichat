@@ -18,8 +18,18 @@ class AIEditor {
         this.statusText = document.getElementById('status-text');
         this.copyBtn = document.getElementById('copy-html-btn');
         this.downloadBtn = document.getElementById('download-html-btn');
+        this.deployBtn = document.getElementById('deploy-btn');
         this.logoutBtn = document.getElementById('logout-btn');
         this.userNameSpan = document.getElementById('user-name');
+        
+        // Modal elements
+        this.deployModal = document.getElementById('deploy-modal');
+        this.deployTitle = document.getElementById('deploy-title');
+        this.deployDescription = document.getElementById('deploy-description');
+        this.deployStatus = document.getElementById('deploy-status');
+        this.confirmDeployBtn = document.getElementById('confirm-deploy');
+        this.cancelDeployBtn = document.getElementById('cancel-deploy');
+        this.closeModalBtn = document.querySelector('.close');
 
         console.log('Elements initialized');
     }
@@ -52,6 +62,28 @@ class AIEditor {
 
         if (this.downloadBtn) {
             this.downloadBtn.addEventListener('click', () => this.downloadHtml());
+        }
+        
+        if (this.deployBtn) {
+            this.deployBtn.addEventListener('click', () => this.showDeployModal());
+        }
+        
+        // Modal event listeners
+        if (this.confirmDeployBtn) {
+            this.confirmDeployBtn.addEventListener('click', () => this.deployWebsite());
+        }
+        if (this.cancelDeployBtn) {
+            this.cancelDeployBtn.addEventListener('click', () => this.hideDeployModal());
+        }
+        if (this.closeModalBtn) {
+            this.closeModalBtn.addEventListener('click', () => this.hideDeployModal());
+        }
+        if (this.deployModal) {
+            this.deployModal.addEventListener('click', (e) => {
+                if (e.target === this.deployModal) {
+                    this.hideDeployModal();
+                }
+            });
         }
 
         // Кнопка выхода
@@ -337,6 +369,111 @@ class AIEditor {
     logout() {
         localStorage.removeItem('windexai_token');
         window.location.href = '/';
+    }
+    
+    showDeployModal() {
+        if (!this.previewIframe || !this.previewIframe.srcdoc) {
+            this.showError('Нет HTML для деплоя');
+            return;
+        }
+        
+        this.deployModal.style.display = 'flex';
+        this.deployTitle.value = '';
+        this.deployDescription.value = '';
+        this.hideDeployStatus();
+    }
+    
+    hideDeployModal() {
+        this.deployModal.style.display = 'none';
+        this.hideDeployStatus();
+    }
+    
+    showDeployStatus(message, type = 'loading') {
+        this.deployStatus.style.display = 'block';
+        this.deployStatus.className = `deploy-status ${type}`;
+        this.deployStatus.querySelector('.status-message').textContent = message;
+    }
+    
+    hideDeployStatus() {
+        this.deployStatus.style.display = 'none';
+    }
+    
+    async deployWebsite() {
+        const title = this.deployTitle.value.trim();
+        if (!title) {
+            this.showError('Введите название сайта');
+            return;
+        }
+        
+        if (!this.previewIframe || !this.previewIframe.srcdoc) {
+            this.showError('Нет HTML для деплоя');
+            return;
+        }
+        
+        const token = localStorage.getItem('windexai_token');
+        if (!token) {
+            this.showError('Необходима авторизация');
+            return;
+        }
+        
+        this.showDeployStatus('Деплой в процессе...', 'loading');
+        this.confirmDeployBtn.disabled = true;
+        
+        try {
+            // Extract HTML content
+            const htmlContent = this.previewIframe.srcdoc;
+            
+            // Create deployment data
+            const deploymentData = {
+                title: title,
+                description: this.deployDescription.value.trim() || null,
+                html_content: htmlContent,
+                css_content: null, // We'll extract CSS from HTML if needed
+                js_content: null   // We'll extract JS from HTML if needed
+            };
+            
+            const response = await fetch('/api/deploy/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(deploymentData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Ошибка при деплое');
+            }
+            
+            const result = await response.json();
+            
+            this.showDeployStatus(
+                `✅ Сайт успешно задеплоен!\nURL: ${result.full_url}`,
+                'success'
+            );
+            
+            // Show success message with link
+            setTimeout(() => {
+                const openLink = confirm(
+                    `Сайт "${result.title}" успешно задеплоен!\n\n` +
+                    `URL: ${result.full_url}\n\n` +
+                    `Открыть сайт в новой вкладке?`
+                );
+                
+                if (openLink) {
+                    window.open(result.full_url, '_blank');
+                }
+                
+                this.hideDeployModal();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Deploy error:', error);
+            this.showDeployStatus(`❌ Ошибка: ${error.message}`, 'error');
+        } finally {
+            this.confirmDeployBtn.disabled = false;
+        }
     }
 }
 

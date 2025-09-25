@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -28,6 +28,7 @@ class User(Base):
     
     # Relationships
     conversations = relationship("Conversation", back_populates="user")
+    deployments = relationship("Deployment", back_populates="user")
 
 # Conversation model
 class Conversation(Base):
@@ -55,6 +56,25 @@ class Message(Base):
     
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
+
+# Deployment model
+class Deployment(Base):
+    __tablename__ = "deployments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    deploy_url = Column(String, unique=True, index=True, nullable=False)  # Уникальный URL для деплоя
+    html_content = Column(Text, nullable=False)
+    css_content = Column(Text, nullable=True)
+    js_content = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    # Relationships
+    user = relationship("User", back_populates="deployments")
 
 # Create all tables
 def create_tables():
