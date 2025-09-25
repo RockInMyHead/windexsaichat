@@ -41,3 +41,12 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+# Export constants
+__all__ = [
+    'verify_password', 
+    'get_password_hash', 
+    'create_access_token', 
+    'decode_token',
+    'ACCESS_TOKEN_EXPIRE_MINUTES'
+]

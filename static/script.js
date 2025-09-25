@@ -110,30 +110,31 @@ class WindexAI {
     constructor(authManager) {
         this.authManager = authManager;
         this.currentConversationId = null;
-        this.currentModel = 'windexai-lite';
+        this.currentModel = 'gpt-4o-mini';
         this.isLoading = false;
         
         this.initializeElements();
         this.bindEvents();
         this.loadConversations();
-        this.initializeTheme();
-        
-        // Debug: Check if theme toggle button is found
-        console.log('Theme toggle button:', this.themeToggle);
     }
 
     initializeElements() {
         this.messageInput = document.getElementById('message-input');
         this.sendBtn = document.getElementById('send-btn');
         this.chatContainer = document.getElementById('chat-container');
+        this.chatMessages = document.getElementById('chat-messages');
+        this.welcomeMessage = document.getElementById('welcome-message');
+        this.selectedModel = document.getElementById('selected-model');
+        this.modelIcon = document.getElementById('model-icon');
+        this.modelName = document.getElementById('model-name');
+        this.modelDescription = document.getElementById('model-description');
+        this.typingIndicator = document.getElementById('typing-indicator');
         this.conversationsList = document.getElementById('conversations-list');
         this.newChatBtn = document.getElementById('new-chat-btn');
         this.clearHistoryBtn = document.getElementById('clear-history-btn');
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
-        this.themeToggle = document.getElementById('theme-toggle');
-        this.authThemeToggle = document.getElementById('auth-theme-toggle');
         this.profileBtn = document.getElementById('profile-btn');
         this.profileModal = document.getElementById('profile-modal');
         this.closeProfileBtn = document.querySelector('.close-profile');
@@ -149,8 +150,6 @@ class WindexAI {
             loadingOverlay: !!this.loadingOverlay,
             charCount: !!this.charCount,
             modelCards: this.modelCards.length,
-            themeToggle: !!this.themeToggle,
-            authThemeToggle: !!this.authThemeToggle,
             profileBtn: !!this.profileBtn,
             profileModal: !!this.profileModal,
             closeProfileBtn: !!this.closeProfileBtn
@@ -172,18 +171,27 @@ class WindexAI {
             }
         });
 
+        // Logo click handler
+        const logoClickable = document.getElementById('logo-clickable');
+        if (logoClickable) {
+            logoClickable.addEventListener('click', () => {
+                this.showWelcomeMessage();
+            });
+        }
+
         // Send button
         this.sendBtn.addEventListener('click', () => {
             this.sendMessage();
         });
 
         // Model cards
-        this.modelCards.forEach(card => {
-            card.addEventListener('click', () => {
+        console.log('Model cards found:', this.modelCards.length);
+        this.modelCards.forEach((card, index) => {
+            console.log(`Model card ${index}:`, card, 'data-model:', card.dataset.model);
+            card.addEventListener('click', (e) => {
+                console.log('Model card clicked:', card.dataset.model);
                 const model = card.dataset.model;
-                this.currentModel = model;
-                this.hideWelcomeMessage();
-                showNotification(`Выбрана модель: ${model === 'windexai-lite' ? 'WIndexAI Lite' : 'WIndexAI Pro'}`, 'success');
+                this.selectModel(model);
             });
         });
 
@@ -197,32 +205,6 @@ class WindexAI {
             this.clearHistory();
         });
 
-        // Theme toggle buttons
-        if (this.themeToggle) {
-            console.log('Main theme toggle button found:', this.themeToggle);
-            this.themeToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Main theme toggle clicked');
-                this.toggleTheme();
-            });
-            console.log('Main theme toggle event listener added');
-        } else {
-            console.error('Main theme toggle button not found!');
-        }
-
-        if (this.authThemeToggle) {
-            console.log('Auth theme toggle button found:', this.authThemeToggle);
-            this.authThemeToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Auth theme toggle clicked');
-                this.toggleTheme();
-            });
-            console.log('Auth theme toggle event listener added');
-        } else {
-            console.error('Auth theme toggle button not found!');
-        }
 
         // Profile button
         if (this.profileBtn) {
@@ -245,6 +227,47 @@ class WindexAI {
         }
     }
 
+    selectModel(model) {
+        this.currentModel = model;
+        
+        // Update model info
+        const modelInfo = this.getModelInfo(model);
+        this.modelIcon.textContent = modelInfo.icon;
+        this.modelName.textContent = modelInfo.name;
+        this.modelDescription.textContent = modelInfo.description;
+        
+        // Show selected model and hide welcome message
+        this.showSelectedModel();
+        this.hideWelcomeMessage();
+        
+        showNotification(`Выбрана модель: ${modelInfo.name}`, 'success');
+        this.messageInput.focus();
+    }
+
+    getModelInfo(model) {
+        const models = {
+            'gpt-4o-mini': {
+                icon: 'L',
+                name: 'WIndexAI Lite',
+                description: 'Быстрая и эффективная модель для повседневных задач'
+            },
+            'gpt-4o': {
+                icon: 'P',
+                name: 'WIndexAI Pro',
+                description: 'Продвинутая модель с расширенными возможностями'
+            }
+        };
+        return models[model] || models['gpt-4o-mini'];
+    }
+
+    showSelectedModel() {
+        this.selectedModel.classList.remove('hidden');
+    }
+
+    hideSelectedModel() {
+        this.selectedModel.classList.add('hidden');
+    }
+
     async sendMessage() {
         const message = this.messageInput.value.trim();
         if (!message || this.isLoading) return;
@@ -254,6 +277,7 @@ class WindexAI {
 
         // Hide welcome message if it's showing
         this.hideWelcomeMessage();
+        this.showChatMessages();
 
         // Add user message to chat
         this.addMessageToChat('user', message);
@@ -262,7 +286,7 @@ class WindexAI {
         this.toggleSendButton();
 
         // Show typing indicator
-        const typingIndicator = this.showTypingIndicator();
+        this.showTypingIndicator();
 
         try {
             const response = await fetch('/api/chat', {
@@ -287,7 +311,7 @@ class WindexAI {
             this.currentConversationId = data.conversation_id;
 
             // Hide typing indicator and add AI response
-            this.hideTypingIndicator(typingIndicator);
+            this.hideTypingIndicator();
             this.addMessageToChat('assistant', data.response);
 
             // Update conversations list
@@ -295,12 +319,68 @@ class WindexAI {
 
         } catch (error) {
             console.error('Error:', error);
-            this.hideTypingIndicator(typingIndicator);
+            this.hideTypingIndicator();
             this.addMessageToChat('assistant', 'Извините, произошла ошибка. Попробуйте еще раз.');
         } finally {
             this.isLoading = false;
             this.hideLoading();
         }
+    }
+
+    // Функция для конвертации Markdown в HTML
+    convertMarkdownToHtml(text) {
+        if (!text) return '';
+        
+        // Экранируем HTML теги
+        text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        // Жирный текст **text** или __text__
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        
+        // Курсив *text* или _text_
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        text = text.replace(/_(.*?)_/g, '<em>$1</em>');
+        
+        // Заголовки
+        text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        
+        // Списки
+        text = text.replace(/^\d+\.\s+(.*$)/gim, '<li>$1</li>');
+        text = text.replace(/^[-*]\s+(.*$)/gim, '<li>$1</li>');
+        
+        // Обертываем списки в ul/ol
+        text = text.replace(/(<li>.*<\/li>)/gs, (match) => {
+            if (match.match(/^\d+\./)) {
+                return '<ol>' + match + '</ol>';
+            } else {
+                return '<ul>' + match + '</ul>';
+            }
+        });
+        
+        // Код `code`
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Блоки кода ```code```
+        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        
+        // Ссылки [text](url)
+        text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        
+        // Разделители ---
+        text = text.replace(/^---$/gim, '<hr>');
+        
+        // Переносы строк в параграфы
+        text = text.replace(/\n\n/g, '</p><p>');
+        text = '<p>' + text + '</p>';
+        
+        // Убираем пустые параграфы
+        text = text.replace(/<p><\/p>/g, '');
+        text = text.replace(/<p>\s*<\/p>/g, '');
+        
+        return text;
     }
 
     addMessageToChat(role, content) {
@@ -316,7 +396,13 @@ class WindexAI {
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.textContent = content;
+        
+        // Конвертируем Markdown в HTML для сообщений ассистента
+        if (role === 'assistant') {
+            bubble.innerHTML = this.convertMarkdownToHtml(content);
+        } else {
+            bubble.textContent = content;
+        }
 
         const time = document.createElement('div');
         time.className = 'message-time';
@@ -330,128 +416,27 @@ class WindexAI {
         messageDiv.appendChild(avatar);
         messageDiv.appendChild(messageContent);
 
-        this.chatContainer.appendChild(messageDiv);
-        this.scrollToBottom();
+        this.chatMessages.appendChild(messageDiv);
+        setTimeout(() => this.scrollToBottom(), 50);
     }
 
-    typeText(text) {
-        // Simple text display for now - typing effect can be added later
-        return text;
+    showChatMessages() {
+        this.chatMessages.classList.remove('hidden');
+    }
+
+    hideChatMessages() {
+        this.chatMessages.classList.add('hidden');
     }
 
     showTypingIndicator() {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message assistant fade-in';
-
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = '🤖';
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-
-        const typingIndicator = document.createElement('div');
-        typingIndicator.className = 'typing-indicator';
-        typingIndicator.innerHTML = `
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        `;
-
-        messageContent.appendChild(typingIndicator);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(messageContent);
-
-        this.chatContainer.appendChild(messageDiv);
-        this.scrollToBottom();
-        
-        return messageDiv;
+        this.typingIndicator.classList.remove('hidden');
+        setTimeout(() => this.scrollToBottom(), 100);
     }
 
-    hideTypingIndicator(typingElement) {
-        if (typingElement && typingElement.parentElement) {
-            typingElement.remove();
-        }
+    hideTypingIndicator() {
+        this.typingIndicator.classList.add('hidden');
     }
 
-    toggleTheme() {
-        console.log('toggleTheme called');
-        const body = document.body;
-        const isDark = body.classList.contains('dark-theme');
-        
-        console.log('Current theme:', isDark ? 'dark' : 'light');
-        console.log('Body classes:', body.className);
-        
-        if (isDark) {
-            body.classList.remove('dark-theme');
-            localStorage.setItem('windexai_theme', 'light');
-            console.log('Switched to light theme');
-        } else {
-            body.classList.add('dark-theme');
-            localStorage.setItem('windexai_theme', 'dark');
-            console.log('Switched to dark theme');
-        }
-        
-        console.log('Body classes after change:', body.className);
-        
-        // Update button icon
-        this.updateThemeButtonIcon();
-    }
-
-    updateThemeButtonIcon() {
-        const buttons = [this.themeToggle, this.authThemeToggle].filter(Boolean);
-        
-        if (buttons.length === 0) {
-            console.log('No theme toggle buttons found in updateThemeButtonIcon');
-            return;
-        }
-        
-        const isDark = document.body.classList.contains('dark-theme');
-        
-        console.log('Updating theme button icons, isDark:', isDark);
-        console.log('Found buttons:', buttons.length);
-        
-        buttons.forEach((button, index) => {
-            const icon = button.querySelector('svg');
-            console.log(`Button ${index + 1} icon element:`, icon);
-            
-            if (isDark) {
-                // Dark theme - show sun icon
-                icon.innerHTML = `
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-                `;
-                console.log(`Set sun icon for button ${index + 1}`);
-            } else {
-                // Light theme - show moon icon
-                icon.innerHTML = `
-                    <path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                `;
-                console.log(`Set moon icon for button ${index + 1}`);
-            }
-        });
-    }
-
-    initializeTheme() {
-        const savedTheme = localStorage.getItem('windexai_theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        console.log('Saved theme:', savedTheme);
-        console.log('Prefers dark:', prefersDark);
-        
-        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-            document.body.classList.add('dark-theme');
-            console.log('Applied dark theme');
-        } else {
-            document.body.classList.remove('dark-theme');
-            console.log('Applied light theme');
-        }
-        
-        // Update button icon after theme is set
-        setTimeout(() => {
-            this.updateThemeButtonIcon();
-        }, 100);
-    }
 
     async loadConversations() {
         try {
@@ -488,25 +473,22 @@ class WindexAI {
         conversations.forEach(conv => {
             const convElement = document.createElement('div');
             convElement.className = 'conversation-item';
-            if (conv.id === this.currentConversationId) {
-                convElement.classList.add('active');
-            }
+            if (conv.id === this.currentConversationId) convElement.classList.add('active');
 
-            const title = document.createElement('div');
-            title.className = 'conversation-title';
-            title.textContent = conv.title || 'Новый чат';
+            // Preview text
+            const preview = document.createElement('div');
+            preview.className = 'conversation-preview';
+            preview.textContent = conv.preview || 'Новый чат';
 
+            // Date and time
             const date = document.createElement('div');
             date.className = 'conversation-date';
-            date.textContent = new Date(conv.timestamp).toLocaleDateString('ru-RU');
+            const dt = new Date(conv.date);
+            date.textContent = dt.toLocaleDateString('ru-RU') + ' ' + dt.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 
-            convElement.appendChild(title);
+            convElement.appendChild(preview);
             convElement.appendChild(date);
-
-            convElement.addEventListener('click', () => {
-                this.loadConversation(conv.id);
-            });
-
+            convElement.addEventListener('click', () => this.loadConversation(conv.id));
             this.conversationsList.appendChild(convElement);
         });
     }
@@ -536,22 +518,27 @@ class WindexAI {
     }
 
     displayConversation(conversation) {
-        this.chatContainer.innerHTML = '';
+        this.chatMessages.innerHTML = '';
         
         if (conversation.messages && conversation.messages.length > 0) {
+            this.showChatMessages();
+            this.hideWelcomeMessage(); // Скрываем приветственное сообщение
             conversation.messages.forEach(message => {
                 this.addMessageToChat(message.role, message.content);
             });
         } else {
+            this.hideChatMessages();
             this.showWelcomeMessage();
         }
         
-        this.scrollToBottom();
+        setTimeout(() => this.scrollToBottom(), 100);
     }
 
     startNewChat() {
         this.currentConversationId = null;
-        this.chatContainer.innerHTML = '';
+        this.chatMessages.innerHTML = '';
+        this.hideChatMessages();
+        this.hideSelectedModel();
         this.showWelcomeMessage();
         this.loadConversations();
     }
@@ -578,57 +565,23 @@ class WindexAI {
     }
 
     showWelcomeMessage() {
-        const welcomeMessage = document.createElement('div');
-        welcomeMessage.className = 'welcome-message';
-        welcomeMessage.innerHTML = `
-            <div class="welcome-icon">🚀</div>
-            <h2>Добро пожаловать в WIndexAI</h2>
-            <p>Выберите модель и начните общение с искусственным интеллектом</p>
-            <div class="model-cards">
-                <div class="model-card" data-model="windexai-lite">
-                    <h3>WIndexAI Lite</h3>
-                    <p>Быстрая и эффективная модель для повседневных задач</p>
-                    <div class="capabilities">
-                        <span class="capability">Текст</span>
-                        <span class="capability">Код</span>
-                        <span class="capability">Анализ</span>
-                        <span class="capability">Перевод</span>
-                    </div>
-                </div>
-                <div class="model-card" data-model="windexai-pro">
-                    <h3>WIndexAI Pro</h3>
-                    <p>Продвинутая модель с расширенными возможностями</p>
-                    <div class="capabilities">
-                        <span class="capability">Текст</span>
-                        <span class="capability">Код</span>
-                        <span class="capability">Анализ</span>
-                        <span class="capability">Перевод</span>
-                        <span class="capability">Креативность</span>
-                        <span class="capability">Логика</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        this.chatContainer.appendChild(welcomeMessage);
-
+        this.welcomeMessage.classList.remove('hidden');
+        
         // Re-bind model card events
         this.modelCards = document.querySelectorAll('.model-card');
-        this.modelCards.forEach(card => {
-            card.addEventListener('click', () => {
+        console.log('Re-binding model cards:', this.modelCards.length);
+        this.modelCards.forEach((card, index) => {
+            console.log(`Re-bound model card ${index}:`, card, 'data-model:', card.dataset.model);
+            card.addEventListener('click', (e) => {
+                console.log('Re-bound model card clicked:', card.dataset.model);
                 const model = card.dataset.model;
-                this.modelSelect.value = model;
-                this.currentModel = model;
-                this.updateModelInfo();
-                this.hideWelcomeMessage();
+                this.selectModel(model);
             });
         });
     }
 
     hideWelcomeMessage() {
-        const welcomeMessage = this.chatContainer.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
+        this.welcomeMessage.classList.add('hidden');
     }
 
 
@@ -654,7 +607,9 @@ class WindexAI {
     }
 
     scrollToBottom() {
-        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        if (this.chatMessages) {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
     }
 
     showLoading() {
@@ -736,9 +691,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginLink = document.getElementById('show-login');
     const loginFormDiv = document.getElementById('login-form');
     const registerFormDiv = document.getElementById('register-form');
+    
+    // Debug: Check if all auth elements are found
+    console.log('Auth elements found:', {
+        loginForm: !!loginForm,
+        registerForm: !!registerForm,
+        showRegisterLink: !!showRegisterLink,
+        showLoginLink: !!showLoginLink,
+        loginFormDiv: !!loginFormDiv,
+        registerFormDiv: !!registerFormDiv
+    });
 
     // Show register form
-    showRegisterLink.addEventListener('click', (e) => {
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
         e.preventDefault();
         loginFormDiv.style.opacity = '0';
         loginFormDiv.style.transform = 'translateX(-20px)';
@@ -754,10 +720,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 registerFormDiv.style.transform = 'translateX(0)';
             }, 50);
         }, 300);
-    });
+        });
+    }
 
     // Show login form
-    showLoginLink.addEventListener('click', (e) => {
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', (e) => {
         e.preventDefault();
         registerFormDiv.style.opacity = '0';
         registerFormDiv.style.transform = 'translateX(-20px)';
@@ -773,14 +741,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginFormDiv.style.transform = 'translateX(0)';
             }, 50);
         }, 300);
-    });
+        });
+    }
 
     // Handle login
-    loginForm.addEventListener('submit', async (e) => {
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
-        const submitBtn = loginForm.querySelector('.auth-btn');
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        
+        if (!submitBtn) {
+            console.error('Submit button not found');
+            return;
+        }
         
         // Show loading state
         const originalText = submitBtn.textContent;
@@ -796,15 +771,22 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
-    });
+        });
+    }
 
     // Handle registration
-    registerForm.addEventListener('submit', async (e) => {
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('register-username').value;
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
-        const submitBtn = registerForm.querySelector('.auth-btn');
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
+        
+        if (!submitBtn) {
+            console.error('Submit button not found');
+            return;
+        }
         
         // Show loading state
         const originalText = submitBtn.textContent;
@@ -835,7 +817,17 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
-    });
+        });
+    }
+
+    // Inside DOMContentLoaded listener, add mobile menu toggle logic
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.querySelector('.sidebar');
+    if (mobileMenuBtn && sidebar) {
+      mobileMenuBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+      });
+    }
 });
 
 // Add some utility functions
@@ -853,4 +845,22 @@ function truncateText(text, maxLength = 50) {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
 }
+
+
+
+function formatDate(date) {
+    return new Intl.DateTimeFormat('ru-RU', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
+}
+
+function truncateText(text, maxLength = 50) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
 

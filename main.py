@@ -6,10 +6,16 @@ from pydantic import BaseModel
 from typing import List
 import uvicorn
 
+# Import database
+from database import create_tables
+
 # Import routers
 from routes import auth, chat, conversations, admin, ai_editor
 
-app = FastAPI(title="WindexAI", description="AI Chat Platform with Model Selection")
+# Create tables on startup
+create_tables()
+
+app = FastAPI(title="WindexsAi", description="Chat Platform with Model Selection")
 
 # CORS middleware
 app.add_middleware(
@@ -40,18 +46,18 @@ class ModelInfo(BaseModel):
 
 # Available models
 MODELS = {
-    "windexai-lite": ModelInfo(
-        id="windexai-lite",
+    "gpt-4o-mini": ModelInfo(
+        id="gpt-4o-mini",
         name="WIndexAI Lite",
         description="Быстрая и эффективная модель для повседневных задач",
-        max_tokens=4000,
+        max_tokens=16384,
         capabilities=["текст", "код", "анализ", "перевод"]
     ),
-    "windexai-pro": ModelInfo(
-        id="windexai-pro",
+    "gpt-4o": ModelInfo(
+        id="gpt-4o",
         name="WIndexAI Pro",
         description="Продвинутая модель с расширенными возможностями",
-        max_tokens=8000,
+        max_tokens=16384,
         capabilities=["текст", "код", "анализ", "перевод", "креативность", "логика"]
     )
 }
@@ -65,6 +71,31 @@ async def read_root():
 async def read_editor():
     """Serve the AI editor HTML page"""
     return FileResponse("static/editor.html")
+
+@app.get("/style.css")
+async def get_css():
+    """Serve CSS file directly"""
+    return FileResponse("static/style.css", media_type="text/css")
+
+@app.get("/script.js")
+async def get_js():
+    """Serve JS file directly"""
+    return FileResponse("static/script.js", media_type="application/javascript")
+
+@app.get("/editor.js")
+async def get_editor_js():
+    """Serve Editor JS file directly"""
+    return FileResponse("static/editor.js", media_type="application/javascript")
+
+@app.get("/round_logo-07.svg")
+async def get_logo():
+    """Serve logo SVG file directly"""
+    return FileResponse("static/round_logo-07.svg", media_type="image/svg+xml")
+
+@app.get("/favicon.ico")
+async def get_favicon():
+    """Serve favicon file directly"""
+    return FileResponse("static/favicon.ico", media_type="image/x-icon")
 
 @app.get("/api/models")
 async def get_models():

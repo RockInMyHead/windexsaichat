@@ -1,76 +1,135 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from datetime import datetime
+from sqlalchemy.orm import Session
 
 from routes.auth import get_current_user, User
-from routes.chat import conversations
+from database import get_db, Conversation as DBConversation, Message as DBMessage
 
 router = APIRouter()
 
 @router.get("/api/conversations")
-async def get_user_conversations(current_user: User = Depends(get_current_user)):
+async def get_user_conversations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all conversations for current user"""
-    user_conversations = []
-    for conv_id, conv_data in conversations.items():
-        if conv_id.startswith(f"conv_{current_user.username}_"):
-            user_conversations.append({
-                "id": conv_id,
-                "title": conv_data.get("title", "Новый чат"),
-                "timestamp": conv_data.get("timestamp", ""),
-                "message_count": len(conv_data.get("messages", []))
-            })
+    conversations = db.query(DBConversation).filter(
+        DBConversation.user_id == current_user.id
+    ).order_by(DBConversation.updated_at.desc()).all()
     
-    # Sort by timestamp (newest first)
-    user_conversations.sort(key=lambda x: x["timestamp"], reverse=True)
+    user_conversations = []
+    for conv in conversations:
+        # Count messages
+        message_count = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).count()
+        # Get last message for preview
+        last_msg = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).order_by(DBMessage.timestamp.desc()).first()
+        snippet = last_msg.content if last_msg else ''
+        snippet_date = last_msg.timestamp.isoformat() if last_msg else conv.created_at.isoformat()
+        user_conversations.append({
+            "id": conv.id,
+            # Use last message content as preview
+            "preview": snippet,
+            "date": snippet_date,
+            "message_count": message_count
+        })
+    
     return {"conversations": user_conversations}
 
 @router.get("/api/conversations/{conversation_id}")
-async def get_conversation(conversation_id: str):
+async def get_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get conversation history"""
-    if conversation_id not in conversations:
+    conversation = db.query(DBConversation).filter(
+        DBConversation.id == conversation_id,
+        DBConversation.user_id == current_user.id
+    ).first()
+    
+    if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return {"conversation": conversations[conversation_id]}
+    
+    messages = db.query(DBMessage).filter(
+        DBMessage.conversation_id == conversation_id
+    ).order_by(DBMessage.timestamp).all()
+    
+    conversation_data = {
+        "id": conversation.id,
+        "title": conversation.title,
+        "timestamp": conversation.created_at.isoformat(),
+        "messages": [
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat()
+            }
+            for msg in messages
+        ]
+    }
+    
+    return {"conversation": conversation_data}
 
 @router.post("/api/conversations")
-async def create_conversation(current_user: User = Depends(get_current_user)):
+async def create_conversation(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Create a new conversation"""
-    conversation_id = f"conv_{current_user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    conversations[conversation_id] = {
-        "id": conversation_id,
-        "title": "Новый чат",
-        "timestamp": datetime.now().isoformat(),
-        "messages": []
-    }
-    return {"conversation_id": conversation_id}
+    conversation = DBConversation(
+        title="Новый чат",
+        user_id=current_user.id
+    )
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    
+    return {"conversation_id": conversation.id}
 
 @router.put("/api/conversations/{conversation_id}")
-async def update_conversation(conversation_id: str, title: str, current_user: User = Depends(get_current_user)):
+async def update_conversation(conversation_id: int, title: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Update conversation title"""
-    if conversation_id not in conversations:
+    conversation = db.query(DBConversation).filter(
+        DBConversation.id == conversation_id,
+        DBConversation.user_id == current_user.id
+    ).first()
+    
+    if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    # Check if user owns this conversation
-    if not conversation_id.startswith(f"conv_{current_user.username}_"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    conversation.title = title
+    db.commit()
     
-    conversations[conversation_id]["title"] = title
     return {"message": "Conversation updated"}
 
 @router.delete("/api/conversations/{conversation_id}")
-async def delete_conversation(conversation_id: str):
+async def delete_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete conversation"""
-    if conversation_id in conversations:
-        del conversations[conversation_id]
-        return {"message": "Conversation deleted"}
-    raise HTTPException(status_code=404, detail="Conversation not found")
+    conversation = db.query(DBConversation).filter(
+        DBConversation.id == conversation_id,
+        DBConversation.user_id == current_user.id
+    ).first()
+    
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Delete all messages first
+    db.query(DBMessage).filter(DBMessage.conversation_id == conversation_id).delete()
+    
+    # Delete conversation
+    db.delete(conversation)
+    db.commit()
+    
+    return {"message": "Conversation deleted"}
 
 @router.delete("/api/conversations")
-async def clear_all_conversations(current_user: User = Depends(get_current_user)):
+async def clear_all_conversations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Clear all conversations for current user"""
-    user_conversations = [conv_id for conv_id in conversations.keys() 
-                         if conv_id.startswith(f"conv_{current_user.username}_")]
+    conversations = db.query(DBConversation).filter(
+        DBConversation.user_id == current_user.id
+    ).all()
     
-    for conv_id in user_conversations:
-        del conversations[conv_id]
+    conversation_ids = [conv.id for conv in conversations]
     
-    return {"message": f"Deleted {len(user_conversations)} conversations"}
+    # Delete all messages
+    if conversation_ids:
+        db.query(DBMessage).filter(DBMessage.conversation_id.in_(conversation_ids)).delete()
+    
+    # Delete all conversations
+    for conv in conversations:
+        db.delete(conv)
+    
+    db.commit()
+    
+    return {"message": f"Deleted {len(conversations)} conversations"}

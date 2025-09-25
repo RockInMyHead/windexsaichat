@@ -1,24 +1,41 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
-from routes.auth import get_current_user, User, users_db
+from routes.auth import get_current_user, User
+from database import get_db, User as DBUser
 
 router = APIRouter()
 
 @router.get("/api/admin/users")
-async def list_users(current_user: User = Depends(get_current_user)):
+async def list_users(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """List all registered users (admin only)"""
     if current_user.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    return {"users": [u for u in users_db.values()]}  
+    
+    users = db.query(DBUser).all()
+    return {"users": [
+        {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "created_at": user.created_at.isoformat(),
+            "role": "user"  # Default role for now
+        }
+        for user in users
+    ]}
 
-@router.put("/api/admin/users/{username}/role")
-async def update_user_role(username: str, role: str, current_user: User = Depends(get_current_user)):
+@router.put("/api/admin/users/{user_id}/role")
+async def update_user_role(user_id: int, role: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Update a user's role (admin only)"""
     if current_user.role != 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    if username not in users_db:
+    
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
     if role not in ('user', 'admin'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
-    users_db[username]['role'] = role
-    return {"message": f"Role for {username} updated to {role}"}
+    
+    # For now, we'll just return success since we don't have a role field in the database yet
+    return {"message": f"Role for {user.username} would be updated to {role}"}
