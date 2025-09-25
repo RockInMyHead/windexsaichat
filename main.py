@@ -10,7 +10,7 @@ import uvicorn
 from database import create_tables
 
 # Import routers
-from routes import auth, chat, conversations, admin, ai_editor
+from routes import auth, chat, conversations, admin, ai_editor, deploy
 
 # Create tables on startup
 create_tables()
@@ -35,6 +35,7 @@ app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(admin.router)
 app.include_router(ai_editor.router)
+app.include_router(deploy.router)
 
 # Pydantic models for API documentation
 class ModelInfo(BaseModel):
@@ -101,6 +102,20 @@ async def get_favicon():
 async def get_models():
     """Get available models"""
     return {"models": MODELS}
+
+# Public deployment route
+@app.get("/deploy/{deploy_url}", response_class=HTMLResponse)
+async def serve_public_deployment(deploy_url: str):
+    """Serve deployed website publicly"""
+    from routes.deploy import serve_deployment
+    from database import get_db
+    
+    # Get database session
+    db = next(get_db())
+    try:
+        return await serve_deployment(deploy_url, db)
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8003)
