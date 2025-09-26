@@ -354,7 +354,7 @@ export default function Home() {
       <Hero />
       <Features />
       <Footer />
-    </main>
+  </main>
   )
 }
 PAGE_TSX_END

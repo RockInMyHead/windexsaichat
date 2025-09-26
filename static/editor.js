@@ -61,6 +61,7 @@ class AIEditor {
         this.cancelDeployBtn = document.getElementById('cancel-deploy');
         this.closeModalBtn = document.querySelector('.close');
         this.projectsBtn = document.getElementById('projects-btn');
+        this.dashboardBtn = document.getElementById('dashboard-btn');
         
         // Store deployment result
         this.lastDeploymentResult = null;
@@ -148,6 +149,13 @@ class AIEditor {
         if (this.projectsBtn) {
             this.projectsBtn.addEventListener('click', () => {
                 window.location.href = '/static/projects.html';
+            });
+        }
+
+        // Обработчик кнопки "Личный кабинет"
+        if (this.dashboardBtn) {
+            this.dashboardBtn.addEventListener('click', () => {
+                window.location.href = '/static/dashboard.html';
             });
         }
         

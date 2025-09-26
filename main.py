@@ -10,7 +10,7 @@ import uvicorn
 from database import create_tables
 
 # Import routers
-from routes import auth, chat, conversations, admin, ai_editor, deploy, voice, documents
+from routes import auth, chat, conversations, admin, ai_editor, deploy, voice, documents, dashboard
 
 # Create tables on startup
 create_tables()
@@ -38,6 +38,7 @@ app.include_router(ai_editor.router)
 app.include_router(deploy.router)
 app.include_router(voice.router)
 app.include_router(documents.router)
+app.include_router(dashboard.router)
 
 # Pydantic models for API documentation
 class ModelInfo(BaseModel):

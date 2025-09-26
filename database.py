@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -99,6 +99,38 @@ class Deployment(Base):
     
     # Relationships
     user = relationship("User", back_populates="deployments")
+    analytics = relationship("SiteAnalytics", back_populates="deployment")
+
+# Site Analytics model
+class SiteAnalytics(Base):
+    __tablename__ = "site_analytics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(Integer, ForeignKey("deployments.id"))
+    
+    # Analytics data
+    page_views = Column(Integer, default=0)
+    unique_visitors = Column(Integer, default=0)
+    avg_load_time = Column(Float, default=0.0)  # в секундах
+    bounce_rate = Column(Float, default=0.0)  # процент
+    session_duration = Column(Float, default=0.0)  # в секундах
+    
+    # Technical metrics
+    error_count = Column(Integer, default=0)
+    last_error = Column(Text, nullable=True)
+    last_error_time = Column(DateTime, nullable=True)
+    
+    # Performance metrics
+    total_requests = Column(Integer, default=0)
+    successful_requests = Column(Integer, default=0)
+    failed_requests = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    deployment = relationship("Deployment", back_populates="analytics")
 
 # Create all tables
 def create_tables():
