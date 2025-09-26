@@ -42,10 +42,25 @@
             color: #16a34a;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-actions .btn {
+            transition: all 0.2s ease;
+        }
+
+        .header-actions .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+        }
+
         .editor-main {
             flex: 1;
             display: grid;
-            grid-template-columns: 300px 1fr 1fr;
+            grid-template-columns: 1fr 1fr; /* Две колонки вместо трех */
             gap: 1rem;
             padding: 1rem;
             max-height: calc(100vh - 80px);
@@ -410,23 +425,20 @@
         /* Адаптивность */
         @media (max-width: 1200px) {
             .editor-main {
-                grid-template-columns: 250px 1fr 1fr;
+                grid-template-columns: 1fr 1fr;
             }
         }
 
         @media (max-width: 1024px) {
             .editor-main {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
+                grid-template-rows: auto 1fr;
             }
             
-            .history-panel {
-                min-width: unset;
-                max-width: unset;
-            }
-            
-            .prompt-textarea {
-                min-height: 120px;
+            .header-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
             }
         }
 
@@ -925,7 +937,10 @@
                     <img src="/static/round_logo-07.svg" alt="WindexsAI" width="24" height="24">
                     WindexsAI
                 </a>
-                <div>
+                <div class="header-actions">
+                    <button id="projects-btn" class="btn btn-outline btn-sm">
+                        📁 Мои проекты
+                    </button>
                     <span id="user-name" class="text-muted"></span>
                     <button id="logout-btn" class="btn btn-outline btn-sm ml-2">Выйти</button>
                 </div>
@@ -934,21 +949,6 @@
 
         <!-- Основная область -->
         <main class="editor-main">
-            <!-- Боковая панель с историей -->
-            <aside class="editor-panel history-panel">
-                <div class="panel-header">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h3 class="panel-title">📁 История проектов</h3>
-                        <button id="new-project-btn" class="btn btn-outline btn-sm">+ Новый</button>
-                    </div>
-                </div>
-                <div class="panel-content p-0">
-                    <div id="conversations-list" class="conversations-list">
-                        <!-- Conversations will be loaded here -->
-                    </div>
-                </div>
-            </aside>
-
             <!-- Панель чата -->
             <div class="editor-panel chat-panel">
                 <div class="panel-header">
