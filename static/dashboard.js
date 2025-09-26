@@ -22,13 +22,6 @@ class Dashboard {
 
     bindEvents() {
         // Кнопка выхода
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('windexai_token');
-                window.location.href = '/';
-            });
-        }
 
         // Модальное окно удаления
         const deleteModal = document.getElementById('delete-modal');

@@ -24,7 +24,6 @@ class AIEditor {
         this.downloadBtn = document.getElementById('download-html-btn');
         this.deployBtn = document.getElementById('deploy-btn');
         this.editModeBtn = document.getElementById('edit-mode-btn');
-        this.logoutBtn = document.getElementById('logout-btn');
         this.userNameSpan = document.getElementById('user-name');
         
         // History elements
@@ -136,9 +135,6 @@ class AIEditor {
         }
 
         // Кнопка выхода
-        if (this.logoutBtn) {
-            this.logoutBtn.addEventListener('click', () => this.logout());
-        }
         
         // История чатов
         if (this.newProjectBtn) {
@@ -860,10 +856,6 @@ project-name/
         this.updateStatus('HTML файл скачан');
     }
 
-    logout() {
-        localStorage.removeItem('windexai_token');
-        window.location.href = '/';
-    }
     
     showDeployModal() {
         if (!this.previewIframe || !this.previewIframe.srcdoc) {
