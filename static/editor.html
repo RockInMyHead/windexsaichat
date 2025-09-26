@@ -930,24 +930,31 @@
 </head>
 <body>
     <div class="editor-container">
-        <!-- Шапка -->
-        <header class="editor-header">
-            <nav class="editor-nav">
-                <a href="/" class="editor-logo">
-                    <img src="/static/round_logo-07.svg" alt="WindexsAI" width="24" height="24">
-                    Создание сайтов
+        <!-- Единый красивый хедер -->
+        <header class="unified-header">
+            <div class="header-container">
+                <a href="/" class="header-logo">
+                    <div class="logo-icon">W</div>
+                    <span class="logo-text">WindexsAI</span>
                 </a>
+                
+                <nav class="header-nav">
+                    <div class="nav-links">
+                        <a href="/" class="nav-link">🏠 Главная</a>
+                        <a href="/static/editor.html" class="nav-link active">⚡ Создание сайтов</a>
+                        <a href="/static/projects.html" class="nav-link">📁 Мои проекты</a>
+                        <a href="/static/dashboard.html" class="nav-link">📊 Личный кабинет</a>
+                    </div>
+                </nav>
+                
                 <div class="header-actions">
-                    <button id="projects-btn" class="btn btn-outline btn-sm">
-                        📁 Мои проекты
-                    </button>
-                    <button id="dashboard-btn" class="btn btn-outline btn-sm">
-                        📊 Личный кабинет
-                    </button>
-                    <span id="user-name" class="text-muted"></span>
-                    <button id="logout-btn" class="btn btn-outline btn-sm ml-2">Выйти</button>
+                    <div class="user-info">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <span class="user-name" id="user-name">Пользователь</span>
+                    </div>
+                    <button id="logout-btn" class="header-btn outline">🚪 Выйти</button>
                 </div>
-            </nav>
+            </div>
         </header>
 
         <!-- Основная область -->
