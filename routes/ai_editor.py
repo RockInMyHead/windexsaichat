@@ -67,10 +67,10 @@ def extract_search_query(message: str) -> str:
 
 @router.post("/api/ai-editor", response_model=AIEditorResponse)
 async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """AI Editor endpoint for website generation with web search capability"""
+    """Editor endpoint for website generation with web search capability"""
     
     try:
-        print(f"AI Editor request from user: {current_user.username}")
+        print(f"Editor request from user: {current_user.username}")
         print(f"Messages: {request.messages}")
         
         # Получаем последнее сообщение пользователя
@@ -314,7 +314,7 @@ NEW_PAGE_END"""
         )
         
     except Exception as e:
-        print(f"AI Editor error: {str(e)}")
+        print(f"Editor error: {str(e)}")
         return AIEditorResponse(
             content=f"Ошибка генерации: {str(e)}",
             conversation_id=conversation_id if 'conversation_id' in locals() else 0,
@@ -511,11 +511,11 @@ async def delete_ai_editor_conversation(conversation_id: int, current_user: User
 
 @router.get("/api/ai-editor/page")
 async def get_editor_page():
-    """Serve the AI Editor page"""
+    """Serve the Editor page"""
     from fastapi.responses import FileResponse
     return FileResponse("static/editor.html")
 
 @router.get("/api/ai-editor/test")
 async def test_ai_editor():
     """Test endpoint"""
-    return {"status": "AI Editor working"}
+    return {"status": "Editor working"}
