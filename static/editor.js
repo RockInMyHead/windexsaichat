@@ -313,8 +313,13 @@ class AIEditor {
     updatePreview(content) {
         if (!content || !this.previewIframe) return;
         
+        // Проверяем, есть ли файловая структура в ответе
+        const hasFileStructure = content.includes('FILE_STRUCTURE_START') || content.includes('HTML_START');
         
-        // Извлекаем HTML между маркерами
+        if (hasFileStructure) {
+            this.displayFileStructure(content);
+        } else {
+            // Старый формат - извлекаем HTML между маркерами
         const htmlMatch = content.match(/NEW_PAGE_START([\s\S]*?)NEW_PAGE_END/);
         if (htmlMatch) {
             const html = htmlMatch[1].trim();
@@ -325,9 +330,213 @@ class AIEditor {
             if (htmlCodeMatch) {
                 const html = htmlCodeMatch[1].trim();
                 this.previewIframe.srcdoc = html;
-            } else {
+                }
             }
         }
+    }
+
+    displayFileStructure(content) {
+        // Извлекаем файловую структуру
+        const structureMatch = content.match(/FILE_STRUCTURE_START([\s\S]*?)FILE_STRUCTURE_END/);
+        
+        // Извлекаем содержимое файлов
+        const htmlMatch = content.match(/HTML_START([\s\S]*?)HTML_END/);
+        const mainCssMatch = content.match(/MAIN_CSS_START([\s\S]*?)MAIN_CSS_END/);
+        const componentsCssMatch = content.match(/COMPONENTS_CSS_START([\s\S]*?)COMPONENTS_CSS_END/);
+        const responsiveCssMatch = content.match(/RESPONSIVE_CSS_START([\s\S]*?)RESPONSIVE_CSS_END/);
+        const mainJsMatch = content.match(/MAIN_JS_START([\s\S]*?)MAIN_JS_END/);
+        const componentsJsMatch = content.match(/COMPONENTS_JS_START([\s\S]*?)COMPONENTS_JS_END/);
+        const utilsJsMatch = content.match(/UTILS_JS_START([\s\S]*?)UTILS_JS_END/);
+
+        // Создаем объект с файлами
+        this.projectFiles = {
+            'index.html': htmlMatch ? htmlMatch[1].trim() : '',
+            'styles/main.css': mainCssMatch ? mainCssMatch[1].trim() : '',
+            'styles/components.css': componentsCssMatch ? componentsCssMatch[1].trim() : '',
+            'styles/responsive.css': responsiveCssMatch ? responsiveCssMatch[1].trim() : '',
+            'scripts/main.js': mainJsMatch ? mainJsMatch[1].trim() : '',
+            'scripts/components.js': componentsJsMatch ? componentsJsMatch[1].trim() : '',
+            'scripts/utils.js': utilsJsMatch ? utilsJsMatch[1].trim() : ''
+        };
+
+        // Обновляем превью с главным HTML файлом
+        if (this.projectFiles['index.html']) {
+            // Объединяем HTML с CSS и JS для превью
+            const fullHtml = this.combineFilesForPreview();
+            this.previewIframe.srcdoc = fullHtml;
+        }
+
+        // Показываем файловую структуру
+        this.showFileExplorer();
+    }
+
+    combineFilesForPreview() {
+        const html = this.projectFiles['index.html'];
+        const mainCss = this.projectFiles['styles/main.css'];
+        const componentsCss = this.projectFiles['styles/components.css'];
+        const responsiveCss = this.projectFiles['styles/responsive.css'];
+        const mainJs = this.projectFiles['scripts/main.js'];
+        const componentsJs = this.projectFiles['scripts/components.js'];
+        const utilsJs = this.projectFiles['scripts/utils.js'];
+
+        // Заменяем ссылки на стили и скрипты на inline версии
+        let combinedHtml = html;
+
+        // Заменяем CSS ссылки
+        if (mainCss) {
+            combinedHtml = combinedHtml.replace(
+                '<link rel="stylesheet" href="styles/main.css">',
+                `<style>${mainCss}</style>`
+            );
+        }
+        if (componentsCss) {
+            combinedHtml = combinedHtml.replace(
+                '<link rel="stylesheet" href="styles/components.css">',
+                `<style>${componentsCss}</style>`
+            );
+        }
+        if (responsiveCss) {
+            combinedHtml = combinedHtml.replace(
+                '<link rel="stylesheet" href="styles/responsive.css">',
+                `<style>${responsiveCss}</style>`
+            );
+        }
+
+        // Заменяем JS ссылки
+        if (utilsJs) {
+            combinedHtml = combinedHtml.replace(
+                '<script src="scripts/utils.js"></script>',
+                `<script>${utilsJs}</script>`
+            );
+        }
+        if (componentsJs) {
+            combinedHtml = combinedHtml.replace(
+                '<script src="scripts/components.js"></script>',
+                `<script>${componentsJs}</script>`
+            );
+        }
+        if (mainJs) {
+            combinedHtml = combinedHtml.replace(
+                '<script src="scripts/main.js"></script>',
+                `<script>${mainJs}</script>`
+            );
+        }
+
+        return combinedHtml;
+    }
+
+    showFileExplorer() {
+        // Создаем или обновляем файловый проводник
+        let fileExplorer = document.getElementById('file-explorer');
+        if (!fileExplorer) {
+            fileExplorer = document.createElement('div');
+            fileExplorer.id = 'file-explorer';
+            fileExplorer.className = 'file-explorer';
+            
+            // Добавляем после панели превью
+            const previewPanel = document.querySelector('.preview-panel');
+            if (previewPanel) {
+                previewPanel.insertAdjacentElement('afterend', fileExplorer);
+            }
+        }
+
+        // Создаем HTML для файлового проводника
+        let explorerHtml = `
+            <div class="file-explorer-header">
+                <h3>📁 Файлы проекта</h3>
+                <button class="download-project-btn" onclick="aiEditor.downloadProject()">
+                    💾 Скачать проект
+                </button>
+            </div>
+            <div class="file-list">
+        `;
+
+        // Добавляем файлы в список
+        Object.keys(this.projectFiles).forEach(filePath => {
+            if (this.projectFiles[filePath]) {
+                const fileName = filePath.split('/').pop();
+                const fileIcon = this.getFileIcon(fileName);
+                explorerHtml += `
+                    <div class="file-item" onclick="aiEditor.showFileContent('${filePath}')">
+                        <span class="file-icon">${fileIcon}</span>
+                        <span class="file-name">${filePath}</span>
+                        <button class="download-file-btn" onclick="event.stopPropagation(); aiEditor.downloadFile('${filePath}')">
+                            ⬇️
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        explorerHtml += '</div>';
+        fileExplorer.innerHTML = explorerHtml;
+    }
+
+    getFileIcon(fileName) {
+        if (fileName.endsWith('.html')) return '🌐';
+        if (fileName.endsWith('.css')) return '🎨';
+        if (fileName.endsWith('.js')) return '⚡';
+        return '📄';
+    }
+
+    showFileContent(filePath) {
+        const content = this.projectFiles[filePath];
+        if (!content) return;
+
+        // Создаем модальное окно для отображения содержимого файла
+        const modal = document.createElement('div');
+        modal.className = 'file-modal';
+        modal.innerHTML = `
+            <div class="file-modal-content">
+                <div class="file-modal-header">
+                    <h3>${filePath}</h3>
+                    <button class="close-file-modal" onclick="this.closest('.file-modal').remove()">×</button>
+                </div>
+                <div class="file-modal-body">
+                    <pre><code>${content}</code></pre>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+
+    downloadFile(filePath) {
+        const content = this.projectFiles[filePath];
+        if (!content) return;
+
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filePath.split('/').pop();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    downloadProject() {
+        if (!this.projectFiles) return;
+
+        // Создаем ZIP файл (простая реализация)
+        const zip = new Map();
+        
+        Object.keys(this.projectFiles).forEach(filePath => {
+            if (this.projectFiles[filePath]) {
+                zip.set(filePath, this.projectFiles[filePath]);
+            }
+        });
+
+        // Простое решение - скачиваем файлы по отдельности
+        // В будущем можно добавить библиотеку для создания ZIP
+        Object.keys(this.projectFiles).forEach(filePath => {
+            if (this.projectFiles[filePath]) {
+                setTimeout(() => {
+                    this.downloadFile(filePath);
+                }, 100);
+            }
+        });
     }
 
     startGeneration() {
