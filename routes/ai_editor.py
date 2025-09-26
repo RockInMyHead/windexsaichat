@@ -195,7 +195,11 @@ project-name/
 │       │   ├── Hero.tsx
 │       │   ├── Features.tsx
 │       │   ├── About.tsx
+│       │   ├── Services.tsx
+│       │   ├── Portfolio.tsx
+│       │   ├── Testimonials.tsx
 │       │   ├── Contact.tsx
+│       │   ├── Footer.tsx
 │       │   └── Dashboard.tsx
 │       └── animations/
 │           ├── FadeIn.tsx
@@ -545,7 +549,12 @@ SECTION_HERO_END
 4) Инструкции по запуску:
 - npm install
 - npm run dev
-- Открыть http://localhost:3000"""
+- Открыть http://localhost:3000
+
+ВАЖНО: Генерируй ПОЛНЫЕ, ДЕТАЛЬНЫЕ сайты с множеством компонентов, секций и функций. 
+Используй весь доступный лимит токенов для создания максимально подробного и функционального сайта.
+Включай все возможные секции: Hero, Features, About, Services, Portfolio, Testimonials, 
+Contact, Footer, Dashboard, Profile, Settings и другие релевантные разделы."""
             }
         
         # Подготавливаем сообщения
@@ -558,13 +567,13 @@ SECTION_HERO_END
             response = openai_client.chat.completions.create(
                 model=preferred_model,
                 messages=messages,
-                max_tokens=3000
+                max_tokens=15000  # Увеличено в 5 раз с 3000
             )
         except Exception as _:
             response = openai_client.chat.completions.create(
                 model=fallback_model,
             messages=messages,
-                max_tokens=2500
+                max_tokens=12500  # Увеличено в 5 раз с 2500
             )
         
         # Получаем ответ
