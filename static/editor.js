@@ -1084,6 +1084,6 @@ class AIEditor {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing AI Editor');
+    console.log('DOM loaded, initializing Editor');
     window.aiEditor = new AIEditor();
 });
