@@ -2,9 +2,12 @@ class AIEditor {
     constructor() {
         this.conversationHistory = [];
         this.currentGeneration = null;
+        this.currentConversationId = null;
+        this.authToken = localStorage.getItem('windexai_token');
         this.initializeElements();
         this.setupEventListeners();
         this.checkAuth();
+        this.loadConversations();
     }
 
     initializeElements() {
@@ -22,6 +25,10 @@ class AIEditor {
         this.editModeBtn = document.getElementById('edit-mode-btn');
         this.logoutBtn = document.getElementById('logout-btn');
         this.userNameSpan = document.getElementById('user-name');
+        
+        // History elements
+        this.conversationsList = document.getElementById('conversations-list');
+        this.newProjectBtn = document.getElementById('new-project-btn');
         
         // Edit mode state
         this.editMode = false;
@@ -131,6 +138,11 @@ class AIEditor {
             this.logoutBtn.addEventListener('click', () => this.logout());
         }
         
+        // История чатов
+        if (this.newProjectBtn) {
+            this.newProjectBtn.addEventListener('click', () => this.createNewProject());
+        }
+        
         // Load saved panel sizes
         this.loadPanelSizes();
 
@@ -208,7 +220,8 @@ class AIEditor {
                 },
                 body: JSON.stringify({
                     messages: this.conversationHistory,
-                    model: 'gpt-4o-mini'
+                    model: 'gpt-4o-mini',
+                    conversation_id: this.currentConversationId
                 })
             });
 
@@ -225,6 +238,11 @@ class AIEditor {
 
             const content = data.content || 'Ответ получен без содержания';
             
+            // Сохраняем conversation_id
+            if (data.conversation_id) {
+                this.currentConversationId = data.conversation_id;
+            }
+            
             // Добавляем ответ AI
             this.conversationHistory.push({role: 'assistant', content: content});
             
@@ -234,6 +252,9 @@ class AIEditor {
             
             // Обновляем превью
             this.updatePreview(content);
+            
+            // Обновляем список разговоров
+            this.loadConversations();
             
             this.updateStatus('Сайт успешно создан');
 
@@ -888,10 +909,181 @@ class AIEditor {
             this.stopGeneration();
         }
     }
+
+    // Методы для работы с историей чатов
+    async loadConversations() {
+        try {
+            const token = localStorage.getItem('windexai_token');
+            if (!token) return;
+
+            const response = await fetch('/api/ai-editor/conversations', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.renderConversations(data.conversations);
+            }
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+        }
+    }
+
+    renderConversations(conversations) {
+        if (!this.conversationsList) return;
+
+        this.conversationsList.innerHTML = '';
+
+        if (conversations.length === 0) {
+            this.conversationsList.innerHTML = `
+                <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                    <p>Нет сохраненных проектов</p>
+                    <p style="font-size: 0.8rem;">Создайте новый проект, чтобы начать работу</p>
+                </div>
+            `;
+            return;
+        }
+
+        conversations.forEach(conv => {
+            const convElement = document.createElement('div');
+            convElement.className = 'conversation-item';
+            if (conv.id === this.currentConversationId) {
+                convElement.classList.add('active');
+            }
+
+            const date = new Date(conv.date).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            convElement.innerHTML = `
+                <div class="conversation-title">${conv.title}</div>
+                <div class="conversation-preview">${conv.preview}</div>
+                <div class="conversation-meta">
+                    <span class="conversation-date">${date}</span>
+                    <span class="conversation-count">${conv.message_count}</span>
+                </div>
+                <div class="conversation-actions">
+                    <button class="conversation-delete" onclick="event.stopPropagation(); aiEditor.deleteConversation(${conv.id})">🗑️</button>
+                </div>
+            `;
+
+            convElement.addEventListener('click', () => {
+                this.loadConversation(conv.id);
+            });
+
+            this.conversationsList.appendChild(convElement);
+        });
+    }
+
+    async loadConversation(conversationId) {
+        try {
+            const token = localStorage.getItem('windexai_token');
+            if (!token) return;
+
+            const response = await fetch(`/api/ai-editor/conversations/${conversationId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.currentConversationId = conversationId;
+                this.displayConversation(data.conversation);
+                this.loadConversations(); // Обновляем список для показа активного
+            }
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+        }
+    }
+
+    displayConversation(conversation) {
+        // Очищаем чат
+        this.chatMessages.innerHTML = '';
+
+        // Добавляем сообщения из истории
+        conversation.messages.forEach(msg => {
+            this.addChatMessage(msg.role, msg.content);
+        });
+
+        // Прокручиваем вниз
+        this.scrollToBottom();
+    }
+
+    async createNewProject() {
+        try {
+            const token = localStorage.getItem('windexai_token');
+            if (!token) return;
+
+            const response = await fetch('/api/ai-editor/conversations', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.currentConversationId = data.conversation_id;
+                
+                // Очищаем чат
+                this.chatMessages.innerHTML = '';
+                
+                // Добавляем приветственное сообщение
+                this.addChatMessage('assistant', 'Привет! Я AI-помощник для создания веб-сайтов. Просто опишите, какой сайт вы хотите создать, и я сгенерирую его для вас!');
+                
+                // Обновляем список разговоров
+                this.loadConversations();
+                
+                this.updateStatus('Новый проект создан');
+            }
+        } catch (error) {
+            console.error('Error creating new project:', error);
+            this.showError('Ошибка при создании нового проекта');
+        }
+    }
+
+    async deleteConversation(conversationId) {
+        if (!confirm('Вы уверены, что хотите удалить этот проект?')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('windexai_token');
+            if (!token) return;
+
+            const response = await fetch(`/api/ai-editor/conversations/${conversationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                // Если удаляем текущий разговор, создаем новый
+                if (conversationId === this.currentConversationId) {
+                    this.currentConversationId = null;
+                    this.chatMessages.innerHTML = '';
+                    this.addChatMessage('assistant', 'Привет! Я AI-помощник для создания веб-сайтов. Просто опишите, какой сайт вы хотите создать, и я сгенерирую его для вас!');
+                }
+                
+                this.loadConversations();
+                this.updateStatus('Проект удален');
+            }
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            this.showError('Ошибка при удалении проекта');
+        }
+    }
 }
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing AI Editor');
-    new AIEditor();
+    window.aiEditor = new AIEditor();
 });

@@ -1,19 +1,29 @@
 import os
 import json
 import re
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
+from datetime import datetime
+from sqlalchemy.orm import Session
 
 from routes.auth import get_current_user, User
 from utils.openai_client import openai_client
 from utils.web_search import search_web, format_search_results
+from database import get_db, Conversation as DBConversation, Message as DBMessage
 
 router = APIRouter()
 
 class AIEditorRequest(BaseModel):
     messages: List[Dict[str, str]]
     model: str = "gpt-4o-mini"
+    conversation_id: Optional[int] = None
+
+class AIEditorResponse(BaseModel):
+    content: str
+    conversation_id: int
+    status: str
+    timestamp: str
 
 class ElementEditRequest(BaseModel):
     element_type: str
@@ -55,8 +65,8 @@ def extract_search_query(message: str) -> str:
     
     return query.strip()
 
-@router.post("/api/ai-editor")
-async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_current_user)):
+@router.post("/api/ai-editor", response_model=AIEditorResponse)
+async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """AI Editor endpoint for website generation with web search capability"""
     
     try:
@@ -66,6 +76,42 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
         # Получаем последнее сообщение пользователя
         last_message = request.messages[-1] if request.messages else None
         user_message = last_message.get('content', '') if last_message else ''
+        
+        # Управление разговором
+        if not request.conversation_id:
+            # Создаем новый разговор для AI редактора
+            conversation = DBConversation(
+                title="Новый проект сайта",
+                conversation_type="ai_editor",
+                user_id=current_user.id
+            )
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+            conversation_id = conversation.id
+        else:
+            conversation_id = request.conversation_id
+            # Проверяем, что разговор принадлежит пользователю
+            conversation = db.query(DBConversation).filter(
+                DBConversation.id == conversation_id,
+                DBConversation.user_id == current_user.id,
+                DBConversation.conversation_type == "ai_editor"
+            ).first()
+            if not conversation:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Conversation not found"
+                )
+        
+        # Добавляем сообщение пользователя в базу данных
+        if last_message and last_message.get('role') == 'user':
+            user_message_db = DBMessage(
+                role="user",
+                content=user_message,
+                conversation_id=conversation_id
+            )
+            db.add(user_message_db)
+            db.commit()
         
         # Проверяем, нужен ли веб-поиск
         web_search_results = ""
@@ -245,17 +291,36 @@ NEW_PAGE_END"""
         content = response.choices[0].message.content
         print(f"Response received: {len(content) if content else 0} characters")
         
-        return {
-            "content": content or "Извините, не удалось сгенерировать сайт.",
-            "status": "completed"
-        }
+        # Добавляем ответ AI в базу данных
+        ai_message_db = DBMessage(
+            role="assistant",
+            content=content or "Извините, не удалось сгенерировать сайт.",
+            conversation_id=conversation_id
+        )
+        db.add(ai_message_db)
+        
+        # Обновляем заголовок разговора на основе первого сообщения пользователя
+        if len(request.messages) == 1:  # Первый обмен
+            title = user_message[:50] + "..." if len(user_message) > 50 else user_message
+            conversation.title = title
+        
+        db.commit()
+        
+        return AIEditorResponse(
+            content=content or "Извините, не удалось сгенерировать сайт.",
+            conversation_id=conversation_id,
+            status="completed",
+            timestamp=datetime.now().isoformat()
+        )
         
     except Exception as e:
         print(f"AI Editor error: {str(e)}")
-        return {
-            "error": f"Ошибка генерации: {str(e)}",
-            "status": "error"
-        }
+        return AIEditorResponse(
+            content=f"Ошибка генерации: {str(e)}",
+            conversation_id=conversation_id if 'conversation_id' in locals() else 0,
+            status="error",
+            timestamp=datetime.now().isoformat()
+        )
 
 @router.post("/api/ai-editor/edit-element")
 async def edit_element(
@@ -350,6 +415,99 @@ HTML_END
             "response": f"Ошибка при редактировании: {str(e)}",
             "status": "error"
         }
+
+@router.get("/api/ai-editor/conversations")
+async def get_ai_editor_conversations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all AI editor conversations for current user"""
+    conversations = db.query(DBConversation).filter(
+        DBConversation.user_id == current_user.id,
+        DBConversation.conversation_type == "ai_editor"
+    ).order_by(DBConversation.updated_at.desc()).all()
+    
+    user_conversations = []
+    for conv in conversations:
+        # Count messages
+        message_count = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).count()
+        # Get last message for preview
+        last_msg = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).order_by(DBMessage.timestamp.desc()).first()
+        snippet = last_msg.content if last_msg else ''
+        snippet_date = last_msg.timestamp.isoformat() if last_msg else conv.created_at.isoformat()
+        user_conversations.append({
+            "id": conv.id,
+            "title": conv.title,
+            "preview": snippet,
+            "date": snippet_date,
+            "message_count": message_count
+        })
+    
+    return {"conversations": user_conversations}
+
+@router.get("/api/ai-editor/conversations/{conversation_id}")
+async def get_ai_editor_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get AI editor conversation history"""
+    conversation = db.query(DBConversation).filter(
+        DBConversation.id == conversation_id,
+        DBConversation.user_id == current_user.id,
+        DBConversation.conversation_type == "ai_editor"
+    ).first()
+    
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    messages = db.query(DBMessage).filter(
+        DBMessage.conversation_id == conversation_id
+    ).order_by(DBMessage.timestamp).all()
+    
+    conversation_data = {
+        "id": conversation.id,
+        "title": conversation.title,
+        "timestamp": conversation.created_at.isoformat(),
+        "messages": [
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat()
+            }
+            for msg in messages
+        ]
+    }
+    
+    return {"conversation": conversation_data}
+
+@router.post("/api/ai-editor/conversations")
+async def create_ai_editor_conversation(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Create a new AI editor conversation"""
+    conversation = DBConversation(
+        title="Новый проект сайта",
+        conversation_type="ai_editor",
+        user_id=current_user.id
+    )
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    
+    return {"conversation_id": conversation.id}
+
+@router.delete("/api/ai-editor/conversations/{conversation_id}")
+async def delete_ai_editor_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Delete AI editor conversation"""
+    conversation = db.query(DBConversation).filter(
+        DBConversation.id == conversation_id,
+        DBConversation.user_id == current_user.id,
+        DBConversation.conversation_type == "ai_editor"
+    ).first()
+    
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Delete all messages first
+    db.query(DBMessage).filter(DBMessage.conversation_id == conversation_id).delete()
+    
+    # Delete conversation
+    db.delete(conversation)
+    db.commit()
+    
+    return {"message": "Conversation deleted"}
 
 @router.get("/api/ai-editor/page")
 async def get_editor_page():
