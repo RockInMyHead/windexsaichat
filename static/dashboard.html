@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет | WindexsAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Специфичные стили для дашборда */
+        .dashboard-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5fdf5 0%, #e8f5e8 100%);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(34, 197, 94, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .dashboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #22c55e;
+            text-decoration: none;
+        }
+
+        .dashboard-logo:hover {
+            color: #16a34a;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .nav-link.active {
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+            font-weight: 500;
+        }
+
+        .dashboard-main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+            color: #6b7280;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Статистические карточки */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        /* Секция деплоев */
+        .deployments-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .deployments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .deployment-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .deployment-card:hover {
+            border-color: #22c55e;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1);
+        }
+
+        .deployment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .deployment-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .deployment-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .deployment-status.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .deployment-status.inactive {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .deployment-url {
+            color: #22c55e;
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .deployment-url:hover {
+            text-decoration: underline;
+        }
+
+        .deployment-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .deployment-stat {
+            text-align: center;
+        }
+
+        .deployment-stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .deployment-stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .deployment-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .deployment-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .deployment-btn.primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .deployment-btn.primary:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+        }
+
+        .deployment-btn.secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .deployment-btn.secondary:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .deployment-btn.danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .deployment-btn.danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* График */
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        /* Пустое состояние */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem;
+            }
+            
+            .dashboard-main {
+                padding: 1rem;
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .deployments-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Хедер -->
+        <header class="dashboard-header">
+            <nav class="dashboard-nav">
+                <a href="/" class="dashboard-logo">
+                    <img src="/static/round_logo-07.svg" alt="WindexsAI" width="24" height="24">
+                    WindexsAI
+                </a>
+                <div class="nav-links">
+                    <a href="/static/editor.html" class="nav-link">Создание сайтов</a>
+                    <a href="/static/projects.html" class="nav-link">Мои проекты</a>
+                    <a href="/static/dashboard.html" class="nav-link active">Личный кабинет</a>
+                    <span id="user-name" class="text-muted"></span>
+                    <button id="logout-btn" class="btn btn-outline btn-sm">Выйти</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Основная область -->
+        <main class="dashboard-main">
+            <div class="dashboard-header-content">
+                <h1 class="dashboard-title">📊 Личный кабинет</h1>
+                <p class="dashboard-subtitle">Аналитика ваших задеплоенных сайтов и проектов</p>
+            </div>
+
+            <!-- Статистические карточки -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Всего сайтов</span>
+                        <span class="stat-icon">🌐</span>
+                    </div>
+                    <div class="stat-value" id="total-deployments">0</div>
+                    <div class="stat-change positive" id="recent-deployments">+0 за неделю</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Просмотры</span>
+                        <span class="stat-icon">👁️</span>
+                    </div>
+                    <div class="stat-value" id="total-views">0</div>
+                    <div class="stat-change positive" id="views-change">+0% за неделю</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Посетители</span>
+                        <span class="stat-icon">👥</span>
+                    </div>
+                    <div class="stat-value" id="total-visitors">0</div>
+                    <div class="stat-change positive" id="visitors-change">+0% за неделю</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Успешность</span>
+                        <span class="stat-icon">✅</span>
+                    </div>
+                    <div class="stat-value" id="success-rate">0%</div>
+                    <div class="stat-change positive" id="success-change">+0% за неделю</div>
+                </div>
+            </div>
+
+            <!-- График аналитики -->
+            <div class="chart-container">
+                <h3 class="chart-title">📈 Статистика за последние 7 дней</h3>
+                <canvas id="analytics-chart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Секция деплоев -->
+            <div class="deployments-section">
+                <div class="section-header">
+                    <h2 class="section-title">🚀 Задеплоенные сайты</h2>
+                </div>
+
+                <div id="deployments-grid" class="deployments-grid">
+                    <!-- Деплои будут загружены здесь -->
+                </div>
+
+                <!-- Пустое состояние -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">🚀</div>
+                    <h3>Пока нет задеплоенных сайтов</h3>
+                    <p>Создайте и задеплойте свой первый сайт, чтобы увидеть аналитику</p>
+                    <a href="/static/editor.html" class="btn btn-primary">
+                        ✨ Создать сайт
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="delete-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🗑️ Удаление сайта</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот сайт? Это действие нельзя отменить.</p>
+                <p><strong id="delete-deployment-name"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline">Отмена</button>
+                <button id="confirm-delete" class="btn btn-danger">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
