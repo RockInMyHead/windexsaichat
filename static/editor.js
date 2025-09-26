@@ -339,7 +339,8 @@ class AIEditor {
         // Извлекаем файловую структуру
         const structureMatch = content.match(/FILE_STRUCTURE_START([\s\S]*?)FILE_STRUCTURE_END/);
         
-        // Извлекаем содержимое файлов
+        // Извлекаем содержимое файлов - поддерживаем как старые, так и новые форматы
+        // Старые форматы (HTML/CSS/JS)
         const htmlMatch = content.match(/HTML_START([\s\S]*?)HTML_END/);
         const mainCssMatch = content.match(/MAIN_CSS_START([\s\S]*?)MAIN_CSS_END/);
         const componentsCssMatch = content.match(/COMPONENTS_CSS_START([\s\S]*?)COMPONENTS_CSS_END/);
@@ -348,20 +349,60 @@ class AIEditor {
         const componentsJsMatch = content.match(/COMPONENTS_JS_START([\s\S]*?)COMPONENTS_JS_END/);
         const utilsJsMatch = content.match(/UTILS_JS_START([\s\S]*?)UTILS_JS_END/);
 
-        // Создаем объект с файлами
-        this.projectFiles = {
-            'index.html': htmlMatch ? htmlMatch[1].trim() : '',
-            'styles/main.css': mainCssMatch ? mainCssMatch[1].trim() : '',
-            'styles/components.css': componentsCssMatch ? componentsCssMatch[1].trim() : '',
-            'styles/responsive.css': responsiveCssMatch ? responsiveCssMatch[1].trim() : '',
-            'scripts/main.js': mainJsMatch ? mainJsMatch[1].trim() : '',
-            'scripts/components.js': componentsJsMatch ? componentsJsMatch[1].trim() : '',
-            'scripts/utils.js': utilsJsMatch ? utilsJsMatch[1].trim() : ''
-        };
+        // Новые форматы (Next.js)
+        const packageJsonMatch = content.match(/PACKAGE_JSON_START([\s\S]*?)PACKAGE_JSON_END/);
+        const tsconfigMatch = content.match(/TSCONFIG_START([\s\S]*?)TSCONFIG_END/);
+        const tailwindConfigMatch = content.match(/TAILWIND_CONFIG_START([\s\S]*?)TAILWIND_CONFIG_END/);
+        const nextConfigMatch = content.match(/NEXT_CONFIG_START([\s\S]*?)NEXT_CONFIG_END/);
+        const layoutTsxMatch = content.match(/LAYOUT_TSX_START([\s\S]*?)LAYOUT_TSX_END/);
+        const pageTsxMatch = content.match(/PAGE_TSX_START([\s\S]*?)PAGE_TSX_END/);
+        const globalsCssMatch = content.match(/GLOBALS_CSS_START([\s\S]*?)GLOBALS_CSS_END/);
 
-        // Обновляем превью с главным HTML файлом
-        if (this.projectFiles['index.html']) {
-            // Объединяем HTML с CSS и JS для превью
+        // Поиск компонентов
+        const heroComponentMatch = content.match(/HERO_COMPONENT_START([\s\S]*?)HERO_COMPONENT_END/);
+        const featuresComponentMatch = content.match(/FEATURES_COMPONENT_START([\s\S]*?)FEATURES_COMPONENT_END/);
+        const footerComponentMatch = content.match(/FOOTER_COMPONENT_START([\s\S]*?)FOOTER_COMPONENT_END/);
+        const buttonComponentMatch = content.match(/BUTTON_COMPONENT_START([\s\S]*?)BUTTON_COMPONENT_END/);
+        const cardComponentMatch = content.match(/CARD_COMPONENT_START([\s\S]*?)CARD_COMPONENT_END/);
+        const containerComponentMatch = content.match(/CONTAINER_COMPONENT_START([\s\S]*?)CONTAINER_COMPONENT_END/);
+
+        // Создаем объект с файлами - поддерживаем оба формата
+        this.projectFiles = {};
+
+        // Старые файлы (если есть)
+        if (htmlMatch) this.projectFiles['index.html'] = htmlMatch[1].trim();
+        if (mainCssMatch) this.projectFiles['styles/main.css'] = mainCssMatch[1].trim();
+        if (componentsCssMatch) this.projectFiles['styles/components.css'] = componentsCssMatch[1].trim();
+        if (responsiveCssMatch) this.projectFiles['styles/responsive.css'] = responsiveCssMatch[1].trim();
+        if (mainJsMatch) this.projectFiles['scripts/main.js'] = mainJsMatch[1].trim();
+        if (componentsJsMatch) this.projectFiles['scripts/components.js'] = componentsJsMatch[1].trim();
+        if (utilsJsMatch) this.projectFiles['scripts/utils.js'] = utilsJsMatch[1].trim();
+
+        // Новые файлы Next.js (если есть)
+        if (packageJsonMatch) this.projectFiles['package.json'] = packageJsonMatch[1].trim();
+        if (tsconfigMatch) this.projectFiles['tsconfig.json'] = tsconfigMatch[1].trim();
+        if (tailwindConfigMatch) this.projectFiles['tailwind.config.js'] = tailwindConfigMatch[1].trim();
+        if (nextConfigMatch) this.projectFiles['next.config.js'] = nextConfigMatch[1].trim();
+        if (layoutTsxMatch) this.projectFiles['app/layout.tsx'] = layoutTsxMatch[1].trim();
+        if (pageTsxMatch) this.projectFiles['app/page.tsx'] = pageTsxMatch[1].trim();
+        if (globalsCssMatch) this.projectFiles['app/globals.css'] = globalsCssMatch[1].trim();
+
+        // Компоненты
+        if (heroComponentMatch) this.projectFiles['app/components/sections/Hero.tsx'] = heroComponentMatch[1].trim();
+        if (featuresComponentMatch) this.projectFiles['app/components/sections/Features.tsx'] = featuresComponentMatch[1].trim();
+        if (footerComponentMatch) this.projectFiles['app/components/sections/Footer.tsx'] = footerComponentMatch[1].trim();
+        if (buttonComponentMatch) this.projectFiles['app/components/ui/Button.tsx'] = buttonComponentMatch[1].trim();
+        if (cardComponentMatch) this.projectFiles['app/components/ui/Card.tsx'] = cardComponentMatch[1].trim();
+        if (containerComponentMatch) this.projectFiles['app/components/ui/Container.tsx'] = containerComponentMatch[1].trim();
+
+        // Для Next.js проектов показываем структуру, для обычных - превью
+        const isNextjsProject = packageJsonMatch || layoutTsxMatch;
+        
+        if (isNextjsProject) {
+            // Для Next.js проектов показываем инструкции по запуску
+            this.showNextjsInstructions();
+        } else if (this.projectFiles['index.html']) {
+            // Для обычных проектов объединяем HTML с CSS и JS для превью
             const fullHtml = this.combineFilesForPreview();
             this.previewIframe.srcdoc = fullHtml;
         }
@@ -476,7 +517,169 @@ class AIEditor {
         if (fileName.endsWith('.html')) return '🌐';
         if (fileName.endsWith('.css')) return '🎨';
         if (fileName.endsWith('.js')) return '⚡';
+        if (fileName.endsWith('.tsx') || fileName.endsWith('.ts')) return '⚛️';
+        if (fileName.endsWith('.json')) return '📋';
+        if (fileName === 'package.json') return '📦';
+        if (fileName.includes('config')) return '⚙️';
+        if (fileName.includes('tailwind')) return '🎨';
         return '📄';
+    }
+
+    showNextjsInstructions() {
+        // Показываем инструкции по запуску Next.js проекта в области превью
+        if (this.previewIframe) {
+            const instructionsHtml = `
+                <!DOCTYPE html>
+                <html lang="ru">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Инструкции по запуску Next.js проекта</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+                            line-height: 1.6;
+                            color: #374151;
+                            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                            margin: 0;
+                            padding: 2rem;
+                        }
+                        .container {
+                            max-width: 800px;
+                            margin: 0 auto;
+                            background: white;
+                            border-radius: 16px;
+                            padding: 2rem;
+                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                        }
+                        h1 {
+                            color: #1f2937;
+                            margin-bottom: 1.5rem;
+                            font-size: 2rem;
+                            font-weight: 700;
+                        }
+                        h2 {
+                            color: #374151;
+                            margin-top: 2rem;
+                            margin-bottom: 1rem;
+                            font-size: 1.25rem;
+                            font-weight: 600;
+                        }
+                        .step {
+                            background: #f9fafb;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 8px;
+                            padding: 1rem;
+                            margin: 1rem 0;
+                        }
+                        .command {
+                            background: #1f2937;
+                            color: #e5e7eb;
+                            padding: 0.75rem 1rem;
+                            border-radius: 6px;
+                            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                            font-size: 0.875rem;
+                            margin: 0.5rem 0;
+                            overflow-x: auto;
+                        }
+                        .note {
+                            background: #dbeafe;
+                            border-left: 4px solid #3b82f6;
+                            padding: 1rem;
+                            margin: 1rem 0;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .success {
+                            background: #d1fae5;
+                            border-left: 4px solid #10b981;
+                            padding: 1rem;
+                            margin: 1rem 0;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .icon {
+                            font-size: 1.5rem;
+                            margin-right: 0.5rem;
+                        }
+                        ul {
+                            padding-left: 1.5rem;
+                        }
+                        li {
+                            margin-bottom: 0.5rem;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1><span class="icon">⚛️</span>Next.js проект создан!</h1>
+                        
+                        <div class="success">
+                            <strong>🎉 Поздравляем!</strong> Ваш Next.js проект с TypeScript и Tailwind CSS готов к использованию.
+                        </div>
+
+                        <h2>📋 Как запустить проект:</h2>
+                        
+                        <div class="step">
+                            <strong>1. Установите зависимости:</strong>
+                            <div class="command">npm install</div>
+                            <em>или</em>
+                            <div class="command">yarn install</div>
+                        </div>
+
+                        <div class="step">
+                            <strong>2. Запустите dev сервер:</strong>
+                            <div class="command">npm run dev</div>
+                            <em>или</em>
+                            <div class="command">yarn dev</div>
+                        </div>
+
+                        <div class="step">
+                            <strong>3. Откройте в браузере:</strong>
+                            <div class="command">http://localhost:3000</div>
+                        </div>
+
+                        <h2>🛠️ Что включено в проект:</h2>
+                        <ul>
+                            <li><strong>Next.js 14+</strong> с App Router</li>
+                            <li><strong>TypeScript</strong> для типизации</li>
+                            <li><strong>Tailwind CSS</strong> для стилизации</li>
+                            <li><strong>Модульная архитектура</strong> компонентов</li>
+                            <li><strong>Responsive дизайн</strong> (Mobile-first)</li>
+                            <li><strong>Оптимизация изображений</strong> с next/image</li>
+                        </ul>
+
+                        <div class="note">
+                            <strong>💡 Совет:</strong> Используйте файловый проводник справа для просмотра и скачивания отдельных файлов проекта.
+                        </div>
+
+                        <h2>📁 Структура проекта:</h2>
+                        <div class="command">
+project-name/
+├── 📦 package.json          # Зависимости и скрипты
+├── ⚙️ tsconfig.json         # Конфигурация TypeScript
+├── 🎨 tailwind.config.js    # Конфигурация Tailwind CSS
+├── ⚙️ next.config.js        # Конфигурация Next.js
+├── app/
+│   ├── ⚛️ layout.tsx         # Основной layout
+│   ├── ⚛️ page.tsx           # Главная страница
+│   ├── 🎨 globals.css        # Глобальные стили
+│   └── components/
+│       ├── ui/              # UI компоненты
+│       ├── sections/        # Секции страниц
+│       └── layout/          # Layout компоненты
+└── lib/
+    ├── ⚛️ types.ts           # TypeScript типы
+    └── ⚛️ utils.ts           # Утилиты
+                        </div>
+
+                        <div class="success">
+                            <strong>🚀 Готово к разработке!</strong> Ваш современный Next.js проект настроен и готов к использованию.
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            this.previewIframe.srcdoc = instructionsHtml;
+        }
     }
 
     showFileContent(filePath) {
