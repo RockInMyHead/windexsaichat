@@ -404,8 +404,18 @@ class WindexAI {
         // Код `code`
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // Блоки кода ```code```
-        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        // Блоки кода с языком ```language\ncode```
+        text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
+            const lang = language || 'text';
+            const cleanCode = code.trim();
+            return `<div class="code-block">
+                <div class="code-header">
+                    <span class="code-language">${lang}</span>
+                    <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
+                </div>
+                <pre data-language="${lang}"><code>${cleanCode}</code></pre>
+            </div>`;
+        });
         
         // Ссылки [text](url)
         text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -1432,3 +1442,29 @@ function truncateText(text, maxLength = 50) {
 }
 
 
+
+// Функция для копирования кода в буфер обмена
+function copyCodeToClipboard(button) {
+    const codeBlock = button.closest('.code-block');
+    const codeElement = codeBlock.querySelector('code');
+    const codeText = codeElement.textContent;
+    
+    navigator.clipboard.writeText(codeText).then(() => {
+        // Показываем успешное копирование
+        const originalText = button.textContent;
+        button.textContent = '✅ Скопировано';
+        button.classList.add('copied');
+        
+        // Возвращаем исходный текст через 2 секунды
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Ошибка копирования:', err);
+        button.textContent = '❌ Ошибка';
+        setTimeout(() => {
+            button.textContent = '📋 Копировать';
+        }, 2000);
+    });
+}

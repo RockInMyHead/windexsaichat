@@ -1230,23 +1230,230 @@ a:hover {
   background: var(--gray-100);
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
   font-size: 0.9em;
   color: var(--primary-green-dark);
+  border: 1px solid var(--gray-200);
+  white-space: nowrap;
 }
 
 .message-content pre {
-  background: var(--gray-100);
-  padding: 1rem;
-  border-radius: 8px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 12px;
   overflow-x: auto;
-  margin: 0.75rem 0;
+  margin: 1rem 0;
+  border: 1px solid var(--gray-300);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.message-content pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: #2d2d2d;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #404040;
+}
+
+.message-content pre::after {
+  content: '•••';
+  position: absolute;
+  top: 8px;
+  left: 15px;
+  color: #666;
+  font-size: 12px;
+  letter-spacing: 2px;
 }
 
 .message-content pre code {
   background: none;
   padding: 0;
-  color: var(--gray-700);
+  color: inherit;
+  border: none;
+  white-space: pre;
+  font-size: inherit;
+  line-height: inherit;
+  display: block;
+  margin-top: 20px;
+}
+
+/* Специальные стили для разных языков программирования */
+.message-content pre[data-language="python"] {
+  border-left: 4px solid #3776ab;
+}
+
+.message-content pre[data-language="javascript"] {
+  border-left: 4px solid #f7df1e;
+}
+
+.message-content pre[data-language="html"] {
+  border-left: 4px solid #e34f26;
+}
+
+.message-content pre[data-language="css"] {
+  border-left: 4px solid #1572b6;
+}
+
+.message-content pre[data-language="json"] {
+  border-left: 4px solid #000000;
+}
+
+.message-content pre[data-language="sql"] {
+  border-left: 4px solid #336791;
+}
+
+.message-content pre[data-language="bash"] {
+  border-left: 4px solid #4eaa25;
+}
+
+/* Кнопка копирования кода */
+.code-block {
+  position: relative;
+}
+
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #d4d4d4;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.code-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.code-copy-btn.copied {
+  background: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+}
+
+/* Улучшенные стили для inline кода */
+.message-content code:not(pre code) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #e83e8c;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для блоков кода с языком */
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  background: #2d2d2d;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #404040;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.code-language {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.code-copy-button {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #d4d4d4;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.code-copy-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.code-copy-button.copied {
+  background: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+}
+
+/* Базовая подсветка синтаксиса */
+.message-content pre code .keyword {
+  color: #569cd6;
+  font-weight: bold;
+}
+
+.message-content pre code .string {
+  color: #ce9178;
+}
+
+.message-content pre code .comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.message-content pre code .number {
+  color: #b5cea8;
+}
+
+.message-content pre code .function {
+  color: #dcdcaa;
+}
+
+.message-content pre code .operator {
+  color: #d4d4d4;
+}
+
+.message-content pre code .punctuation {
+  color: #cccccc;
+}
+
+/* Улучшенные стили для команд bash/shell */
+.message-content pre[data-language="bash"] code,
+.message-content pre[data-language="shell"] code {
+  color: #a9b665;
+}
+
+.message-content pre[data-language="bash"] code::before,
+.message-content pre[data-language="shell"] code::before {
+  content: '$ ';
+  color: #7c6f64;
+  font-weight: bold;
+}
+
+/* Дополнительные стили для JSON */
+.message-content pre[data-language="json"] code {
+  color: #d4d4d4;
+}
+
+/* Подсветка HTML тегов */
+.message-content pre[data-language="html"] code {
+  color: #808080;
+}
+
+/* Подсветка CSS селекторов */
+.message-content pre[data-language="css"] code {
+  color: #d7ba7d;
 }
 
 .message-content hr {
