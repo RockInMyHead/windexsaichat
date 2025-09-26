@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+import os
 
 from database import get_db, Deployment, User
 from utils.auth_utils import decode_token
@@ -38,8 +39,16 @@ class DeploymentUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 # Helper function to get current user
-async def get_current_user(token: str, db: Session = Depends(get_db)):
+async def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)):
     """Get current user from JWT token"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = authorization.split(" ")[1]
     payload = decode_token(token)
     if not payload:
         raise HTTPException(
@@ -55,7 +64,12 @@ async def get_current_user(token: str, db: Session = Depends(get_db)):
             detail="Invalid token payload",
         )
     
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    # Try to find user by ID first, then by username
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    except ValueError:
+        # If user_id is not a number, try to find by username
+        user = db.query(User).filter(User.username == user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,11 +81,10 @@ async def get_current_user(token: str, db: Session = Depends(get_db)):
 @router.post("/", response_model=DeploymentResponse)
 async def create_deployment(
     deployment: DeploymentCreate,
-    token: str,
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new deployment"""
-    user = await get_current_user(token, db)
     
     # Generate unique URL
     url_slug = generate_unique_url()
@@ -91,8 +104,8 @@ async def create_deployment(
     db.commit()
     db.refresh(db_deployment)
     
-    # Create full URL (you'll need to set your domain)
-    base_url = "http://localhost:8003"  # This should be configurable
+    # Create full URL (use ngrok URL if available)
+    base_url = os.environ.get('NGROK_URL', "http://localhost:8003")
     full_url = create_deployment_url(base_url, url_slug)
     
     return DeploymentResponse(
@@ -108,17 +121,16 @@ async def create_deployment(
 
 @router.get("/", response_model=List[DeploymentResponse])
 async def get_user_deployments(
-    token: str,
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get all deployments for current user"""
-    user = await get_current_user(token, db)
     
     deployments = db.query(Deployment).filter(
         Deployment.user_id == user.id
     ).order_by(Deployment.created_at.desc()).all()
     
-    base_url = "http://localhost:8003"
+    base_url = os.environ.get('NGROK_URL', "http://localhost:8003")
     
     return [
         DeploymentResponse(
@@ -137,11 +149,10 @@ async def get_user_deployments(
 @router.get("/{deployment_id}", response_model=DeploymentResponse)
 async def get_deployment(
     deployment_id: int,
-    token: str,
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get specific deployment by ID"""
-    user = await get_current_user(token, db)
     
     deployment = db.query(Deployment).filter(
         Deployment.id == deployment_id,
@@ -154,7 +165,7 @@ async def get_deployment(
             detail="Deployment not found"
         )
     
-    base_url = "http://localhost:8003"
+    base_url = os.environ.get('NGROK_URL', "http://localhost:8003")
     
     return DeploymentResponse(
         id=deployment.id,
@@ -171,11 +182,10 @@ async def get_deployment(
 async def update_deployment(
     deployment_id: int,
     deployment_update: DeploymentUpdate,
-    token: str,
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Update deployment"""
-    user = await get_current_user(token, db)
     
     deployment = db.query(Deployment).filter(
         Deployment.id == deployment_id,
@@ -198,7 +208,7 @@ async def update_deployment(
     db.commit()
     db.refresh(deployment)
     
-    base_url = "http://localhost:8003"
+    base_url = os.environ.get('NGROK_URL', "http://localhost:8003")
     
     return DeploymentResponse(
         id=deployment.id,
@@ -214,11 +224,10 @@ async def update_deployment(
 @router.delete("/{deployment_id}")
 async def delete_deployment(
     deployment_id: int,
-    token: str,
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete deployment"""
-    user = await get_current_user(token, db)
     
     deployment = db.query(Deployment).filter(
         Deployment.id == deployment_id,

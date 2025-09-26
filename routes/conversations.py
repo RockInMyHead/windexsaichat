@@ -25,8 +25,8 @@ async def get_user_conversations(current_user: User = Depends(get_current_user),
         snippet_date = last_msg.timestamp.isoformat() if last_msg else conv.created_at.isoformat()
         user_conversations.append({
             "id": conv.id,
-            # Use last message content as preview
-            "preview": snippet,
+            "title": conv.title,  # Use conversation title
+            "preview": snippet,  # Keep preview for compatibility
             "date": snippet_date,
             "message_count": message_count
         })
