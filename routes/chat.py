@@ -132,7 +132,6 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
     # Проверяем, нужен ли веб-поиск
     web_search_results = ""
     if should_search_web(request.message):
-        print(f"🔍 Веб-поиск активирован для: {request.message}")
         
         # Извлекаем поисковый запрос
         search_query = extract_search_query(request.message)
@@ -143,9 +142,7 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
         try:
             search_results = search_web(search_query, num_results=3)
             web_search_results = format_search_results(search_results)
-            print(f"Найдено результатов поиска: {len(search_results)}")
         except Exception as e:
-            print(f"Ошибка веб-поиска: {e}")
             web_search_results = "Ошибка при поиске в интернете."
     
     # Prepare messages for OpenAI
@@ -192,7 +189,6 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
     try:
         ai_response = generate_response(messages, request.model)
     except Exception as e:
-        print(f"OpenAI API error: {e}")
         ai_response = f"Извините, произошла ошибка при обращении к OpenAI API. Проверьте настройки API ключа. Ошибка: {str(e)}"
     
     # Add AI response

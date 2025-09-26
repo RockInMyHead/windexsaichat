@@ -70,8 +70,6 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
     """Editor endpoint for website generation with web search capability"""
     
     try:
-        print(f"Editor request from user: {current_user.username}")
-        print(f"Messages: {request.messages}")
         
         # Получаем последнее сообщение пользователя
         last_message = request.messages[-1] if request.messages else None
@@ -116,7 +114,6 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
         # Проверяем, нужен ли веб-поиск
         web_search_results = ""
         if last_message and last_message.get('role') == 'user' and should_search_web(user_message):
-            print(f"🔍 Веб-поиск активирован для: {user_message}")
             
             # Извлекаем поисковый запрос
             search_query = extract_search_query(user_message)
@@ -127,9 +124,7 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
             try:
                 search_results = search_web(search_query, num_results=3)
                 web_search_results = format_search_results(search_results)
-                print(f"Найдено результатов поиска: {len(search_results)}")
             except Exception as e:
-                print(f"Ошибка веб-поиска: {e}")
                 web_search_results = "Ошибка при поиске в интернете."
         
         # Определяем системный промт в зависимости от типа запроса
@@ -289,7 +284,6 @@ NEW_PAGE_END"""
         
         # Получаем ответ
         content = response.choices[0].message.content
-        print(f"Response received: {len(content) if content else 0} characters")
         
         # Добавляем ответ AI в базу данных
         ai_message_db = DBMessage(
@@ -314,7 +308,6 @@ NEW_PAGE_END"""
         )
         
     except Exception as e:
-        print(f"Editor error: {str(e)}")
         return AIEditorResponse(
             content=f"Ошибка генерации: {str(e)}",
             conversation_id=conversation_id if 'conversation_id' in locals() else 0,
@@ -329,10 +322,6 @@ async def edit_element(
 ):
     """Редактирование конкретного элемента на сайте"""
     try:
-        print(f"Element edit request from user: {user.username}")
-        print(f"Element type: {request.element_type}")
-        print(f"Current text: {request.current_text}")
-        print(f"Edit instruction: {request.edit_instruction}")
         
         # Создаем промпт для редактирования элемента
         edit_prompt = f"""
@@ -385,7 +374,6 @@ HTML_END
         )
         
         response_text = response.choices[0].message.content
-        print(f"Response received: {len(response_text)} characters")
         
         # Извлекаем HTML код из ответа
         html_match = re.search(r'HTML_START\s*(.*?)\s*HTML_END', response_text, re.DOTALL)
@@ -409,7 +397,6 @@ HTML_END
             }
         
     except Exception as e:
-        print(f"Element edit error: {str(e)}")
         return {
             "html_content": request.html_content,
             "response": f"Ошибка при редактировании: {str(e)}",

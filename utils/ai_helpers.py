@@ -22,7 +22,6 @@ def generate_ai_response(message: str, model: str) -> str:
             if price:
                 return f"Текущая цена биткоина: {price} RUB"
         except Exception as e:
-            print(f"CoinGecko API error: {e}")
     
     # Handle weather queries
     weather_match = re.search(r"\b(погода|weather)\b.*?\b(в|in)\s+([а-яё\w\s]+)", message_lower)
@@ -35,7 +34,6 @@ def generate_ai_response(message: str, model: str) -> str:
             if weather_data and not weather_data.startswith("Sorry"):
                 return f"Погода в {city}: {weather_data}"
         except Exception as e:
-            print(f"Weather API error: {e}")
     
     # Handle currency exchange queries
     currency_match = re.search(r"\b(курс|exchange)\b.*?\b(\d+)\s*([a-z]{3})\s*(?:в|to)\s*([a-z]{3})", message_lower)
@@ -53,7 +51,6 @@ def generate_ai_response(message: str, model: str) -> str:
                 result = float(amount) * rate
                 return f"{amount} {from_curr.upper()} = {result:.2f} {to_curr.upper()}"
         except Exception as e:
-            print(f"Exchange API error: {e}")
     
     # Handle time queries
     time_match = re.search(r"\b(время|time)\b.*?\b(в|in)\s+([а-яё\w\s]+)", message_lower)
@@ -78,7 +75,6 @@ def generate_ai_response(message: str, model: str) -> str:
                 now = datetime.now(tz)
                 return f"Время в {city}: {now.strftime('%H:%M:%S %Z')}"
         except Exception as e:
-            print(f"Timezone error: {e}")
     
     # General search using DuckDuckGo Instant Answer API
     try:
@@ -95,7 +91,6 @@ def generate_ai_response(message: str, model: str) -> str:
         elif ddg_data.get("Answer"):
             return f"Ответ: {ddg_data['Answer']}"
     except Exception as e:
-        print(f"DuckDuckGo API error: {e}")
     
     # Fallback to AI model
     try:
@@ -127,7 +122,6 @@ def generate_ai_response(message: str, model: str) -> str:
         return response.choices[0].message.content
         
     except Exception as e:
-        print(f"OpenAI API error: {e}")
         return generate_fallback_response(message)
 
 def generate_fallback_response(message: str) -> str:

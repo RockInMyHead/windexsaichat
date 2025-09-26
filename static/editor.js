@@ -63,7 +63,6 @@ class AIEditor {
         // Store deployment result
         this.lastDeploymentResult = null;
 
-        console.log('Elements initialized');
     }
 
     setupEventListeners() {
@@ -146,7 +145,6 @@ class AIEditor {
         // Load saved panel sizes
         this.loadPanelSizes();
 
-        console.log('Event listeners set up');
     }
 
     async checkAuth() {
@@ -183,7 +181,6 @@ class AIEditor {
         const message = this.chatInput?.value?.trim();
         if (!message) return;
 
-        console.log('Sending message:', message);
 
         // Проверяем, находимся ли мы в режиме редактирования
         if (this.editMode && this.selectedElement) {
@@ -230,7 +227,6 @@ class AIEditor {
             }
 
             const data = await response.json();
-            console.log('Response data:', data);
 
             if (data.error) {
                 throw new Error(data.error);
@@ -317,23 +313,19 @@ class AIEditor {
     updatePreview(content) {
         if (!content || !this.previewIframe) return;
         
-        console.log('Updating preview with content:', content.substring(0, 200) + '...');
         
         // Извлекаем HTML между маркерами
         const htmlMatch = content.match(/NEW_PAGE_START([\s\S]*?)NEW_PAGE_END/);
         if (htmlMatch) {
             const html = htmlMatch[1].trim();
             this.previewIframe.srcdoc = html;
-            console.log('Preview updated with HTML:', html.substring(0, 200) + '...');
         } else {
             // Пробуем найти HTML код без маркеров (fallback)
             const htmlCodeMatch = content.match(/```html([\s\S]*?)```/);
             if (htmlCodeMatch) {
                 const html = htmlCodeMatch[1].trim();
                 this.previewIframe.srcdoc = html;
-                console.log('Preview updated with fallback HTML');
             } else {
-                console.log('No HTML found in content');
             }
         }
     }
@@ -1084,6 +1076,5 @@ class AIEditor {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing Editor');
     window.aiEditor = new AIEditor();
 });
