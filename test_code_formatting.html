@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест форматирования кода</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Тест улучшенного форматирования кода</h1>
+        
+        <div class="message assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>Вот примеры того, как теперь отображается код:</p>
+                    
+                    <h3>1. Правильный markdown:</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">python</span>
+                            <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
+                        </div>
+                        <pre data-language="python"><code>def hello_world():
+    print("Привет, мир!")
+    return True</code></pre>
+                    </div>
+                    
+                    <h3>2. Исправленный неправильный markdown:</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">python</span>
+                            <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
+                        </div>
+                        <pre data-language="python"><code>def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+    print("-" * 9)
+
+def check_winner(board):
+    # Проверка строк
+    for row in board:
+        if row[0] == row[1] == row[2] != " ":
+            return row[0]
+    return None</code></pre>
+                    </div>
+                    
+                    <h3>3. Inline код:</h3>
+                    <p>Используйте <code>console.log()</code> для вывода в консоль.</p>
+                    
+                    <h3>4. JavaScript код:</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">javascript</span>
+                            <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
+                        </div>
+                        <pre data-language="javascript"><code>function greetUser(name) {
+    return `Привет, ${name}!`;
+}
+
+const user = "Мир";
+console.log(greetUser(user));</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

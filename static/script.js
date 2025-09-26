@@ -372,6 +372,39 @@ class WindexAI {
         // Экранируем HTML теги
         text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
+        // Исправляем распространенные ошибки в markdown коде
+        // Исправляем `language вместо ```language
+        text = text.replace(/`(\w+)\s+([\s\S]*?)`/g, (match, language, code) => {
+            // Проверяем, является ли это блоком кода (содержит переносы строк)
+            if (code.includes('\n') || code.length > 50) {
+                return `\`\`\`${language}\n${code}\`\`\``;
+            }
+            return match; // Оставляем как inline код
+        });
+        
+        // Исправляем блоки кода без закрывающих ```
+        text = text.replace(/```(\w+)?\n?([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z]|\n[a-z]|\n\d|$)/g, (match, language, code) => {
+            if (!match.includes('```')) {
+                return `\`\`\`${language || 'text'}\n${code.trim()}\`\`\``;
+            }
+            return match;
+        });
+        
+        // Автоматическое определение блоков кода по содержимому
+        text = text.replace(/(\n|^)(def\s+\w+|function\s+\w+|class\s+\w+|import\s+|from\s+|if\s+.*:|for\s+.*:|while\s+.*:|try:|except|catch|var\s+|let\s+|const\s+|<html|<head|<body|<div|<script|<style)([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z]|\n[a-z]|\n\d|$)/g, (match, prefix, start, code) => {
+            // Проверяем, что это действительно код (содержит отступы, ключевые слова)
+            if (code.includes('    ') || code.includes('\t') || code.includes('def ') || code.includes('function ') || code.includes('class ') || code.includes('<')) {
+                let language = 'text';
+                if (start.includes('def ') || start.includes('import ') || start.includes('from ')) language = 'python';
+                else if (start.includes('function ') || start.includes('var ') || start.includes('let ') || start.includes('const ')) language = 'javascript';
+                else if (start.includes('<html') || start.includes('<head') || start.includes('<div')) language = 'html';
+                else if (start.includes('<style')) language = 'css';
+                
+                return `${prefix}\`\`\`${language}\n${start}${code.trim()}\`\`\``;
+            }
+            return match;
+        });
+        
         // Жирный текст **text** или __text__
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
@@ -401,9 +434,6 @@ class WindexAI {
             }
         });
         
-        // Код `code`
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
         // Блоки кода с языком ```language\ncode```
         text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
             const lang = language || 'text';
@@ -416,6 +446,9 @@ class WindexAI {
                 <pre data-language="${lang}"><code>${cleanCode}</code></pre>
             </div>`;
         });
+        
+        // Inline код `code`
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
         
         // Ссылки [text](url)
         text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');

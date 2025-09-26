@@ -1284,6 +1284,10 @@ a:hover {
   line-height: inherit;
   display: block;
   margin-top: 20px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
 }
 
 /* Специальные стили для разных языков программирования */
