@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест исправленного парсера кода</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Тест исправленного парсера кода</h1>
+        
+        <div class="message assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>Теперь код должен отображаться правильно:</p>
+                    
+                    <h3>Пример 1: Неправильный markdown (как в вашем случае)</h3>
+                    <div id="test1"></div>
+                    
+                    <h3>Пример 2: Правильный markdown</h3>
+                    <div id="test2"></div>
+                    
+                    <h3>Пример 3: Сплошной текст кода</h3>
+                    <div id="test3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        // Тестируем парсер с разными вариантами кода
+        const windexAI = new WindexAI(null);
+        
+        // Тест 1: Неправильный markdown (как в вашем случае)
+        const test1Text = `python def print_board(board): for row in board: print(" | ".join(row)) print("-" * 9)
+
+python def check_winner(board): # Проверка строк и столбцов for i in range(3): if board[i][0] == board[i][1] == board[i][2] != " ": return board[i][0] if board[0][i] == board[1][i] == board[2][i] != " ": return board[0][i]
+
+# Проверка диагоналей
+    if board[0][0] == board[1][1] == board[2][2] != " ":
+        return board[0][0]
+    if board[0][2] == board[1][1] == board[2][0] != " ":
+        return board[0][2]
+    return None
+
+python def isboardfull(board): return all(cell != " " for row in board for cell in row)
+
+python def play_game(): board = [[" " for in range(3)] for in range(3)] current_player = "X"
+
+while True:
+        print_board(board)
+        row = int(input(f"Игрок {current_player}, введите номер строки (0-2): "))
+        col = int(input(f"Игрок {current_player}, введите номер столбца (0-2): "))
+        if board[row][col] == " ":
+            board[row][col] = current_player
+            winner = check_winner(board)
+            if winner:
+                print_board(board)
+                print(f"Поздравляем! Игрок {winner} победил!")
+                break
+            if isboardfull(board):
+                print_board(board)
+                print("Игра завершилась вничью!")
+                break
+            currentplayer = "O" if currentplayer == "X" else "X"
+        else:
+            print("Эта клетка уже занята, попробуйте снова.")
+
+text if name == "main":play_game()`;
+
+        // Тест 2: Правильный markdown
+        const test2Text = `Вот правильный код:
+
+\`\`\`python
+def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+    print("-" * 9)
+
+def check_winner(board):
+    # Проверка строк
+    for row in board:
+        if row[0] == row[1] == row[2] != " ":
+            return row[0]
+    return None
+\`\`\`
+
+Этот код работает правильно!`;
+
+        // Тест 3: Сплошной текст кода
+        const test3Text = `python def hello_world():
+    print("Привет, мир!")
+    return True
+
+def main():
+    hello_world()
+
+if __name__ == "__main__":
+    main()`;
+
+        // Применяем парсер
+        document.getElementById('test1').innerHTML = windexAI.convertMarkdownToHtml(test1Text);
+        document.getElementById('test2').innerHTML = windexAI.convertMarkdownToHtml(test2Text);
+        document.getElementById('test3').innerHTML = windexAI.convertMarkdownToHtml(test3Text);
+    </script>
+</body>
+</html>

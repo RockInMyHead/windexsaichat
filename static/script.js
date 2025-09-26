@@ -372,39 +372,40 @@ class WindexAI {
         // Экранируем HTML теги
         text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
-        // Исправляем распространенные ошибки в markdown коде
-        // Исправляем `language вместо ```language
+        // Специальная обработка для случаев, когда код идет сплошным текстом
+        // Ищем паттерны типа "python def function()" в начале строк
+        text = text.replace(/(\n|^)(python|javascript|html|css|json|sql|bash|java|cpp|c\+\+|c#|php|ruby|go|rust|swift|kotlin|typescript|js|py|sh)\s+(def\s+\w+|function\s+\w+|class\s+\w+|import\s+|from\s+|if\s+.*:|for\s+.*:|while\s+.*:|try:|except|catch|var\s+|let\s+|const\s+|<html|<head|<body|<div|<script|<style|SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z][a-z]|\n\d+\.|\n-|\n\*|$)/g, (match, prefix, language, start, code) => {
+            // Проверяем, что это действительно код (содержит отступы, ключевые слова)
+            if (code.includes('    ') || code.includes('\t') || code.includes('def ') || code.includes('function ') || code.includes('class ') || code.includes('<') || code.includes('SELECT') || code.includes('INSERT')) {
+                return `${prefix}\`\`\`${language}\n${start}${code.trim()}\`\`\``;
+            }
+            return match;
+        });
+        
+        // Сначала обрабатываем блоки кода - это приоритетно
+        // Исправляем неправильные маркеры кода типа `python def function()`
         text = text.replace(/`(\w+)\s+([\s\S]*?)`/g, (match, language, code) => {
-            // Проверяем, является ли это блоком кода (содержит переносы строк)
+            // Если код содержит переносы строк или длинный - это блок кода
             if (code.includes('\n') || code.length > 50) {
                 return `\`\`\`${language}\n${code}\`\`\``;
             }
             return match; // Оставляем как inline код
         });
         
-        // Исправляем блоки кода без закрывающих ```
-        text = text.replace(/```(\w+)?\n?([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z]|\n[a-z]|\n\d|$)/g, (match, language, code) => {
-            if (!match.includes('```')) {
-                return `\`\`\`${language || 'text'}\n${code.trim()}\`\`\``;
-            }
-            return match;
+        // Обрабатываем правильные блоки кода ```language\ncode```
+        text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
+            const lang = language || 'text';
+            const cleanCode = code.trim();
+            return `<div class="code-block">
+                <div class="code-header">
+                    <span class="code-language">${lang}</span>
+                    <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
+                </div>
+                <pre data-language="${lang}"><code>${cleanCode}</code></pre>
+            </div>`;
         });
         
-        // Автоматическое определение блоков кода по содержимому
-        text = text.replace(/(\n|^)(def\s+\w+|function\s+\w+|class\s+\w+|import\s+|from\s+|if\s+.*:|for\s+.*:|while\s+.*:|try:|except|catch|var\s+|let\s+|const\s+|<html|<head|<body|<div|<script|<style)([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z]|\n[a-z]|\n\d|$)/g, (match, prefix, start, code) => {
-            // Проверяем, что это действительно код (содержит отступы, ключевые слова)
-            if (code.includes('    ') || code.includes('\t') || code.includes('def ') || code.includes('function ') || code.includes('class ') || code.includes('<')) {
-                let language = 'text';
-                if (start.includes('def ') || start.includes('import ') || start.includes('from ')) language = 'python';
-                else if (start.includes('function ') || start.includes('var ') || start.includes('let ') || start.includes('const ')) language = 'javascript';
-                else if (start.includes('<html') || start.includes('<head') || start.includes('<div')) language = 'html';
-                else if (start.includes('<style')) language = 'css';
-                
-                return `${prefix}\`\`\`${language}\n${start}${code.trim()}\`\`\``;
-            }
-            return match;
-        });
-        
+        // Теперь обрабатываем остальной markdown
         // Жирный текст **text** или __text__
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
@@ -434,20 +435,7 @@ class WindexAI {
             }
         });
         
-        // Блоки кода с языком ```language\ncode```
-        text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
-            const lang = language || 'text';
-            const cleanCode = code.trim();
-            return `<div class="code-block">
-                <div class="code-header">
-                    <span class="code-language">${lang}</span>
-                    <button class="code-copy-button" onclick="copyCodeToClipboard(this)">📋 Копировать</button>
-                </div>
-                <pre data-language="${lang}"><code>${cleanCode}</code></pre>
-            </div>`;
-        });
-        
-        // Inline код `code`
+        // Inline код `code` (только если не внутри блока кода)
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
         
         // Ссылки [text](url)
