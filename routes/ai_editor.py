@@ -174,32 +174,51 @@ project-name/
 │   ├── layout.tsx
 │   ├── page.tsx
 │   ├── globals.css
+│   ├── dashboard/
+│   │   ├── page.tsx
+│   │   ├── profile/
+│   │   │   └── page.tsx
+│   │   └── settings/
+│   │       └── page.tsx
 │   └── components/
 │       ├── ui/
 │       │   ├── Button.tsx
 │       │   ├── Card.tsx
-│       │   └── Container.tsx
+│       │   ├── Input.tsx
+│       │   ├── Modal.tsx
+│       │   └── ThemeToggle.tsx
+│       ├── layout/
+│       │   ├── Header.tsx
+│       │   ├── Navigation.tsx
+│       │   └── Footer.tsx
 │       ├── sections/
 │       │   ├── Hero.tsx
 │       │   ├── Features.tsx
-│       │   └── Footer.tsx
-│       └── layout/
-│           ├── Header.tsx
-│           └── Navigation.tsx
+│       │   ├── About.tsx
+│       │   ├── Contact.tsx
+│       │   └── Dashboard.tsx
+│       └── animations/
+│           ├── FadeIn.tsx
+│           ├── SlideUp.tsx
+│           └── ScaleIn.tsx
 ├── lib/
 │   ├── types.ts
-│   └── utils.ts
+│   ├── utils.ts
+│   └── store.ts
 └── public/
     ├── images/
     └── icons/
 ```
 
 ТЕХНОЛОГИИ:
-• Next.js 14+ (App Router)
-• TypeScript
-• Tailwind CSS
-• React 18+ (Hooks, Context)
-• Next.js Image optimization
+• Next.js 14+ (App Router, Server Components)
+• TypeScript (строгая типизация)
+• Tailwind CSS (utility-first)
+• Framer Motion (анимации)
+• Lucide React (иконки)
+• Next.js Image (оптимизация)
+• React Hook Form (формы)
+• Zustand (state management)
 • Responsive design patterns
 • Modern CSS (Container queries, Grid, Flexbox)
 
@@ -216,8 +235,24 @@ project-name/
 │   ├── layout.tsx
 │   ├── page.tsx
 │   ├── globals.css
+│   ├── dashboard/
+│   │   ├── page.tsx
+│   │   ├── profile/
+│   │   │   └── page.tsx
+│   │   └── settings/
+│   │       └── page.tsx
 │   └── components/
-└── lib/
+│       ├── ui/
+│       ├── layout/
+│       ├── sections/
+│       └── animations/
+├── lib/
+│   ├── types.ts
+│   ├── utils.ts
+│   └── store.ts
+└── public/
+    ├── images/
+    └── icons/
 FILE_STRUCTURE_END
 
 3) Содержимое каждого файла:
@@ -236,7 +271,13 @@ PACKAGE_JSON_START
   "dependencies": {
     "next": "14.0.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.292.0",
+    "react-hook-form": "^7.47.0",
+    "zustand": "^4.4.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -245,7 +286,9 @@ PACKAGE_JSON_START
     "autoprefixer": "^10.0.0",
     "postcss": "^8.0.0",
     "tailwindcss": "^3.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "14.0.0"
   }
 }
 PACKAGE_JSON_END
@@ -375,6 +418,129 @@ GLOBALS_CSS_START
 GLOBALS_CSS_END
 
 Далее создавай компоненты в соответствующих папках с TypeScript типизацией.
+
+ПРИМЕРЫ КОМПОНЕНТОВ:
+
+ANIMATION_FADEIN_START
+'use client'
+import { motion } from 'framer-motion'
+
+interface FadeInProps {
+  children: React.ReactNode
+  delay?: number
+  duration?: number
+}
+
+export default function FadeIn({ children, delay = 0, duration = 0.6 }: FadeInProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+ANIMATION_FADEIN_END
+
+UI_BUTTON_START
+'use client'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+
+interface ButtonProps {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+  onClick?: () => void
+}
+
+export default function Button({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  className,
+  onClick 
+}: ButtonProps) {
+  const baseClasses = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+  
+  const variants = {
+    primary: "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500",
+    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500",
+    outline: "border-2 border-gray-300 text-gray-700 hover:border-gray-400 focus:ring-gray-500"
+  }
+  
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg"
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className={cn(baseClasses, variants[variant], sizes[size], className)}
+      onClick={onClick}
+    >
+      {children}
+    </motion.button>
+  )
+}
+UI_BUTTON_END
+
+SECTION_HERO_START
+'use client'
+import { motion } from 'framer-motion'
+import Button from '../ui/Button'
+import FadeIn from '../animations/FadeIn'
+
+export default function Hero() {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 text-center">
+        <FadeIn delay={0.2}>
+          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+            Современный сайт
+          </h1>
+        </FadeIn>
+        
+        <FadeIn delay={0.4}>
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Создан с использованием Next.js, TypeScript и современных технологий
+          </p>
+        </FadeIn>
+        
+        <FadeIn delay={0.6}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => window.scrollTo({ top: 1000, behavior: 'smooth' })}>
+              Начать работу
+            </Button>
+            <Button variant="outline" size="lg">
+              Узнать больше
+            </Button>
+        </div>
+        </FadeIn>
+      </div>
+      
+      {/* Анимированный фон */}
+      <motion.div
+        className="absolute inset-0 -z-10"
+        animate={{
+          background: [
+            "radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)",
+            "radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.1) 0%, transparent 50%)",
+            "radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)"
+          ]
+        }}
+        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+      />
+    </section>
+  )
+}
+SECTION_HERO_END
 
 4) Инструкции по запуску:
 - npm install
