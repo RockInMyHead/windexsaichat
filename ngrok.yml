@@ -1,0 +1,10 @@
+version: "2"
+authtoken: # Вставьте ваш authtoken здесь
+tunnels:
+  windexai:
+    proto: http
+    addr: 8003
+    subdomain: windexai-chat  # Опционально, если у вас есть платный план
+    inspect: false
+    bind_tls: true
+

@@ -456,6 +456,170 @@
             border: 1px solid #bae6fd;
             color: #0369a1;
         }
+
+        .deploy-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .deploy-actions .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Edit mode styles */
+        .edit-mode-active {
+            background-color: #fef3c7 !important;
+            border-color: #f59e0b !important;
+        }
+
+        .edit-mode-active .btn {
+            background-color: #f59e0b !important;
+            color: white !important;
+        }
+
+        .editable-element {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .editable-element:hover {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .editable-element.selected {
+            outline: 3px solid #ef4444;
+            outline-offset: 2px;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .element-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: #3b82f6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .edit-mode-instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Resizable panels styles */
+        .editor-main {
+            display: flex;
+            height: calc(100vh - 60px);
+            position: relative;
+        }
+
+        .chat-panel, .preview-panel {
+            flex: 1;
+            min-width: 300px;
+            max-width: 70%;
+            transition: flex 0.2s ease;
+        }
+
+        .panel-divider {
+            width: 8px;
+            background: #e5e7eb;
+            cursor: col-resize;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: none;
+        }
+
+        .panel-divider:hover {
+            background: #d1d5db;
+        }
+
+        .panel-divider.dragging {
+            background: #3b82f6;
+        }
+
+        .divider-handle {
+            width: 100%;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .divider-dots {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .divider-dots span {
+            width: 3px;
+            height: 3px;
+            background: #9ca3af;
+            border-radius: 50%;
+        }
+
+        .panel-divider:hover .divider-dots span {
+            background: #6b7280;
+        }
+
+        .panel-divider.dragging .divider-dots span {
+            background: white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .editor-main {
+                flex-direction: column;
+            }
+            
+            .panel-divider {
+                width: 100%;
+                height: 8px;
+                cursor: row-resize;
+            }
+            
+            .divider-handle {
+                height: 100%;
+                width: 40px;
+            }
+            
+            .divider-dots {
+                flex-direction: row;
+            }
+            
+            .chat-panel, .preview-panel {
+                min-width: unset;
+                max-width: unset;
+                min-height: 200px;
+                max-height: 70%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -477,7 +641,7 @@
         <!-- Основная область -->
         <main class="editor-main">
             <!-- Панель чата -->
-            <div class="editor-panel">
+            <div class="editor-panel chat-panel">
                 <div class="panel-header">
                     <h2 class="panel-title">💬 AI-Чат для создания сайтов</h2>
                 </div>
@@ -495,6 +659,12 @@
                                     <br>• Измени цвет кнопок на синий
                                     <br>• Добавь секцию с отзывами клиентов
                                     <br>• Сделай дизайн более современным
+                                    
+                                    <br><br><strong>🖼️ Изображения из интернета:</strong>
+                                    <br>• "Добавь красивое изображение гор в hero-секцию"
+                                    <br>• "Используй фотографии еды для ресторана"
+                                    <br>• "Добавь изображения продуктов в каталог"
+                                    <br>• "Сделай фон с изображением офиса"
                                 </div>
                             </div>
                         </div>
@@ -532,12 +702,29 @@
                 </div>
             </div>
 
+            <!-- Разделитель панелей -->
+            <div class="panel-divider" id="panel-divider">
+                <div class="divider-handle">
+                    <div class="divider-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Панель предварительного просмотра -->
-            <div class="editor-panel">
+            <div class="editor-panel preview-panel">
                 <div class="panel-header">
                     <div class="d-flex align-items-center justify-content-between">
                         <h2 class="panel-title">🌐 Предварительный просмотр</h2>
                         <div class="d-flex gap-2">
+                            <button id="edit-mode-btn" class="btn btn-outline btn-sm" title="Режим редактирования">
+                                ✏️ Редактировать
+                            </button>
                             <button id="copy-html-btn" class="btn btn-outline btn-sm" title="Копировать HTML">
                                 📋 Копировать
                             </button>
@@ -585,6 +772,10 @@
                 </div>
                 <div class="deploy-status" id="deploy-status" style="display: none;">
                     <div class="status-message"></div>
+                    <div class="deploy-actions" id="deploy-actions" style="display: none;">
+                        <button id="view-site-btn" class="btn btn-primary">🌐 Открыть сайт</button>
+                        <button id="copy-url-btn" class="btn btn-outline">📋 Копировать URL</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

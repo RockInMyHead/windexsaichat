@@ -1,5 +1,6 @@
 from openai import OpenAI
 import os
+import tempfile
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 
@@ -73,3 +74,36 @@ def format_messages_for_openai(messages: List[Dict[str, str]]) -> List[Dict[str,
         })
     
     return formatted_messages
+
+def transcribe_audio(audio_file_path: str) -> str:
+    """Transcribe audio file using OpenAI Whisper"""
+    try:
+        with open(audio_file_path, "rb") as audio_file:
+            transcript = openai_client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language="ru"  # Russian language
+            )
+        return transcript.text
+    except Exception as e:
+        print(f"Error transcribing audio: {e}")
+        return None
+
+def text_to_speech(text: str, voice: str = "alloy") -> str:
+    """Convert text to speech using OpenAI TTS"""
+    try:
+        response = openai_client.audio.speech.create(
+            model="tts-1",
+            voice=voice,
+            input=text
+        )
+        
+        # Save to temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        temp_file.write(response.content)
+        temp_file.close()
+        
+        return temp_file.name
+    except Exception as e:
+        print(f"Error generating speech: {e}")
+        return None

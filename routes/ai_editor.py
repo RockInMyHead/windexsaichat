@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import List, Dict
 
 from routes.auth import get_current_user, User
-from utils.openai_client import windexai_client
+from utils.openai_client import openai_client
 from utils.web_search import search_web, format_search_results
 
 router = APIRouter()
@@ -14,6 +14,12 @@ router = APIRouter()
 class AIEditorRequest(BaseModel):
     messages: List[Dict[str, str]]
     model: str = "gpt-4o-mini"
+
+class ElementEditRequest(BaseModel):
+    element_type: str
+    current_text: str
+    edit_instruction: str
+    html_content: str
 
 def should_search_web(message: str) -> bool:
     """Определяет, нужен ли веб-поиск для сообщения"""
@@ -114,6 +120,16 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
 • Обязательные секции лендинга: hero с сильным визуалом и CTA, преимущества/фичи (cards), отзывы, CTA‑блок, футер.
 • Легкий JS без внешних библиотек только при необходимости (например, переключатели тарифов/темы).
 
+ИЗОБРАЖЕНИЯ ИЗ ИНТЕРНЕТА:
+• Используй изображения из интернета по прямым ссылкам (https://example.com/image.jpg)
+• Для hero-секций используй качественные изображения с Unsplash, Pexels, Pixabay
+• Добавляй alt-текст для всех изображений для доступности
+• Используй CSS для адаптивности изображений: width: 100%, height: auto, object-fit: cover
+• Примеры хороших источников изображений:
+  - Unsplash: https://images.unsplash.com/photo-[id]?w=800&h=600&fit=crop
+  - Pexels: https://images.pexels.com/photos/[id]/pexels-photo-[id].jpeg
+  - Pixabay: https://cdn.pixabay.com/photo/[year]/[month]/[day]/[id]/[filename]
+
 ФОРМАТ ОТВЕТА (строго):
 1) Краткое описание (1–2 предложения)
 2) Полный HTML между маркерами:
@@ -213,13 +229,13 @@ NEW_PAGE_END"""
         preferred_model = "gpt-4o"  # более качественный ответ
         fallback_model = "gpt-4o-mini"
         try:
-            response = windexai_client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model=preferred_model,
                 messages=messages,
                 max_tokens=3000
             )
         except Exception as _:
-            response = windexai_client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model=fallback_model,
             messages=messages,
                 max_tokens=2500
@@ -238,6 +254,100 @@ NEW_PAGE_END"""
         print(f"AI Editor error: {str(e)}")
         return {
             "error": f"Ошибка генерации: {str(e)}",
+            "status": "error"
+        }
+
+@router.post("/api/ai-editor/edit-element")
+async def edit_element(
+    request: ElementEditRequest,
+    user: User = Depends(get_current_user)
+):
+    """Редактирование конкретного элемента на сайте"""
+    try:
+        print(f"Element edit request from user: {user.username}")
+        print(f"Element type: {request.element_type}")
+        print(f"Current text: {request.current_text}")
+        print(f"Edit instruction: {request.edit_instruction}")
+        
+        # Создаем промпт для редактирования элемента
+        edit_prompt = f"""
+Ты - эксперт по веб-разработке. Пользователь хочет отредактировать элемент на своем сайте.
+
+ИНФОРМАЦИЯ ОБ ЭЛЕМЕНТЕ:
+- Тип элемента: {request.element_type}
+- Текущий текст: "{request.current_text}"
+- Инструкция по редактированию: {request.edit_instruction}
+
+ТЕКУЩИЙ HTML КОД САЙТА:
+{request.html_content}
+
+ЗАДАЧА:
+Отредактируй указанный элемент согласно инструкции пользователя. Сохрани весь остальной HTML код без изменений.
+
+ТРЕБОВАНИЯ:
+1. Найди элемент с текстом "{request.current_text}" в HTML
+2. Примени изменения согласно инструкции "{request.edit_instruction}"
+3. Сохрани структуру и стили сайта
+4. Верни полный обновленный HTML код
+5. Объясни, что именно было изменено
+
+ИЗОБРАЖЕНИЯ ИЗ ИНТЕРНЕТА:
+• Если пользователь просит добавить изображение, используй прямые ссылки на изображения
+• Хорошие источники: Unsplash, Pexels, Pixabay
+• Всегда добавляй alt-текст для доступности
+• Используй адаптивные CSS стили для изображений
+
+ФОРМАТ ОТВЕТА:
+Ответь в формате:
+RESPONSE_START
+[Твое объяснение изменений]
+RESPONSE_END
+
+HTML_START
+[Полный обновленный HTML код]
+HTML_END
+"""
+
+        # Отправляем запрос к OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты - эксперт по веб-разработке и HTML/CSS."},
+                {"role": "user", "content": edit_prompt}
+            ],
+            max_tokens=4000,
+            temperature=0.3
+        )
+        
+        response_text = response.choices[0].message.content
+        print(f"Response received: {len(response_text)} characters")
+        
+        # Извлекаем HTML код из ответа
+        html_match = re.search(r'HTML_START\s*(.*?)\s*HTML_END', response_text, re.DOTALL)
+        response_match = re.search(r'RESPONSE_START\s*(.*?)\s*RESPONSE_END', response_text, re.DOTALL)
+        
+        if html_match:
+            updated_html = html_match.group(1).strip()
+            response_text = response_match.group(1).strip() if response_match else "Элемент успешно отредактирован."
+            
+            return {
+                "html_content": updated_html,
+                "response": response_text,
+                "status": "success"
+            }
+        else:
+            # Если не удалось извлечь HTML, возвращаем оригинальный код
+            return {
+                "html_content": request.html_content,
+                "response": "Не удалось применить изменения. Попробуйте более конкретную инструкцию.",
+                "status": "error"
+            }
+        
+    except Exception as e:
+        print(f"Element edit error: {str(e)}")
+        return {
+            "html_content": request.html_content,
+            "response": f"Ошибка при редактировании: {str(e)}",
             "status": "error"
         }
 

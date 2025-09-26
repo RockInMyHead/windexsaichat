@@ -29,6 +29,7 @@ class User(Base):
     # Relationships
     conversations = relationship("Conversation", back_populates="user")
     deployments = relationship("Deployment", back_populates="user")
+    documents = relationship("Document", back_populates="user")
 
 # Conversation model
 class Conversation(Base):
@@ -51,11 +52,33 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     role = Column(String, nullable=False)  # 'user' or 'assistant'
     content = Column(Text, nullable=False)
+    message_type = Column(String, default="text")  # 'text', 'voice', or 'document'
+    audio_url = Column(String, nullable=True)  # URL to audio file for voice messages
+    document_id = Column(Integer, ForeignKey("documents.id"), nullable=True)  # Reference to document
     timestamp = Column(DateTime, default=datetime.utcnow)
     conversation_id = Column(Integer, ForeignKey("conversations.id"))
     
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
+    document = relationship("Document", back_populates="messages")
+
+# Document model
+class Document(Base):
+    __tablename__ = "documents"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False)
+    original_filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+    file_type = Column(String, nullable=False)  # 'pdf', 'docx', 'txt', etc.
+    content = Column(Text, nullable=True)  # Extracted text content
+    upload_date = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    # Relationships
+    user = relationship("User", back_populates="documents")
+    messages = relationship("Message", back_populates="document")
 
 # Deployment model
 class Deployment(Base):
