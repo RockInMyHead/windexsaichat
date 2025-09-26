@@ -61,7 +61,6 @@ class WebSearchEngine:
             return results
             
         except Exception as e:
-            print(f"Ошибка поиска Google: {e}")
             return []
     
     def search_duckduckgo(self, query: str, num_results: int = 5) -> List[Dict[str, str]]:
@@ -100,7 +99,6 @@ class WebSearchEngine:
             return results
             
         except Exception as e:
-            print(f"Ошибка поиска DuckDuckGo: {e}")
             return []
     
     def search_bing(self, query: str, num_results: int = 5) -> List[Dict[str, str]]:
@@ -140,12 +138,10 @@ class WebSearchEngine:
             return results
             
         except Exception as e:
-            print(f"Ошибка поиска Bing: {e}")
             return []
     
     def search_web(self, query: str, num_results: int = 5) -> List[Dict[str, str]]:
         """Универсальный поиск по веб-источникам"""
-        print(f"🔍 Поиск в интернете: {query}")
         
         # Пробуем разные поисковики
         search_engines = [
@@ -163,7 +159,6 @@ class WebSearchEngine:
                     all_results.extend(results)
                     break  # Если получили результаты, останавливаемся
             except Exception as e:
-                print(f"Ошибка поисковика: {e}")
                 continue
         
         # Убираем дубликаты по URL
@@ -180,7 +175,6 @@ class WebSearchEngine:
     def fetch_page_content(self, url: str, max_length: int = 2000) -> str:
         """Получение содержимого веб-страницы"""
         try:
-            print(f"📄 Загружаю страницу: {url}")
             
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
@@ -206,7 +200,6 @@ class WebSearchEngine:
             return text
             
         except Exception as e:
-            print(f"Ошибка загрузки страницы {url}: {e}")
             return ""
     
     def search_and_fetch_content(self, query: str, num_results: int = 3) -> List[Dict[str, str]]:

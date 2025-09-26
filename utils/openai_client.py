@@ -52,7 +52,6 @@ def generate_response(messages: List[Dict[str, str]], model: str = "gpt-4o-mini"
         return response.choices[0].message.content
         
     except Exception as e:
-        print(f"Error generating response: {e}")
         # Более детальная обработка ошибок
         if "max_tokens" in str(e):
             return "Извините, произошла ошибка с настройками модели. Попробуйте еще раз."
@@ -86,7 +85,6 @@ def transcribe_audio(audio_file_path: str) -> str:
             )
         return transcript.text
     except Exception as e:
-        print(f"Error transcribing audio: {e}")
         return None
 
 def text_to_speech(text: str, voice: str = "alloy") -> str:
@@ -105,5 +103,4 @@ def text_to_speech(text: str, voice: str = "alloy") -> str:
         
         return temp_file.name
     except Exception as e:
-        print(f"Error generating speech: {e}")
         return None

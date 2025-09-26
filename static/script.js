@@ -152,23 +152,6 @@ class WindexAI {
         this.recordingStartTime = null;
         
         // Debug: Check if all elements are found
-        console.log('Elements found:', {
-            messageInput: !!this.messageInput,
-            sendBtn: !!this.sendBtn,
-            voiceBtn: !!this.voiceBtn,
-            documentBtn: !!this.documentBtn,
-            documentInput: !!this.documentInput,
-            chatContainer: !!this.chatContainer,
-            conversationsList: !!this.conversationsList,
-            newChatBtn: !!this.newChatBtn,
-            clearHistoryBtn: !!this.clearHistoryBtn,
-            loadingOverlay: !!this.loadingOverlay,
-            charCount: !!this.charCount,
-            modelCards: this.modelCards.length,
-            profileBtn: !!this.profileBtn,
-            profileModal: !!this.profileModal,
-            closeProfileBtn: !!this.closeProfileBtn
-        });
     }
 
     bindEvents() {
@@ -223,11 +206,8 @@ class WindexAI {
         }
 
         // Model cards
-        console.log('Model cards found:', this.modelCards.length);
         this.modelCards.forEach((card, index) => {
-            console.log(`Model card ${index}:`, card, 'data-model:', card.dataset.model);
             card.addEventListener('click', (e) => {
-                console.log('Model card clicked:', card.dataset.model);
                 const model = card.dataset.model;
                 this.selectModel(model);
             });
@@ -725,11 +705,8 @@ class WindexAI {
         
         // Re-bind model card events
         this.modelCards = document.querySelectorAll('.model-card');
-        console.log('Re-binding model cards:', this.modelCards.length);
         this.modelCards.forEach((card, index) => {
-            console.log(`Re-bound model card ${index}:`, card, 'data-model:', card.dataset.model);
             card.addEventListener('click', (e) => {
-                console.log('Re-bound model card clicked:', card.dataset.model);
                 const model = card.dataset.model;
                 this.selectModel(model);
             });
@@ -1292,14 +1269,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerFormDiv = document.getElementById('register-form');
     
     // Debug: Check if all auth elements are found
-    console.log('Auth elements found:', {
-        loginForm: !!loginForm,
-        registerForm: !!registerForm,
-        showRegisterLink: !!showRegisterLink,
-        showLoginLink: !!showLoginLink,
-        loginFormDiv: !!loginFormDiv,
-        registerFormDiv: !!registerFormDiv
-    });
 
     // Show register form
     if (showRegisterLink) {
