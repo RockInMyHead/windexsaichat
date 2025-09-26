@@ -8,6 +8,7 @@ class AIEditor {
         this.setupEventListeners();
         this.checkAuth();
         this.loadConversations();
+        this.checkUrlParams();
     }
 
     initializeElements() {
@@ -59,6 +60,7 @@ class AIEditor {
         this.confirmDeployBtn = document.getElementById('confirm-deploy');
         this.cancelDeployBtn = document.getElementById('cancel-deploy');
         this.closeModalBtn = document.querySelector('.close');
+        this.projectsBtn = document.getElementById('projects-btn');
         
         // Store deployment result
         this.lastDeploymentResult = null;
@@ -140,6 +142,13 @@ class AIEditor {
         // История чатов
         if (this.newProjectBtn) {
             this.newProjectBtn.addEventListener('click', () => this.createNewProject());
+        }
+
+        // Обработчик кнопки "Мои проекты"
+        if (this.projectsBtn) {
+            this.projectsBtn.addEventListener('click', () => {
+                window.location.href = '/static/projects.html';
+            });
         }
         
         // Load saved panel sizes
@@ -1482,6 +1491,19 @@ project-name/
         } catch (error) {
             console.error('Error deleting conversation:', error);
             this.showError('Ошибка при удалении проекта');
+        }
+    }
+
+    checkUrlParams() {
+        // Проверяем URL параметры для открытия конкретного проекта
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project');
+        
+        if (projectId) {
+            // Загружаем конкретный проект
+            this.loadConversation(parseInt(projectId));
+            // Очищаем URL от параметров
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 }

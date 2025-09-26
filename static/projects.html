@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои проекты | WindexsAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Специфичные стили для страницы проектов */
+        .projects-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5fdf5 0%, #e8f5e8 100%);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .projects-header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(34, 197, 94, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .projects-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .projects-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #22c55e;
+            text-decoration: none;
+        }
+
+        .projects-logo:hover {
+            color: #16a34a;
+        }
+
+        .back-to-editor {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-to-editor:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            color: white;
+        }
+
+        .projects-main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .projects-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .projects-subtitle {
+            color: #6b7280;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }
+
+        .projects-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .new-project-btn {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .new-project-btn:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .project-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .project-preview {
+            color: #4b5563;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            max-height: 60px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .project-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .project-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .project-btn.primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .project-btn.primary:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .project-btn.secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .project-btn.secondary:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .project-btn.danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .project-btn.danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .projects-header {
+                padding: 1rem;
+            }
+            
+            .projects-main {
+                padding: 1rem;
+            }
+            
+            .projects-title {
+                font-size: 2rem;
+            }
+            
+            .projects-actions {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="projects-container">
+        <!-- Хедер -->
+        <header class="projects-header">
+            <nav class="projects-nav">
+                <a href="/static/editor.html" class="projects-logo">
+                    <img src="/static/round_logo-07.svg" alt="WindexsAI" width="24" height="24">
+                    WindexsAI
+                </a>
+                <a href="/static/editor.html" class="back-to-editor">
+                    ← Вернуться к редактору
+                </a>
+            </nav>
+        </header>
+
+        <!-- Основная область -->
+        <main class="projects-main">
+            <div class="projects-header-content">
+                <h1 class="projects-title">📁 Мои проекты</h1>
+                <p class="projects-subtitle">Управляйте своими Next.js проектами и веб-приложениями</p>
+            </div>
+
+            <div class="projects-actions">
+                <div>
+                    <span id="projects-count" class="text-muted">Загрузка проектов...</span>
+                </div>
+                <button id="new-project-btn" class="new-project-btn">
+                    ✨ Создать новый проект
+                </button>
+            </div>
+
+            <!-- Сетка проектов -->
+            <div id="projects-grid" class="projects-grid">
+                <!-- Проекты будут загружены здесь -->
+            </div>
+
+            <!-- Пустое состояние -->
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📁</div>
+                <h3>Пока нет проектов</h3>
+                <p>Создайте свой первый Next.js проект с помощью AI</p>
+                <button class="new-project-btn">
+                    ✨ Создать первый проект
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="delete-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🗑️ Удаление проекта</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот проект? Это действие нельзя отменить.</p>
+                <p><strong id="delete-project-name"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline">Отмена</button>
+                <button id="confirm-delete" class="btn btn-danger">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/projects.js"></script>
+</body>
+</html>
