@@ -1138,6 +1138,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Стили для форматирования текста в сообщениях */
@@ -1250,6 +1253,10 @@ a:hover {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
   font-size: 0.9rem;
   line-height: 1.5;
+  max-width: 100%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .message-content pre::before {
@@ -1279,7 +1286,7 @@ a:hover {
   padding: 0;
   color: inherit;
   border: none;
-  white-space: pre;
+  white-space: pre-wrap;
   font-size: inherit;
   line-height: inherit;
   display: block;
@@ -1288,6 +1295,10 @@ a:hover {
   tab-size: 4;
   -moz-tab-size: 4;
   -o-tab-size: 4;
+  word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 /* Специальные стили для разных языков программирования */
@@ -1322,6 +1333,9 @@ a:hover {
 /* Кнопка копирования кода */
 .code-block {
   position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .code-copy-btn {
@@ -1455,6 +1469,18 @@ a:hover {
   color: #808080;
 }
 
+/* Специальные стили для HTML кода */
+.message-content pre[data-language="html"] {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.message-content pre[data-language="html"] code {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
 /* Подсветка CSS селекторов */
 .message-content pre[data-language="css"] code {
   color: #d7ba7d;
@@ -1490,6 +1516,11 @@ a:hover {
     word-wrap: break-word;
   line-height: 1.5;
     position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .message.user .message-bubble {
