@@ -723,6 +723,197 @@
                 max-height: 70%;
             }
         }
+
+        /* Файловый проводник */
+        .file-explorer {
+            background: white;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .file-explorer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fdf8;
+            border-bottom: 1px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .file-explorer-header h3 {
+            margin: 0;
+            color: #16a34a;
+            font-size: 1rem;
+        }
+
+        .download-project-btn {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .download-project-btn:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(34, 197, 94, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-icon {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .file-name {
+            flex: 1;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .download-file-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .download-file-btn:hover {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        /* Модальное окно для файлов */
+        .file-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .file-modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fdf8;
+            border-bottom: 1px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .file-modal-header h3 {
+            margin: 0;
+            color: #16a34a;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .close-file-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .close-file-modal:hover {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .file-modal-body {
+            padding: 1rem;
+            max-height: 70vh;
+            overflow: auto;
+        }
+
+        .file-modal-body pre {
+            margin: 0;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .file-modal-body code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+        }
+
+        /* Адаптивность для файлового проводника */
+        @media (max-width: 768px) {
+            .file-explorer-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+
+            .file-modal-content {
+                max-width: 95%;
+                max-height: 95%;
+            }
+
+            .file-item {
+                padding: 0.5rem;
+            }
+
+            .file-name {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
