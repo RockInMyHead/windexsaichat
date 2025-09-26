@@ -67,34 +67,31 @@
 
         <!-- Main App (hidden until authenticated) -->
         <div id="main-app" class="main-app hidden">
-        <!-- Header -->
-        <header class="navbar">
-            <div class="container">
-                <div class="header-content d-flex align-items-center justify-content-between">
-                    <div class="logo d-flex align-items-center gap-3" id="logo-clickable">
-                        <img src="/static/round_logo-07.svg" alt="WindexsAI" width="32" height="32">
-                        <h1 class="navbar-brand">WindexsAI</h1>
+        <!-- Единый красивый хедер -->
+        <header class="unified-header">
+            <div class="header-container">
+                <a href="/" class="header-logo">
+                    <div class="logo-icon">W</div>
+                    <span class="logo-text">WindexsAI</span>
+                </a>
+                
+                <nav class="header-nav">
+                    <div class="nav-links">
+                        <a href="/" class="nav-link active">🏠 Главная</a>
+                        <a href="/static/editor.html" class="nav-link">⚡ Создание сайтов</a>
+                        <a href="/static/projects.html" class="nav-link">📁 Мои проекты</a>
+                        <a href="/static/dashboard.html" class="nav-link">📊 Личный кабинет</a>
                     </div>
-                    <div class="header-actions d-flex align-items-center gap-3">
-                        <a href="/api/ai-editor/page" class="btn btn-outline" title="AI-Редактор сайтов">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10,9 9,9 8,9"></polyline>
-                            </svg>
-                            Редактор
-                        </a>
-                        <button id="profile-btn" class="btn btn-outline" title="Личный кабинет">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"></path>
-                                <path d="M4 20v-1c0-2.21 3.58-4 8-4s8 1.79 8 4v1"></path>
-                            </svg>
-                        </button>
-                        <button id="new-chat-btn" class="btn btn-primary">Новый чат</button>
-                        <button id="mobile-menu-btn" class="mobile-menu-btn">☰</button>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <span class="user-name" id="user-name">Пользователь</span>
                     </div>
+                    <button id="new-chat-btn" class="header-btn primary">💬 Новый чат</button>
+                    <button id="profile-btn" class="header-btn secondary" title="Профиль">👤</button>
+                    <button id="logout-btn" class="header-btn outline" title="Выйти">🚪</button>
                 </div>
             </div>
         </header>

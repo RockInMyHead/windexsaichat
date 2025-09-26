@@ -269,17 +269,31 @@
 </head>
 <body>
     <div class="projects-container">
-        <!-- Хедер -->
-        <header class="projects-header">
-            <nav class="projects-nav">
-                <a href="/static/editor.html" class="projects-logo">
-                    <img src="/static/round_logo-07.svg" alt="WindexsAI" width="24" height="24">
-                    WindexsAI
+        <!-- Единый красивый хедер -->
+        <header class="unified-header">
+            <div class="header-container">
+                <a href="/" class="header-logo">
+                    <div class="logo-icon">W</div>
+                    <span class="logo-text">WindexsAI</span>
                 </a>
-                <a href="/static/editor.html" class="back-to-editor">
-                    ← Вернуться к редактору
-                </a>
-            </nav>
+                
+                <nav class="header-nav">
+                    <div class="nav-links">
+                        <a href="/" class="nav-link">🏠 Главная</a>
+                        <a href="/static/editor.html" class="nav-link">⚡ Создание сайтов</a>
+                        <a href="/static/projects.html" class="nav-link active">📁 Мои проекты</a>
+                        <a href="/static/dashboard.html" class="nav-link">📊 Личный кабинет</a>
+                    </div>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <span class="user-name" id="user-name">Пользователь</span>
+                    </div>
+                    <button id="logout-btn" class="header-btn outline">🚪 Выйти</button>
+                </div>
+            </div>
         </header>
 
         <!-- Основная область -->
