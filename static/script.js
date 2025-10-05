@@ -112,7 +112,7 @@ class WindexAI {
         this.currentConversationId = null;
         this.currentModel = 'gpt-4o-mini';
         this.isLoading = false;
-        
+
         this.initializeElements();
         this.bindEvents();
         this.loadConversations();
@@ -122,6 +122,7 @@ class WindexAI {
         this.messageInput = document.getElementById('message-input');
         this.sendBtn = document.getElementById('send-btn');
         this.voiceBtn = document.getElementById('voice-btn');
+        this.connectBtn = document.getElementById('connect-btn');
         this.documentBtn = document.getElementById('document-btn');
         this.documentInput = document.getElementById('document-input');
         this.chatContainer = document.getElementById('chat-container');
@@ -135,22 +136,31 @@ class WindexAI {
         this.voiceRecordingIndicator = document.getElementById('voice-recording-indicator');
         this.documentUploadIndicator = document.getElementById('document-upload-indicator');
         this.conversationsList = document.getElementById('conversations-list');
-        this.newChatBtn = document.getElementById('new-chat-btn');
         this.clearHistoryBtn = document.getElementById('clear-history-btn');
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
-        this.profileBtn = document.getElementById('profile-btn');
+        this.userAvatar = document.getElementById('user-avatar');
+        this.userName = document.getElementById('user-name');
         this.profileModal = document.getElementById('profile-modal');
         this.closeProfileBtn = document.querySelector('.close-profile');
-        
+
+        // Connect modal elements
+        this.connectModal = document.getElementById('connect-modal');
+        this.closeConnectBtn = document.querySelector('.close-connect');
+        this.connectionCodeInput = document.getElementById('connection-code');
+        this.testConnectionBtn = document.getElementById('test-connection-btn');
+        this.connectBtnModal = document.getElementById('connect-btn-modal');
+        this.connectionStatus = document.getElementById('connection-status');
+        this.connectionResult = document.getElementById('connection-result');
+
         // Voice recording variables
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.isRecording = false;
         this.recordingTimer = null;
         this.recordingStartTime = null;
-        
+
         // Debug: Check if all elements are found
     }
 
@@ -189,6 +199,13 @@ class WindexAI {
             });
         }
 
+        // Connect button
+        if (this.connectBtn) {
+            this.connectBtn.addEventListener('click', () => {
+                this.showConnectModal();
+            });
+        }
+
         // Document button
         if (this.documentBtn) {
             this.documentBtn.addEventListener('click', () => {
@@ -213,52 +230,111 @@ class WindexAI {
             });
         });
 
-        // New chat button
-        this.newChatBtn.addEventListener('click', () => {
-            this.startNewChat();
+        // Specialist cards
+        const specialistCards = document.querySelectorAll('.specialist-card');
+        specialistCards.forEach((card) => {
+            card.addEventListener('click', (e) => {
+                const specialist = card.dataset.specialist;
+                const model = card.dataset.model;
+                this.selectSpecialist(specialist, model);
+            });
         });
+
 
         // Clear history button
         this.clearHistoryBtn.addEventListener('click', () => {
             this.clearHistory();
         });
 
-
-        // Profile button
-        if (this.profileBtn) {
-            this.profileBtn.addEventListener('click', () => {
-                // Populate profile data
-                const usernameSpan = document.getElementById('profile-username');
-                const emailSpan = document.getElementById('profile-email');
-                if (this.authManager.user) {
-                    usernameSpan.textContent = this.authManager.user.username;
-                    emailSpan.textContent = this.authManager.user.email;
-                }
-                this.profileModal.classList.remove('hidden');
+        // User info click handler
+        if (this.userAvatar) {
+            this.userAvatar.addEventListener('click', () => {
+                this.showProfileModal();
             });
         }
+
+        if (this.userName) {
+            this.userName.addEventListener('click', () => {
+                this.showProfileModal();
+            });
+        }
+
         // Close profile modal
         if (this.closeProfileBtn) {
             this.closeProfileBtn.addEventListener('click', () => {
-                this.profileModal.classList.add('hidden');
+                this.hideProfileModal();
+            });
+        }
+
+        // Connect modal handlers
+        if (this.closeConnectBtn) {
+            this.closeConnectBtn.addEventListener('click', () => {
+                this.hideConnectModal();
+            });
+        }
+
+        if (this.testConnectionBtn) {
+            this.testConnectionBtn.addEventListener('click', () => {
+                this.testConnection();
+            });
+        }
+
+        if (this.connectBtnModal) {
+            this.connectBtnModal.addEventListener('click', () => {
+                this.connectToChat();
+            });
+        }
+
+        if (this.connectionCodeInput) {
+            this.connectionCodeInput.addEventListener('input', () => {
+                this.validateConnectionCode();
             });
         }
     }
 
-    selectModel(model) {
+    async selectModel(model) {
+        // Проверяем подписку для Pro модели
+        if (model === 'gpt-4o') {
+            const hasProSubscription = await checkProSubscription();
+            if (!hasProSubscription) {
+                showProSubscriptionModal();
+                return;
+            }
+        }
+
         this.currentModel = model;
-        
+
         // Update model info
         const modelInfo = this.getModelInfo(model);
         this.modelIcon.textContent = modelInfo.icon;
         this.modelName.textContent = modelInfo.name;
         this.modelDescription.textContent = modelInfo.description;
-        
+
         // Show selected model and hide welcome message
         this.showSelectedModel();
         this.hideWelcomeMessage();
-        
+
         showNotification(`Выбрана модель: ${modelInfo.name}`, 'success');
+        this.messageInput.focus();
+    }
+
+    selectSpecialist(specialist, model) {
+        this.currentModel = model;
+        this.currentSpecialist = specialist;
+
+        // Update model info with specialist details
+        const specialistInfo = this.getSpecialistInfo(specialist);
+        const modelInfo = this.getModelInfo(model);
+
+        this.modelIcon.textContent = specialistInfo.icon;
+        this.modelName.textContent = specialistInfo.name;
+        this.modelDescription.textContent = specialistInfo.description;
+
+        // Show selected model and hide welcome message
+        this.showSelectedModel();
+        this.hideWelcomeMessage();
+
+        showNotification(`Выбран специалист: ${specialistInfo.name}`, 'success');
         this.messageInput.focus();
     }
 
@@ -276,6 +352,42 @@ class WindexAI {
             }
         };
         return models[model] || models['gpt-4o-mini'];
+    }
+
+    getSpecialistInfo(specialist) {
+        const specialists = {
+            'mentor': {
+                icon: '🎓',
+                name: 'AI Ментор',
+                description: 'Персональный наставник для развития навыков и карьеры'
+            },
+            'psychologist': {
+                icon: '🧠',
+                name: 'AI Психолог',
+                description: 'Поддержка психического здоровья и эмоционального благополучия'
+            },
+            'programmer': {
+                icon: '💻',
+                name: 'AI Программист',
+                description: 'Эксперт по разработке и техническим решениям'
+            },
+            'accountant': {
+                icon: '📊',
+                name: 'AI Бухгалтер',
+                description: 'Финансовый консультант и эксперт по учету'
+            },
+            'analyst': {
+                icon: '📈',
+                name: 'AI Аналитик',
+                description: 'Специалист по анализу данных и бизнес-процессов'
+            },
+            'general': {
+                icon: '🤖',
+                name: 'Универсальный AI',
+                description: 'Многофункциональный помощник для любых задач'
+            }
+        };
+        return specialists[specialist] || specialists['general'];
     }
 
     showSelectedModel() {
@@ -313,7 +425,8 @@ class WindexAI {
                 body: JSON.stringify({
                     message: message,
                     model: this.currentModel,
-                    conversation_id: this.currentConversationId
+                    conversation_id: this.currentConversationId,
+                    specialist: this.currentSpecialist || null
                 })
             });
 
@@ -348,10 +461,10 @@ class WindexAI {
     // Функция для конвертации Markdown в HTML
     convertMarkdownToHtml(text) {
         if (!text) return '';
-        
+
         // Экранируем HTML теги
         text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        
+
         // Специальная обработка для случаев, когда код идет сплошным текстом
         // Ищем паттерны типа "python def function()" в начале строк
         text = text.replace(/(\n|^)(python|javascript|html|css|json|sql|bash|java|cpp|c\+\+|c#|php|ruby|go|rust|swift|kotlin|typescript|js|py|sh)\s+(def\s+\w+|function\s+\w+|class\s+\w+|import\s+|from\s+|if\s+.*:|for\s+.*:|while\s+.*:|try:|except|catch|var\s+|let\s+|const\s+|<html|<head|<body|<div|<script|<style|SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)([\s\S]*?)(?=\n\n|\n[А-Я]|\n[а-я]|\n[A-Z][a-z]|\n\d+\.|\n-|\n\*|$)/g, (match, prefix, language, start, code) => {
@@ -361,7 +474,7 @@ class WindexAI {
             }
             return match;
         });
-        
+
         // Сначала обрабатываем блоки кода - это приоритетно
         // Исправляем неправильные маркеры кода типа `python def function()`
         text = text.replace(/`(\w+)\s+([\s\S]*?)`/g, (match, language, code) => {
@@ -371,7 +484,7 @@ class WindexAI {
             }
             return match; // Оставляем как inline код
         });
-        
+
         // Обрабатываем правильные блоки кода ```language\ncode```
         text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
             const lang = language || 'text';
@@ -384,16 +497,53 @@ class WindexAI {
                 <pre data-language="${lang}"><code>${cleanCode}</code></pre>
             </div>`;
         });
-        
+
+        // After escaping HTML tags, add table conversion
+        text = text.split('\n').map(line => line).join('\n');
+        let lines = text.split('\n');
+        let resultLines = [];
+        for (let i = 0; i < lines.length; i++) {
+            // Detect start of markdown table
+            if (lines[i].trim().startsWith('|') && i + 1 < lines.length && lines[i+1].includes('---')) {
+                // Header and separator found
+                let headerLine = lines[i].trim();
+                let sepLine = lines[i+1];
+                let j = i + 2;
+                let rows = [];
+                while (j < lines.length && lines[j].trim().startsWith('|')) {
+                    rows.push(lines[j].trim());
+                    j++;
+                }
+                // Parse header cells
+                let headers = headerLine.slice(1, -1).split('|').map(h => h.trim());
+                // Build HTML table
+                let tableHtml = '<table class="markdown-table"><thead><tr>';
+                headers.forEach(cell => tableHtml += `<th>${cell}</th>`);
+                tableHtml += '</tr></thead><tbody>';
+                rows.forEach(rowLine => {
+                    let cells = rowLine.slice(1, -1).split('|').map(c => c.trim());
+                    tableHtml += '<tr>';
+                    cells.forEach(cell => tableHtml += `<td>${cell}</td>`);
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody></table>';
+                resultLines.push(tableHtml);
+                i = j - 1; // Skip processed lines
+            } else {
+                resultLines.push(lines[i]);
+            }
+        }
+        text = resultLines.join('\n');
+
         // Теперь обрабатываем остальной markdown
         // Жирный текст **text** или __text__
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
-        
+
         // Курсив *text* или _text_
         text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
         text = text.replace(/_(.*?)_/g, '<em>$1</em>');
-        
+
         // Заголовки (обрабатываем от h6 к h1, чтобы избежать пересечений)
         text = text.replace(/^######\s+(.*)$/gim, '<h6>$1</h6>');
         text = text.replace(/^#####\s+(.*)$/gim, '<h5>$1</h5>');
@@ -401,11 +551,11 @@ class WindexAI {
         text = text.replace(/^###\s+(.*)$/gim, '<h3>$1</h3>');
         text = text.replace(/^##\s+(.*)$/gim, '<h2>$1</h2>');
         text = text.replace(/^#\s+(.*)$/gim, '<h1>$1</h1>');
-        
+
         // Списки
         text = text.replace(/^\d+\.\s+(.*$)/gim, '<li>$1</li>');
         text = text.replace(/^[-*]\s+(.*$)/gim, '<li>$1</li>');
-        
+
         // Обертываем списки в ul/ol
         text = text.replace(/(<li>.*<\/li>)/gs, (match) => {
             if (match.match(/^\d+\./)) {
@@ -414,24 +564,24 @@ class WindexAI {
                 return '<ul>' + match + '</ul>';
             }
         });
-        
+
         // Inline код `code` (только если не внутри блока кода)
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
+
         // Ссылки [text](url)
         text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-        
+
         // Разделители ---
         text = text.replace(/^---$/gim, '<hr>');
-        
+
         // Переносы строк в параграфы
         text = text.replace(/\n\n/g, '</p><p>');
         text = '<p>' + text + '</p>';
-        
+
         // Убираем пустые параграфы
         text = text.replace(/<p><\/p>/g, '');
         text = text.replace(/<p>\s*<\/p>/g, '');
-        
+
         return text;
     }
 
@@ -448,7 +598,7 @@ class WindexAI {
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        
+
         // Конвертируем Markdown в HTML для сообщений ассистента
         if (role === 'assistant') {
             bubble.innerHTML = this.convertMarkdownToHtml(content);
@@ -495,7 +645,7 @@ class WindexAI {
             const response = await fetch('/api/conversations', {
                 headers: this.authManager.getAuthHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 this.renderConversations(data.conversations);
@@ -582,12 +732,12 @@ class WindexAI {
     async loadConversation(conversationId) {
         this.currentConversationId = conversationId;
         this.loadConversations(); // Refresh to show active state
-        
+
         try {
             const response = await fetch(`/api/conversations/${conversationId}`, {
                 headers: this.authManager.getAuthHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 this.displayConversation(data.conversation);
@@ -605,7 +755,7 @@ class WindexAI {
 
     displayConversation(conversation) {
         this.chatMessages.innerHTML = '';
-        
+
         if (conversation.messages && conversation.messages.length > 0) {
             this.showChatMessages();
             this.hideWelcomeMessage(); // Скрываем приветственное сообщение
@@ -616,7 +766,7 @@ class WindexAI {
             this.hideChatMessages();
             this.showWelcomeMessage();
         }
-        
+
         setTimeout(() => this.scrollToBottom(), 100);
     }
 
@@ -636,7 +786,7 @@ class WindexAI {
                     method: 'DELETE',
                     headers: this.authManager.getAuthHeaders()
                 });
-                
+
                 if (response.ok) {
                     this.startNewChat();
                     showNotification('История чатов очищена', 'success');
@@ -657,7 +807,7 @@ class WindexAI {
                     method: 'DELETE',
                     headers: this.authManager.getAuthHeaders()
                 });
-                
+
                 if (response.ok) {
                     if (this.currentConversationId === conversationId) {
                         this.startNewChat();
@@ -686,7 +836,7 @@ class WindexAI {
                     },
                     body: JSON.stringify({ title: newTitle.trim() })
                 });
-                
+
                 if (response.ok) {
                     this.loadConversations();
                     showNotification('Чат переименован', 'success');
@@ -702,7 +852,7 @@ class WindexAI {
 
     showWelcomeMessage() {
         this.welcomeMessage.classList.remove('hidden');
-        
+
         // Re-bind model card events
         this.modelCards = document.querySelectorAll('.model-card');
         this.modelCards.forEach((card, index) => {
@@ -721,7 +871,7 @@ class WindexAI {
     updateCharCount() {
         const count = this.messageInput.value.length;
         this.charCount.textContent = `${count}/4000`;
-        
+
         if (count > 3500) {
             this.charCount.style.color = 'var(--primary-green)';
         } else {
@@ -795,7 +945,7 @@ class WindexAI {
             this.mediaRecorder.start();
             this.isRecording = true;
             this.recordingStartTime = Date.now();
-            
+
             this.showVoiceRecordingIndicator();
             this.updateVoiceButton();
             this.startRecordingTimer();
@@ -810,11 +960,11 @@ class WindexAI {
         if (this.mediaRecorder && this.isRecording) {
             this.mediaRecorder.stop();
             this.isRecording = false;
-            
+
             this.hideVoiceRecordingIndicator();
             this.updateVoiceButton();
             this.stopRecordingTimer();
-            
+
             // Stop all tracks
             this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
         }
@@ -863,7 +1013,7 @@ class WindexAI {
                 const minutes = Math.floor(elapsed / 60);
                 const seconds = elapsed % 60;
                 const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
+
                 const timerElement = this.voiceRecordingIndicator?.querySelector('.recording-timer');
                 if (timerElement) {
                     timerElement.textContent = timeString;
@@ -924,10 +1074,10 @@ class WindexAI {
 
             // Hide typing indicator and add AI response
             this.hideTypingIndicator();
-            
+
             // Add user voice message (transcribed text)
             this.addVoiceMessageToChat('user', 'Голосовое сообщение', null);
-            
+
             // Add AI response
             if (data.audio_url) {
                 this.addVoiceMessageToChat('assistant', data.response, data.audio_url);
@@ -961,7 +1111,7 @@ class WindexAI {
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        
+
         // Add transcribed text
         if (role === 'assistant') {
             bubble.innerHTML = this.convertMarkdownToHtml(content);
@@ -973,16 +1123,16 @@ class WindexAI {
         if (audioUrl) {
             const voiceControls = document.createElement('div');
             voiceControls.className = 'voice-controls';
-            
+
             const playBtn = document.createElement('button');
             playBtn.className = 'voice-play-btn';
             playBtn.innerHTML = '▶️';
             playBtn.addEventListener('click', () => this.playAudio(audioUrl, playBtn));
-            
+
             const duration = document.createElement('span');
             duration.className = 'voice-duration';
             duration.textContent = '00:00';
-            
+
             voiceControls.appendChild(playBtn);
             voiceControls.appendChild(duration);
             bubble.appendChild(voiceControls);
@@ -1006,7 +1156,7 @@ class WindexAI {
 
     playAudio(audioUrl, playBtn) {
         const audio = new Audio(audioUrl);
-        
+
         if (playBtn.classList.contains('playing')) {
             audio.pause();
             playBtn.classList.remove('playing');
@@ -1015,7 +1165,7 @@ class WindexAI {
             audio.play();
             playBtn.classList.add('playing');
             playBtn.innerHTML = '⏸️';
-            
+
             audio.onended = () => {
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = '▶️';
@@ -1034,18 +1184,18 @@ class WindexAI {
             'text/csv',
             'application/rtf'
         ];
-        
+
         if (!allowedTypes.includes(file.type)) {
             showNotification('Неподдерживаемый тип файла. Поддерживаются: PDF, DOCX, DOC, TXT, CSV, RTF', 'error');
             return;
         }
-        
+
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
             showNotification('Файл слишком большой. Максимальный размер: 10MB', 'error');
             return;
         }
-        
+
         this.isLoading = true;
         this.showLoading();
         this.showDocumentUploadIndicator();
@@ -1086,10 +1236,10 @@ class WindexAI {
             // Hide indicators and add responses
             this.hideTypingIndicator();
             this.hideDocumentUploadIndicator();
-            
+
             // Add user document message
             this.addDocumentMessageToChat('user', data.document_name, data.document_id);
-            
+
             // Add AI response
             this.addMessageToChat('assistant', data.response);
 
@@ -1151,44 +1301,44 @@ class WindexAI {
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        
+
         // Add document info
         const documentInfo = document.createElement('div');
         documentInfo.className = 'document-info';
-        
+
         const documentIcon = document.createElement('div');
         documentIcon.className = 'document-icon';
         documentIcon.textContent = '📄';
-        
+
         const documentDetails = document.createElement('div');
         documentDetails.className = 'document-details';
-        
+
         const documentNameEl = document.createElement('div');
         documentNameEl.className = 'document-name';
         documentNameEl.textContent = documentName;
-        
+
         const documentMeta = document.createElement('div');
         documentMeta.className = 'document-meta';
         documentMeta.textContent = 'Документ загружен';
-        
+
         documentDetails.appendChild(documentNameEl);
         documentDetails.appendChild(documentMeta);
-        
+
         const documentActions = document.createElement('div');
         documentActions.className = 'document-actions';
-        
+
         const viewBtn = document.createElement('button');
         viewBtn.className = 'document-action-btn';
         viewBtn.innerHTML = '👁️';
         viewBtn.title = 'Просмотреть документ';
         viewBtn.addEventListener('click', () => this.viewDocument(documentId));
-        
+
         documentActions.appendChild(viewBtn);
-        
+
         documentInfo.appendChild(documentIcon);
         documentInfo.appendChild(documentDetails);
         documentInfo.appendChild(documentActions);
-        
+
         bubble.appendChild(documentInfo);
 
         const time = document.createElement('div');
@@ -1211,15 +1361,214 @@ class WindexAI {
         // Open document in new tab
         window.open(`/api/documents/${documentId}`, '_blank');
     }
+
+    showProfileModal() {
+        if (this.profileModal) {
+            // Populate profile data
+            const usernameSpan = document.getElementById('profile-username');
+            const emailSpan = document.getElementById('profile-email');
+            if (this.authManager.user) {
+                if (usernameSpan) usernameSpan.textContent = this.authManager.user.username;
+                if (emailSpan) emailSpan.textContent = this.authManager.user.email;
+            }
+            this.profileModal.classList.remove('hidden');
+        }
+    }
+
+    hideProfileModal() {
+        if (this.profileModal) {
+            this.profileModal.classList.add('hidden');
+        }
+    }
+
+    // Connect Modal Functions
+    showConnectModal() {
+        if (this.connectModal) {
+            this.connectModal.classList.remove('hidden');
+            this.connectionCodeInput.focus();
+            this.resetConnectModal();
+        }
+    }
+
+    hideConnectModal() {
+        if (this.connectModal) {
+            this.connectModal.classList.add('hidden');
+            this.resetConnectModal();
+        }
+    }
+
+    resetConnectModal() {
+        if (this.connectionCodeInput) {
+            this.connectionCodeInput.value = '';
+        }
+        if (this.connectBtnModal) {
+            this.connectBtnModal.disabled = true;
+        }
+        if (this.connectionStatus) {
+            this.connectionStatus.style.display = 'none';
+        }
+        if (this.connectionResult) {
+            this.connectionResult.style.display = 'none';
+        }
+    }
+
+    validateConnectionCode() {
+        const code = this.connectionCodeInput.value.trim();
+        const isValid = /^[a-zA-Z0-9]+$/.test(code) && code.length >= 4;
+
+        if (this.testConnectionBtn) {
+            this.testConnectionBtn.disabled = !isValid;
+        }
+
+        return isValid;
+    }
+
+    async testConnection() {
+        const code = this.connectionCodeInput.value.trim();
+        if (!this.validateConnectionCode()) {
+            return;
+        }
+
+        // Показываем статус загрузки
+        if (this.connectionStatus) {
+            this.connectionStatus.style.display = 'block';
+        }
+        if (this.connectionResult) {
+            this.connectionResult.style.display = 'none';
+        }
+
+        try {
+            // Симулируем проверку подключения
+            const response = await fetch('/api/chat/test-connection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('windexai_token')}`
+                },
+                body: JSON.stringify({ connectionCode: code })
+            });
+
+            const result = await response.json();
+
+            // Скрываем статус загрузки
+            if (this.connectionStatus) {
+                this.connectionStatus.style.display = 'none';
+            }
+
+            // Показываем результат
+            if (this.connectionResult) {
+                this.connectionResult.style.display = 'block';
+
+                if (response.ok && result.success) {
+                    this.connectionResult.innerHTML = `
+                        <div class="alert alert-success">
+                            <div class="d-flex align-items-center">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                                </svg>
+                                <div>
+                                    <strong>Подключение успешно!</strong><br>
+                                    <small>${result.message || 'Чат доступен для подключения'}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (this.connectBtnModal) {
+                        this.connectBtnModal.disabled = false;
+                    }
+                } else {
+                    this.connectionResult.innerHTML = `
+                        <div class="alert alert-danger">
+                            <div class="d-flex align-items-center">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                                <div>
+                                    <strong>Ошибка подключения</strong><br>
+                                    <small>${result.message || 'Неверный код подключения'}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+        } catch (error) {
+            console.error('Connection test error:', error);
+
+            // Скрываем статус загрузки
+            if (this.connectionStatus) {
+                this.connectionStatus.style.display = 'none';
+            }
+
+            // Показываем ошибку
+            if (this.connectionResult) {
+                this.connectionResult.style.display = 'block';
+                this.connectionResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        <div class="d-flex align-items-center">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            <div>
+                                <strong>Ошибка сети</strong><br>
+                                <small>Не удалось проверить подключение</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    async connectToChat() {
+        const code = this.connectionCodeInput.value.trim();
+        if (!this.validateConnectionCode()) {
+            return;
+        }
+
+        try {
+            // Подключаемся к чату
+            const response = await fetch('/api/chat/connect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('windexai_token')}`
+                },
+                body: JSON.stringify({ connectionCode: code })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Успешное подключение
+                this.hideConnectModal();
+                this.addMessage('assistant', `✅ Подключение к чату "${result.chatName || 'Внешний чат'}" установлено!`);
+                showNotification('Подключение к чату установлено', 'success');
+            } else {
+                showNotification(result.message || 'Ошибка подключения', 'error');
+            }
+
+        } catch (error) {
+            console.error('Connect error:', error);
+            showNotification('Ошибка подключения к чату', 'error');
+        }
+    }
 }
 
 // Notification system
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    
+
     const icon = type === 'success' ? '✓' : '✕';
-    
+
     notification.innerHTML = `
         <div class="notification-content">
             <div class="notification-icon">${icon}</div>
@@ -1227,14 +1576,14 @@ function showNotification(message, type = 'success') {
             <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
         </div>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Show notification
     setTimeout(() => {
         notification.classList.add('show');
     }, 100);
-    
+
     // Auto remove after 5 seconds
     setTimeout(() => {
         notification.classList.remove('show');
@@ -1249,7 +1598,7 @@ function showNotification(message, type = 'success') {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const authManager = new AuthManager();
-    
+
     // Initialize WindexAI only after authentication
     authManager.showMainApp = function() {
         document.getElementById('auth-modal').style.display = 'none';
@@ -1259,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.windexAI = new WindexAI(authManager);
         }
     };
-    
+
     // Auth form handlers
     const loginForm = document.getElementById('login-form-element');
     const registerForm = document.getElementById('register-form-element');
@@ -1267,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginLink = document.getElementById('show-login');
     const loginFormDiv = document.getElementById('login-form');
     const registerFormDiv = document.getElementById('register-form');
-    
+
     // Debug: Check if all auth elements are found
 
     // Show register form
@@ -1276,13 +1625,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         loginFormDiv.style.opacity = '0';
         loginFormDiv.style.transform = 'translateX(-20px)';
-        
+
         setTimeout(() => {
             loginFormDiv.classList.add('hidden');
             registerFormDiv.classList.remove('hidden');
             registerFormDiv.style.opacity = '0';
             registerFormDiv.style.transform = 'translateX(20px)';
-            
+
             setTimeout(() => {
                 registerFormDiv.style.opacity = '1';
                 registerFormDiv.style.transform = 'translateX(0)';
@@ -1297,13 +1646,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         registerFormDiv.style.opacity = '0';
         registerFormDiv.style.transform = 'translateX(-20px)';
-        
+
         setTimeout(() => {
             registerFormDiv.classList.add('hidden');
             loginFormDiv.classList.remove('hidden');
             loginFormDiv.style.opacity = '0';
             loginFormDiv.style.transform = 'translateX(20px)';
-            
+
             setTimeout(() => {
                 loginFormDiv.style.opacity = '1';
                 loginFormDiv.style.transform = 'translateX(0)';
@@ -1319,17 +1668,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
         const submitBtn = loginForm.querySelector('button[type="submit"]');
-        
+
         if (!submitBtn) {
             console.error('Submit button not found');
             return;
         }
-        
+
         // Show loading state
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Вход...';
-        
+
         try {
             await authManager.login(username, password);
         } catch (error) {
@@ -1350,29 +1699,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
         const submitBtn = registerForm.querySelector('button[type="submit"]');
-        
+
         if (!submitBtn) {
             console.error('Submit button not found');
             return;
         }
-        
+
         // Show loading state
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Регистрация...';
-        
+
         try {
             await authManager.register(username, email, password);
             showNotification('Регистрация успешна! Теперь войдите в систему.', 'success');
             registerFormDiv.style.opacity = '0';
             registerFormDiv.style.transform = 'translateX(-20px)';
-            
+
             setTimeout(() => {
                 registerFormDiv.classList.add('hidden');
                 loginFormDiv.classList.remove('hidden');
                 loginFormDiv.style.opacity = '0';
                 loginFormDiv.style.transform = 'translateX(20px)';
-                
+
                 setTimeout(() => {
                     loginFormDiv.style.opacity = '1';
                     loginFormDiv.style.transform = 'translateX(0)';
@@ -1438,13 +1787,13 @@ function copyCodeToClipboard(button) {
     const codeBlock = button.closest('.code-block');
     const codeElement = codeBlock.querySelector('code');
     const codeText = codeElement.textContent;
-    
+
     navigator.clipboard.writeText(codeText).then(() => {
         // Показываем успешное копирование
         const originalText = button.textContent;
         button.textContent = '✅ Скопировано';
         button.classList.add('copied');
-        
+
         // Возвращаем исходный текст через 2 секунды
         setTimeout(() => {
             button.textContent = originalText;
@@ -1457,4 +1806,174 @@ function copyCodeToClipboard(button) {
             button.textContent = '📋 Копировать';
         }, 2000);
     });
+}
+
+// Функция для прокрутки карточек специалистов
+function scrollSpecialists(direction) {
+    const grid = document.getElementById('specialistsGrid');
+    if (!grid) return;
+
+    const scrollAmount = 300; // Количество пикселей для прокрутки
+    const currentScroll = grid.scrollLeft;
+
+    if (direction === 'left') {
+        grid.scrollTo({
+            left: currentScroll - scrollAmount,
+            behavior: 'smooth'
+        });
+    } else if (direction === 'right') {
+        grid.scrollTo({
+            left: currentScroll + scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Обновление видимости кнопок прокрутки
+function updateScrollButtons() {
+    const grid = document.getElementById('specialistsGrid');
+    const leftBtn = document.querySelector('.scroll-left');
+    const rightBtn = document.querySelector('.scroll-right');
+
+    if (!grid || !leftBtn || !rightBtn) return;
+
+    const isScrollable = grid.scrollWidth > grid.clientWidth;
+    const isAtStart = grid.scrollLeft <= 0;
+    const isAtEnd = grid.scrollLeft >= (grid.scrollWidth - grid.clientWidth);
+
+    // Показываем/скрываем кнопки в зависимости от возможности прокрутки
+    leftBtn.style.display = isScrollable ? 'flex' : 'none';
+    rightBtn.style.display = isScrollable ? 'flex' : 'none';
+
+    // Отключаем кнопки в крайних позициях
+    leftBtn.disabled = isAtStart;
+    rightBtn.disabled = isAtEnd;
+
+    // Добавляем/убираем классы для стилизации
+    leftBtn.classList.toggle('disabled', isAtStart);
+    rightBtn.classList.toggle('disabled', isAtEnd);
+}
+
+// Инициализация прокрутки при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    const grid = document.getElementById('specialistsGrid');
+    if (grid) {
+        // Обновляем кнопки при загрузке
+        updateScrollButtons();
+
+        // Обновляем кнопки при прокрутке
+        grid.addEventListener('scroll', updateScrollButtons);
+
+        // Обновляем кнопки при изменении размера окна
+        window.addEventListener('resize', updateScrollButtons);
+    }
+
+    // Обработчик клика по карточке Pro модели - удалён, теперь доступ проверяется через selectModel
+    // const proModelCard = document.querySelector('.pro-model');
+    // if (proModelCard) {
+    //     proModelCard.addEventListener('click', function(e) {
+    //         e.preventDefault();
+    //         window.location.href = '/pricing';
+    //     });
+    // }
+});
+
+// Pro Subscription Modal Functions
+function showProSubscriptionModal() {
+    // Создаем модальное окно для Pro подписки
+    const modal = document.createElement('div');
+    modal.id = 'pro-subscription-modal';
+    modal.className = 'connect-modal';
+    modal.innerHTML = `
+        <div class="connect-modal-content card">
+            <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="mb-0">🚀 WindexAI Pro</h2>
+                    <button class="close-pro-modal btn btn-outline" title="Закрыть">×</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <p class="text-muted mb-3">Для использования WindexAI Pro требуется активная подписка:</p>
+                    <ul class="list-unstyled">
+                        <li>✅ Расширенные возможности</li>
+                        <li>✅ Безлимитные запросы</li>
+                        <li>✅ Приоритетная поддержка</li>
+                        <li>✅ Голосовые сообщения</li>
+                        <li>✅ Обработка документов</li>
+                    </ul>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button id="upgrade-to-pro-btn" class="btn btn-primary flex-fill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                        Перейти к тарифам
+                    </button>
+                    <button id="use-lite-model-btn" class="btn btn-outline flex-fill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M9 12l2 2 4-4"></path>
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        Использовать Lite
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Обработчики событий
+    modal.querySelector('.close-pro-modal').addEventListener('click', () => {
+        hideProSubscriptionModal();
+    });
+
+    modal.querySelector('#upgrade-to-pro-btn').addEventListener('click', () => {
+        window.location.href = '/pricing';
+    });
+
+    modal.querySelector('#use-lite-model-btn').addEventListener('click', () => {
+        // Выбираем Lite модель
+        if (window.chatApp && window.chatApp.selectModel) {
+            window.chatApp.selectModel('gpt-4o-mini');
+        }
+        hideProSubscriptionModal();
+    });
+
+    // Показываем модальное окно
+    modal.classList.remove('hidden');
+}
+
+function hideProSubscriptionModal() {
+    const modal = document.getElementById('pro-subscription-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function checkProSubscription() {
+    try {
+        const token = localStorage.getItem('windexai_token');
+        if (!token) {
+            return false;
+        }
+
+        const response = await fetch('/api/auth/subscription-status', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const status = await response.json();
+            return status.plan === 'pro' && status.is_active;
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Ошибка проверки подписки:', error);
+        return false;
+    }
 }

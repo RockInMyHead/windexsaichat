@@ -7,4 +7,3 @@ tunnels:
     subdomain: windexai-chat  # Опционально, если у вас есть платный план
     inspect: false
     bind_tls: true
-

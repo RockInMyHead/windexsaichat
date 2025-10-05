@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы WindexsAI - Выберите подходящий план</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="pricing-page">
+        <!-- Header -->
+        <header class="pricing-header">
+            <div class="container">
+                <div class="header-content">
+                    <a href="/" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Назад к чату
+                    </a>
+                    <h1 class="pricing-title">Тарифы WindexsAI</h1>
+                    <p class="pricing-subtitle">Выберите подходящий план для максимальной продуктивности</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Pricing Cards -->
+        <main class="pricing-main">
+            <div class="container">
+                <div class="pricing-cards">
+                    <!-- Free Plan -->
+                    <div class="pricing-card">
+                        <div class="card-header">
+                            <h3 class="plan-name">WindexsAI Lite</h3>
+                            <div class="plan-price">
+                                <span class="currency">₽</span>
+                                <span class="amount">0</span>
+                                <span class="period">/месяц</span>
+                            </div>
+                            <p class="plan-description">Базовые возможности для повседневных задач</p>
+                        </div>
+                        <div class="card-body">
+                            <ul class="features-list">
+                                <li><i class="fas fa-check"></i> Доступ к WindexAI Lite</li>
+                                <li><i class="fas fa-check"></i> 100 запросов в день</li>
+                                <li><i class="fas fa-check"></i> Базовая поддержка</li>
+                                <li><i class="fas fa-check"></i> История чатов</li>
+                                <li><i class="fas fa-check"></i> Экспорт данных</li>
+                                <li><i class="fas fa-check"></i> AI-генератор веб-сайтов</li>
+                                <li><i class="fas fa-check"></i> Деплой на домене Windexs</li>
+                            </ul>
+                            <button class="btn btn-outline plan-btn" onclick="selectPlan('free')">
+                                Текущий план
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pro Plan -->
+                    <div class="pricing-card pro-card featured">
+                        <div class="card-header">
+                            <h3 class="plan-name">WindexsAI Pro</h3>
+                            <div class="plan-price">
+                                <span class="currency">₽</span>
+                                <span class="amount">2,990</span>
+                                <span class="period">/месяц</span>
+                            </div>
+                            <p class="plan-description">Расширенные возможности для профессионалов</p>
+                        </div>
+                        <div class="card-body">
+                            <ul class="features-list">
+                                <li><i class="fas fa-check"></i> Доступ к WindexAI Pro</li>
+                                <li><i class="fas fa-check"></i> Безлимитные запросы</li>
+                                <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
+                                <li><i class="fas fa-check"></i> Голосовые сообщения</li>
+                                <li><i class="fas fa-check"></i> Обработка документов</li>
+                                <li><i class="fas fa-check"></i> AI редактор сайтов</li>
+                                <li><i class="fas fa-check"></i> Автоматический деплой</li>
+                                <li><i class="fas fa-check"></i> Расширенная аналитика</li>
+                            </ul>
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('pro')">
+                                Выбрать Pro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="faq-section">
+                    <h2 class="faq-title">Часто задаваемые вопросы</h2>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Можно ли изменить план в любое время?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, вы можете изменить или отменить подписку в любое время. Изменения вступят в силу в следующем биллинговом цикле.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Есть ли пробный период?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, мы предлагаем 14-дневный бесплатный пробный период для всех платных планов без обязательств.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Какие способы оплаты принимаются?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Мы принимаем все основные кредитные карты, PayPal, банковские переводы и корпоративные счета.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // FAQ Toggle
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                const answer = faqItem.querySelector('.faq-answer');
+                const icon = question.querySelector('i');
+                
+                faqItem.classList.toggle('active');
+                
+                if (faqItem.classList.contains('active')) {
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    answer.style.maxHeight = '0';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
+
+        // Plan Selection
+        async function selectPlan(plan) {
+            if (plan === 'free') {
+                alert('Вы уже используете бесплатный план!');
+                return;
+            }
+            
+            if (plan === 'pro') {
+                try {
+                    // Показываем индикатор загрузки
+                    const proButton = document.querySelector('button[onclick="selectPlan(\'pro\')"]');
+                    const originalText = proButton.textContent;
+                    proButton.textContent = 'Активация...';
+                    proButton.disabled = true;
+                    
+                    // Получаем токен авторизации
+                    const token = localStorage.getItem('windexai_token');
+                    if (!token) {
+                        alert('Необходимо войти в систему для активации подписки');
+                        window.location.href = '/';
+                        return;
+                    }
+                    
+                    // Отправляем запрос на активацию Pro подписки
+                    const response = await fetch('/api/auth/activate-subscription', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ plan: 'pro' })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        // Успешная активация
+                        showSuccessNotification(result.message);
+                        
+                        // Обновляем кнопку
+                        proButton.textContent = 'Активен';
+                        proButton.classList.remove('btn-primary');
+                        proButton.classList.add('btn-success');
+                        
+                        // Обновляем статус на странице
+                        updateSubscriptionStatus(result.plan, result.expires_at);
+                        
+                        // Перенаправляем на главную страницу через 2 секунды
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                        
+                    } else {
+                        // Ошибка активации
+                        showErrorNotification(result.message || 'Ошибка активации подписки');
+                        proButton.textContent = originalText;
+                        proButton.disabled = false;
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка активации подписки:', error);
+                    showErrorNotification('Ошибка сети при активации подписки');
+                    
+                    // Восстанавливаем кнопку
+                    const proButton = document.querySelector('button[onclick="selectPlan(\'pro\')"]');
+                    proButton.textContent = 'Выбрать Pro';
+                    proButton.disabled = false;
+                }
+            }
+        }
+        
+        // Функция для показа уведомлений
+        function showSuccessNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification success';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Анимация появления
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        function showErrorNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification error';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Анимация появления
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Функция для обновления статуса подписки на странице
+        function updateSubscriptionStatus(plan, expiresAt) {
+            if (plan === 'pro') {
+                // Обновляем заголовок Pro плана
+                const proCard = document.querySelector('.pro-card');
+                const planName = proCard.querySelector('.plan-name');
+                planName.innerHTML = 'WindexsAI Pro <span class="badge badge-success">Активен</span>';
+                
+                // Показываем дату истечения
+                if (expiresAt) {
+                    const expiresDate = new Date(expiresAt);
+                    const expiresText = `Действует до: ${expiresDate.toLocaleDateString('ru-RU')}`;
+                    
+                    const planDescription = proCard.querySelector('.plan-description');
+                    planDescription.innerHTML = `${planDescription.textContent}<br><small class="text-success">${expiresText}</small>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

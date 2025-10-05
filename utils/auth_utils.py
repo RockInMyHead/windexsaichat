@@ -1,9 +1,10 @@
-from passlib.context import CryptContext
-from jose import JWTError, jwt
+import os
 from datetime import datetime, timedelta
 from typing import Optional
-import os
+
 from dotenv import load_dotenv
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 load_dotenv()
 
@@ -15,13 +16,24 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    # Bcrypt has a maximum password length of 72 bytes
+    # Truncate to match what was hashed
+    password_bytes = plain_password.encode('utf-8')[:72]
+    password_truncated = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(password_truncated, hashed_password)
+
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
-    return pwd_context.hash(password)
+    # Bcrypt has a maximum password length of 72 bytes
+    # Truncate if necessary to avoid errors
+    password_bytes = password.encode('utf-8')[:72]
+    password_truncated = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(password_truncated)
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token"""
@@ -34,6 +46,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 def decode_token(token: str) -> Optional[dict]:
     """Decode and validate a JWT token"""
     try:
@@ -42,11 +55,12 @@ def decode_token(token: str) -> Optional[dict]:
     except JWTError:
         return None
 
+
 # Export constants
 __all__ = [
-    'verify_password', 
-    'get_password_hash', 
-    'create_access_token', 
-    'decode_token',
-    'ACCESS_TOKEN_EXPIRE_MINUTES'
+    "verify_password",
+    "get_password_hash",
+    "create_access_token",
+    "decode_token",
+    "ACCESS_TOKEN_EXPIRE_MINUTES",
 ]

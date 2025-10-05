@@ -21,6 +21,30 @@ class Dashboard {
     }
 
     bindEvents() {
+        // User info click handlers
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const profileModal = document.getElementById('profile-modal');
+        const closeProfileBtn = document.querySelector('.close-profile');
+
+        if (userAvatar) {
+            userAvatar.addEventListener('click', () => {
+                this.showProfileModal();
+            });
+        }
+
+        if (userName) {
+            userName.addEventListener('click', () => {
+                this.showProfileModal();
+            });
+        }
+
+        if (closeProfileBtn) {
+            closeProfileBtn.addEventListener('click', () => {
+                this.hideProfileModal();
+            });
+        }
+
         // Кнопка выхода
 
         // Модальное окно удаления
@@ -48,13 +72,13 @@ class Dashboard {
         try {
             // Загружаем общую статистику
             await this.loadOverview();
-            
+
             // Загружаем деплои
             await this.loadDeployments();
-            
+
             // Инициализируем график
             this.initChart();
-            
+
         } catch (error) {
             console.error('Error loading dashboard data:', error);
             this.showError('Не удалось загрузить данные дашборда');
@@ -86,7 +110,7 @@ class Dashboard {
         document.getElementById('total-views').textContent = data.total_views.toLocaleString();
         document.getElementById('total-visitors').textContent = data.total_visitors.toLocaleString();
         document.getElementById('success-rate').textContent = `${data.success_rate}%`;
-        
+
         // Обновляем изменения (демо-данные)
         document.getElementById('views-change').textContent = `+${Math.floor(Math.random() * 20 + 5)}% за неделю`;
         document.getElementById('visitors-change').textContent = `+${Math.floor(Math.random() * 15 + 3)}% за неделю`;
@@ -149,11 +173,11 @@ class Dashboard {
                     <h3 class="deployment-title">${deployment.title}</h3>
                     <span class="deployment-status ${statusClass}">${statusText}</span>
                 </div>
-                
+
                 <a href="${deployment.deploy_url}" target="_blank" class="deployment-url">
                     ${deployment.deploy_url}
                 </a>
-                
+
                 <div class="deployment-stats">
                     <div class="deployment-stat">
                         <div class="deployment-stat-value">${deployment.analytics.page_views}</div>
@@ -172,7 +196,7 @@ class Dashboard {
                         <div class="deployment-stat-label">Ошибки</div>
                     </div>
                 </div>
-                
+
                 <div class="deployment-actions">
                     <a href="${deployment.deploy_url}" target="_blank" class="deployment-btn primary">
                         👁️ Открыть
@@ -239,12 +263,12 @@ class Dashboard {
 
     initChart() {
         const ctx = document.getElementById('analytics-chart').getContext('2d');
-        
+
         // Демо-данные для графика
         const labels = [];
         const viewsData = [];
         const visitorsData = [];
-        
+
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
@@ -336,6 +360,27 @@ class Dashboard {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+
+    showProfileModal() {
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal) {
+            // Populate profile data
+            const usernameSpan = document.getElementById('profile-username');
+            const emailSpan = document.getElementById('profile-email');
+            if (this.user) {
+                if (usernameSpan) usernameSpan.textContent = this.user.username;
+                if (emailSpan) emailSpan.textContent = this.user.email;
+            }
+            profileModal.classList.remove('hidden');
+        }
+    }
+
+    hideProfileModal() {
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal) {
+            profileModal.classList.add('hidden');
+        }
     }
 }
 

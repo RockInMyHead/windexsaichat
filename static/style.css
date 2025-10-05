@@ -9,7 +9,7 @@
   --primary-green-dark: #059669;
   --secondary-green: #6ee7b7;
   --accent-green: #a7f3d0;
-  
+
   /* Нейтральные цвета */
     --white: #ffffff;
     --gray-50: #f9fafb;
@@ -22,25 +22,25 @@
     --gray-700: #374151;
     --gray-800: #1f2937;
     --gray-900: #111827;
-    
+
   /* Семантические цвета */
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
-  
+
   /* Тени */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  
+
   /* Радиусы */
     --radius-sm: 0.375rem;
     --radius-md: 0.5rem;
     --radius-lg: 0.75rem;
     --radius-xl: 1rem;
-    
+
   /* Переходы */
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 250ms ease-in-out;
@@ -266,6 +266,7 @@
   font-weight: 600;
   font-size: 0.95rem;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -278,6 +279,7 @@
   color: var(--gray-700);
   font-weight: 500;
   font-size: 0.9rem;
+  cursor: pointer;
   transition: color 0.3s ease;
 }
 
@@ -287,39 +289,39 @@
     padding: 0 1rem;
     height: 64px;
   }
-  
+
   .header-nav {
     gap: 1rem;
   }
-  
+
   .nav-links {
     gap: 0.5rem;
   }
-  
+
   .nav-link {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
   }
-  
+
   .header-btn {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
   }
-  
+
   .logo-text {
     font-size: 1.3rem;
   }
-  
+
   .logo-icon {
     width: 32px;
     height: 32px;
     font-size: 1.1rem;
   }
-  
+
   .user-info {
     padding: 0.5rem 1rem;
   }
-  
+
   .user-avatar {
     width: 30px;
     height: 30px;
@@ -331,28 +333,28 @@
   .nav-links {
     display: none;
   }
-  
+
   .header-actions {
     gap: 0.5rem;
   }
-  
+
   .user-info {
     padding: 0.4rem 0.8rem;
   }
-  
+
   .user-name {
     display: none;
   }
-  
+
   .header-btn {
     padding: 0.5rem 0.8rem;
     font-size: 0.75rem;
   }
-  
+
   .logo-text {
     font-size: 1.1rem;
   }
-  
+
   .logo-icon {
     width: 28px;
     height: 28px;
@@ -504,6 +506,13 @@ a:hover {
     color: var(--gray-800);
   transition: all var(--transition-fast);
   font-family: inherit;
+  /* Скрываем скроллбар для textarea */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.form-input::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .form-input:focus {
@@ -672,25 +681,25 @@ a:hover {
   .container {
     padding: 0 0.75rem;
   }
-  
+
   h1 {
     font-size: 2rem;
   }
-  
+
   h2 {
     font-size: 1.75rem;
   }
-  
+
   .btn {
     padding: 0.625rem 1.25rem;
     font-size: 0.8125rem;
   }
-  
+
   .card-header,
   .card-body {
     padding: 1rem;
   }
-  
+
   .navbar-nav {
     gap: 1rem;
   }
@@ -700,11 +709,11 @@ a:hover {
   h1 {
     font-size: 1.75rem;
   }
-  
+
   h2 {
         font-size: 1.5rem;
     }
-    
+
   .btn {
     padding: 0.5rem 1rem;
     font-size: 0.75rem;
@@ -940,6 +949,13 @@ a:hover {
   font-family: inherit;
   box-sizing: border-box;
   min-height: 44px;
+  /* Скрываем скроллбар для textarea */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.form-input::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .form-input:focus {
@@ -974,6 +990,111 @@ a:hover {
   max-width: 500px;
   width: 90%;
   margin: 0 auto;
+}
+
+/* Connect Modal Styles */
+.connect-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.connect-modal-content {
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto;
+}
+
+.connection-status .spinner-border {
+    width: 1rem;
+    height: 1rem;
+}
+
+.connection-result .alert {
+    margin-bottom: 0;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+.flex-fill {
+    flex: 1;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 400px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.notification-content i {
+    font-size: 1.25rem;
+}
+
+/* Badge styles */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.badge-success {
+    background: #10b981;
+    color: white;
+}
+
+.badge-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.badge-danger {
+    background: #ef4444;
+    color: white;
 }
 
 /* Главное приложение */
@@ -1115,10 +1236,31 @@ a:hover {
 
 .chat-container {
   flex: 1;
-    display: flex;
+  display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-green-light) transparent;
+}
+
+.chat-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+  background: var(--primary-green-light);
+  border-radius: 4px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green);
 }
 
 .welcome-message {
@@ -1128,7 +1270,7 @@ a:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .welcome-icon {
@@ -1148,6 +1290,40 @@ a:hover {
   max-width: 400px;
   cursor: pointer;
   transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.pro-model {
+  border-color: var(--primary-green-light);
+  background: linear-gradient(135deg, var(--white), var(--primary-green-light-10));
+}
+
+.pro-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+  color: white;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 0 0.5rem 0 0.5rem;
+  z-index: 10;
+  box-shadow: var(--shadow-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pro-model:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-green);
+}
+
+.pro-model:hover .pro-badge {
+  background: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green));
+  transform: scale(1.05);
 }
 
 .model-card:hover {
@@ -1160,6 +1336,187 @@ a:hover {
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
+}
+
+/* AI Specialists Gallery Styles */
+.ai-specialists-gallery {
+  margin-bottom: 2rem;
+}
+
+.specialists-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scroll-btn {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.scroll-btn:hover {
+  background: var(--primary-green-dark);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.scroll-btn:active {
+  transform: scale(0.95);
+}
+
+.scroll-btn.disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.scroll-btn.disabled:hover {
+  background: var(--gray-300);
+  transform: none;
+  box-shadow: var(--shadow-md);
+}
+
+.scroll-btn i {
+  font-size: 0.9rem;
+}
+
+.scroll-left {
+  margin-right: 0.5rem;
+}
+
+.scroll-right {
+  margin-left: 0.5rem;
+}
+
+.specialists-grid {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-green-light) transparent;
+}
+
+.specialists-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.specialists-grid::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.specialists-grid::-webkit-scrollbar-thumb {
+  background: var(--primary-green-light);
+  border-radius: 4px;
+}
+
+.specialists-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green);
+}
+
+.specialist-card {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.specialist-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  z-index: 1;
+}
+
+.specialist-card:hover::before {
+  opacity: 0.05;
+}
+
+.specialist-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-green-light);
+}
+
+.specialist-card .card-body {
+  position: relative;
+  z-index: 2;
+}
+
+.specialist-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.specialist-card h3 {
+  color: var(--gray-800);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.specialist-card p {
+  color: var(--gray-600);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.specialist-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.skill-tag {
+  background: var(--primary-green-light);
+  color: var(--white);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.specialist-card:hover .skill-tag {
+  background: var(--primary-green);
+  transform: scale(1.05);
+}
+
+.classic-models-section {
+  border-top: 1px solid var(--gray-200);
+  padding-top: 2rem;
+}
+
+.classic-models-section h4 {
+  color: var(--gray-700);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
 }
 
 .capability {
@@ -1187,6 +1544,13 @@ a:hover {
   min-height: 44px;
   max-height: 200px;
   line-height: 1.5;
+  /* Скрываем скроллбар */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.input-container textarea::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .input-footer {
@@ -1979,7 +2343,7 @@ a:hover {
   font-size: 0.875rem;
         color: var(--gray-800);
     }
-    
+
 .model-details p {
   margin: 0;
   font-size: 0.75rem;
@@ -1993,57 +2357,57 @@ a:hover {
     padding: 1rem;
     gap: 1rem;
     }
-    
+
     .sidebar {
         width: 100%;
     max-height: none;
     }
-    
+
     .chat-area {
     height: calc(100vh - 120px);
     }
-    
+
     .model-cards {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .model-card {
     min-width: 100%;
     max-width: 100%;
     }
-    
+
     .welcome-message {
     padding: 1rem;
     }
-    
+
     .welcome-icon {
         font-size: 3rem;
     }
-    
+
   .preview-frame {
     height: 300px;
   }
-  
+
   .code-block {
     font-size: 0.75rem;
     padding: 1rem;
     }
-    
+
     .message-content {
     max-width: 85%;
     }
-    
+
     .message-avatar {
     width: 32px;
     height: 32px;
     font-size: 1rem;
   }
-  
+
   .typing-indicator {
     margin-left: 44px;
   }
-  
+
   .chat-messages {
     padding: 0.5rem;
     }
@@ -2053,19 +2417,19 @@ a:hover {
   .main-content {
     padding: 0.75rem;
     }
-    
+
     .welcome-message {
     padding: 0.75rem;
     }
-    
+
     .welcome-icon {
     font-size: 2.5rem;
   }
-  
+
   .preview-frame {
     height: 250px;
   }
-  
+
   .btn {
     padding: 0.625rem 1rem;
     font-size: 0.8125rem;
@@ -2436,22 +2800,22 @@ a:hover {
     gap: var(--spacing-2);
     text-align: center;
   }
-  
+
   .voice-controls {
     justify-content: center;
   }
-  
+
   .upload-content {
     flex-direction: column;
     gap: var(--spacing-2);
     text-align: center;
   }
-  
+
   .document-info {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .document-actions {
     align-self: flex-end;
   }
@@ -2467,7 +2831,7 @@ a:hover {
   .preview-frame {
     height: 250px;
   }
-  
+
   .btn {
     padding: 0.625rem 1rem;
     font-size: 0.8125rem;
@@ -2838,22 +3202,22 @@ a:hover {
     gap: var(--spacing-2);
     text-align: center;
   }
-  
+
   .voice-controls {
     justify-content: center;
   }
-  
+
   .upload-content {
     flex-direction: column;
     gap: var(--spacing-2);
     text-align: center;
   }
-  
+
   .document-info {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .document-actions {
     align-self: flex-end;
   }
@@ -2864,4 +3228,361 @@ a:hover {
   background: var(--white);
   border: 1px solid var(--gray-200);
   color: var(--gray-800);
+}
+
+/* Адаптивные стили для AI Specialists */
+@media (max-width: 768px) {
+  .specialists-container {
+    gap: 0.5rem;
+  }
+
+  .scroll-btn {
+    width: 35px;
+    height: 35px;
+  }
+
+  .scroll-btn i {
+    font-size: 0.8rem;
+  }
+
+  .specialists-grid {
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .specialist-card {
+    min-width: 260px;
+  }
+
+  .specialist-icon {
+    font-size: 2.5rem;
+  }
+
+  .specialist-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .specialist-card p {
+    font-size: 0.85rem;
+  }
+
+  .skill-tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+}
+
+/* Стили для страницы тарификации */
+.pricing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--gray-50), var(--white));
+}
+
+.pricing-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 2rem 0;
+}
+
+.header-content {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-green);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  transition: all var(--transition-normal);
+}
+
+.back-btn:hover {
+  color: var(--primary-green-dark);
+  transform: translateX(-4px);
+}
+
+.pricing-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pricing-subtitle {
+  font-size: 1.2rem;
+  color: var(--gray-600);
+  margin-bottom: 0;
+}
+
+.pricing-main {
+  padding: 4rem 0;
+}
+
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto 4rem;
+}
+
+.pricing-card {
+  background: var(--white);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+}
+
+.pro-card {
+  border-color: var(--primary-green-light);
+  transform: scale(1.05);
+  margin-top: 1rem;
+}
+
+.pro-card:hover {
+  transform: scale(1.05) translateY(-8px);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -15px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 20;
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+  padding: 2rem 2rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.plan-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 1rem;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+  margin-bottom: 1rem;
+}
+
+.currency {
+  font-size: 1.2rem;
+  color: var(--gray-600);
+}
+
+.amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+.period {
+  font-size: 1rem;
+  color: var(--gray-600);
+}
+
+.plan-description {
+  color: var(--gray-600);
+  margin-bottom: 0;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+
+.features-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+  color: var(--gray-700);
+}
+
+.features-list i {
+  color: var(--primary-green);
+  font-size: 0.9rem;
+}
+
+.plan-btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all var(--transition-normal);
+}
+
+.faq-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-title {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 3rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.faq-item {
+  background: var(--white);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.faq-question:hover {
+  background: var(--gray-50);
+}
+
+.faq-question h4 {
+  margin: 0;
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+.faq-question i {
+  color: var(--primary-green);
+  transition: transform var(--transition-normal);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-normal);
+}
+
+.faq-answer p {
+  padding: 0 1.5rem 1.5rem;
+  margin: 0;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.faq-item.active .faq-question {
+  background: var(--primary-green-light-10);
+}
+
+/* Адаптивные стили для страницы тарификации */
+@media (max-width: 768px) {
+  .pricing-title {
+    font-size: 2rem;
+  }
+
+  .pricing-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pro-card {
+    transform: none;
+    margin-top: 0;
+  }
+
+  .pro-card:hover {
+    transform: translateY(-8px);
+  }
+
+  .popular-badge {
+    top: -12px;
+    right: 15px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.7rem;
+  }
+
+  .card-header,
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .amount {
+    font-size: 2.5rem;
+  }
+}
+
+/* Стили для превью сайта в чате */
+.website-preview-container {
+  margin-top: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.website-preview-container iframe {
+  width: 100%;
+  height: 400px;
+  border: none;
+  background: white;
+  transition: height 0.3s ease;
+}
+
+.website-preview-container:hover iframe {
+  height: 500px;
+}
+
+/* Адаптивность для превью */
+@media (max-width: 768px) {
+  .website-preview-container iframe {
+    height: 300px;
+  }
+
+  .website-preview-container:hover iframe {
+    height: 350px;
+  }
 }

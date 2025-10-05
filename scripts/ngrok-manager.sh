@@ -48,14 +48,14 @@ start_ngrok() {
     fi
 
     log "Запуск ngrok туннеля для порта 8003..."
-    
+
     # Запускаем ngrok в фоне
     ngrok http 8003 --log=stdout > /dev/null 2>&1 &
     NGROK_PID=$!
-    
+
     # Ждем запуска
     sleep 3
-    
+
     # Получаем URL туннеля
     NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | python3 -c "
 import sys, json
@@ -65,16 +65,16 @@ if data['tunnels']:
 else:
     print('')
 ")
-    
+
     if [ -n "$NGROK_URL" ]; then
         log "✅ Ngrok туннель запущен!"
         info "🌐 Публичный URL: $NGROK_URL"
         info "📊 Веб-интерфейс ngrok: http://localhost:4040"
         info "🛑 Для остановки нажмите Ctrl+C"
-        
+
         # Сохраняем URL в файл
         echo "$NGROK_URL" > .ngrok_url
-        
+
         # Ждем сигнала завершения
         trap cleanup EXIT
         wait $NGROK_PID
@@ -90,13 +90,13 @@ stop_ngrok() {
         log "Остановка ngrok туннеля..."
         kill $NGROK_PID 2>/dev/null
     fi
-    
+
     # Убиваем все процессы ngrok
     pkill ngrok 2>/dev/null
-    
+
     # Удаляем файл с URL
     rm -f .ngrok_url
-    
+
     log "Ngrok туннель остановлен"
 }
 
@@ -113,7 +113,7 @@ show_status() {
     else
         warning "❌ Сервер не запущен на порту 8003"
     fi
-    
+
     if pgrep ngrok > /dev/null; then
         info "✅ Ngrok туннель активен"
         if [ -f .ngrok_url ]; then
@@ -158,4 +158,3 @@ case "$1" in
         echo "  $0 stop     # Остановить туннель"
         ;;
 esac
-

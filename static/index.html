@@ -20,7 +20,7 @@
                     </div>
                     <p class="text-muted">Добро пожаловать в будущее искусственного интеллекта</p>
                 </div>
-                
+
                 <!-- Login Form -->
                 <div id="login-form" class="auth-form">
                     <h2 class="text-center mb-4">Вход в систему</h2>
@@ -39,7 +39,7 @@
                         Нет аккаунта? <a href="#" id="show-register" class="text-primary">Зарегистрироваться</a>
                     </p>
                 </div>
-                
+
                 <!-- Register Form -->
                 <div id="register-form" class="auth-form hidden">
                     <h2 class="text-center mb-4">Регистрация</h2>
@@ -74,24 +74,19 @@
                     <div class="logo-icon">W</div>
                     <span class="logo-text">WindexsAI</span>
                 </a>
-                
+
                 <nav class="header-nav">
                     <div class="nav-links">
-                        <a href="/" class="nav-link active">🏠 Главная</a>
-                        <a href="/static/editor.html" class="nav-link">⚡ Создание сайтов</a>
-                        <a href="/static/projects.html" class="nav-link">📁 Мои проекты</a>
-                        <a href="/static/dashboard.html" class="nav-link">📊 Личный кабинет</a>
+                        <a href="/static/editor.html" class="nav-link">Создание сайтов</a>
+                        <a href="/static/projects.html" class="nav-link">Мои проекты</a>
                     </div>
                 </nav>
-                
+
                 <div class="header-actions">
                     <div class="user-info">
                         <div class="user-avatar" id="user-avatar">U</div>
                         <span class="user-name" id="user-name">Пользователь</span>
                     </div>
-                    <button id="new-chat-btn" class="header-btn primary">💬 Новый чат</button>
-                    <button id="profile-btn" class="header-btn secondary" title="Профиль">👤</button>
-                    <button id="logout-btn" class="header-btn outline" title="Выйти">🚪</button>
                 </div>
             </div>
         </header>
@@ -129,35 +124,141 @@
                 <div id="chat-container" class="chat-container flex-grow-1">
                     <!-- Welcome Message -->
                     <div id="welcome-message" class="welcome-message text-center fade-in">
-                        <div class="welcome-icon mb-4">🚀</div>
+                        <div class="welcome-icon mb-4"></div>
                         <h2 class="gradient-text mb-3">Добро пожаловать в WIndexsAI</h2>
-                        <p class="text-muted mb-5">Выберите модель и начните общение с искусственным интеллектом</p>
-                        <div class="model-cards d-flex gap-4 justify-content-center">
-                            <div class="model-card card" data-model="gpt-4o-mini">
-                                <div class="card-body text-center">
-                                    <h3 class="mb-3">WindexsAI Lite</h3>
-                                    <p class="text-muted mb-4">Быстрая и эффективная модель для повседневных задач</p>
-                                    <div class="capabilities d-flex flex-wrap gap-2 justify-content-center">
-                                        <span class="capability btn btn-outline btn-sm">Текст</span>
-                                        <span class="capability btn btn-outline btn-sm">Код</span>
-                                        <span class="capability btn btn-outline btn-sm">Анализ</span>
-                                        <span class="capability btn btn-outline btn-sm">Перевод</span>
+                        <p class="text-muted mb-5">Выберите модель для начала работы</p>
+
+                        <!-- Classic Models Section -->
+                        <div class="classic-models-section mb-5">
+                            <h4 class="mb-3">Классические модели</h4>
+                            <div class="model-cards d-flex gap-4 justify-content-center">
+                                <div class="model-card card" data-model="gpt-4o-mini">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-3">WindexsAI Lite</h3>
+                                        <p class="text-muted mb-4">Быстрая и эффективная модель для повседневных задач</p>
+                                        <div class="capabilities d-flex flex-wrap gap-2 justify-content-center">
+                                            <span class="capability btn btn-outline btn-sm">Текст</span>
+                                            <span class="capability btn btn-outline btn-sm">Код</span>
+                                            <span class="capability btn btn-outline btn-sm">Анализ</span>
+                                            <span class="capability btn btn-outline btn-sm">Перевод</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="model-card card pro-model" data-model="gpt-4o">
+                                    <div class="pro-badge">Подписка Pro</div>
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-3">WindexsAI Pro</h3>
+                                        <p class="text-muted mb-4">Продвинутая модель с расширенными возможностями</p>
+                                        <div class="capabilities d-flex flex-wrap gap-2 justify-content-center">
+                                            <span class="capability btn btn-outline btn-sm">Текст</span>
+                                            <span class="capability btn btn-outline btn-sm">Код</span>
+                                            <span class="capability btn btn-outline btn-sm">Анализ</span>
+                                            <span class="capability btn btn-outline btn-sm">Перевод</span>
+                                            <span class="capability btn btn-outline btn-sm">Креативность</span>
+                                            <span class="capability btn btn-outline btn-sm">Логика</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="model-card card" data-model="gpt-4o">
-                                <div class="card-body text-center">
-                                    <h3 class="mb-3">WindexsAI Pro</h3>
-                                    <p class="text-muted mb-4">Продвинутая модель с расширенными возможностями</p>
-                                    <div class="capabilities d-flex flex-wrap gap-2 justify-content-center">
-                                        <span class="capability btn btn-outline btn-sm">Текст</span>
-                                        <span class="capability btn btn-outline btn-sm">Код</span>
-                                        <span class="capability btn btn-outline btn-sm">Анализ</span>
-                                        <span class="capability btn btn-outline btn-sm">Перевод</span>
-                                        <span class="capability btn btn-outline btn-sm">Креативность</span>
-                                        <span class="capability btn btn-outline btn-sm">Логика</span>
+                        </div>
+
+                        <h4 class="mb-3">Специализированные AI-ассистенты</h4>
+                        <p class="text-muted mb-4">Выберите специализированного AI-ассистента для ваших задач</p>
+
+                        <!-- AI Specialists Gallery -->
+                        <div class="ai-specialists-gallery">
+                            <div class="specialists-container">
+                                <button class="scroll-btn scroll-left" onclick="scrollSpecialists('left')">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="specialists-grid" id="specialistsGrid">
+                                <!-- Ментор -->
+                                <div class="specialist-card card" data-specialist="mentor" data-model="gpt-4o">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">🎓</div>
+                                        <h3 class="mb-2">AI Ментор</h3>
+                                        <p class="text-muted mb-3">Персональный наставник для развития навыков и карьеры</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Карьерное планирование</span>
+                                            <span class="skill-tag">Обучение</span>
+                                            <span class="skill-tag">Мотивация</span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- Психолог -->
+                                <div class="specialist-card card" data-specialist="psychologist" data-model="gpt-4o">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">🧠</div>
+                                        <h3 class="mb-2">AI Психолог</h3>
+                                        <p class="text-muted mb-3">Поддержка психического здоровья и эмоционального благополучия</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Стресс-менеджмент</span>
+                                            <span class="skill-tag">Эмоции</span>
+                                            <span class="skill-tag">Саморазвитие</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Программист -->
+                                <div class="specialist-card card" data-specialist="programmer" data-model="gpt-4o">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">💻</div>
+                                        <h3 class="mb-2">AI Программист</h3>
+                                        <p class="text-muted mb-3">Эксперт по разработке и техническим решениям</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Кодинг</span>
+                                            <span class="skill-tag">Архитектура</span>
+                                            <span class="skill-tag">Отладка</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Бухгалтер -->
+                                <div class="specialist-card card" data-specialist="accountant" data-model="gpt-4o-mini">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">📊</div>
+                                        <h3 class="mb-2">AI Бухгалтер</h3>
+                                        <p class="text-muted mb-3">Финансовый консультант и эксперт по учету</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Финансы</span>
+                                            <span class="skill-tag">Налоги</span>
+                                            <span class="skill-tag">Отчетность</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Аналитик -->
+                                <div class="specialist-card card" data-specialist="analyst" data-model="gpt-4o">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">📈</div>
+                                        <h3 class="mb-2">AI Аналитик</h3>
+                                        <p class="text-muted mb-3">Специалист по анализу данных и бизнес-процессов</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Анализ данных</span>
+                                            <span class="skill-tag">Статистика</span>
+                                            <span class="skill-tag">Прогнозирование</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Универсальный -->
+                                <div class="specialist-card card" data-specialist="general" data-model="gpt-4o-mini">
+                                    <div class="card-body text-center">
+                                        <div class="specialist-icon mb-3">🤖</div>
+                                        <h3 class="mb-2">Универсальный AI</h3>
+                                        <p class="text-muted mb-3">Многофункциональный помощник для любых задач</p>
+                                        <div class="specialist-skills">
+                                            <span class="skill-tag">Общие вопросы</span>
+                                            <span class="skill-tag">Творчество</span>
+                                            <span class="skill-tag">Помощь</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                                <button class="scroll-btn scroll-right" onclick="scrollSpecialists('right')">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -201,10 +302,10 @@
                 <div class="input-area card">
                     <div class="card-body">
                         <div class="input-container d-flex align-items-end gap-3">
-                            <textarea 
-                                id="message-input" 
-                                class="form-input flex-grow-1" 
-                                placeholder="Введите ваше сообщение..." 
+                            <textarea
+                                id="message-input"
+                                class="form-input flex-grow-1"
+                                placeholder="Введите ваше сообщение..."
                                 rows="1"
                                 maxlength="4000"
                             ></textarea>
@@ -224,6 +325,19 @@
                                     <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                     <line x1="12" y1="19" x2="12" y2="23"></line>
                                     <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </button>
+                            <button id="connect-btn" class="btn btn-outline" title="Подключить к чату">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M12 1v6"></path>
+                                    <path d="M12 17v6"></path>
+                                    <path d="M4.22 4.22l4.24 4.24"></path>
+                                    <path d="M15.54 15.54l4.24 4.24"></path>
+                                    <path d="M1 12h6"></path>
+                                    <path d="M17 12h6"></path>
+                                    <path d="M4.22 19.78l4.24-4.24"></path>
+                                    <path d="M15.54 8.46l4.24-4.24"></path>
                                 </svg>
                             </button>
                             <button id="send-btn" class="btn btn-primary" disabled>
@@ -270,8 +384,64 @@
         </div>
     </div>
 
+    <!-- Connect Modal -->
+    <div id="connect-modal" class="connect-modal hidden">
+        <div class="connect-modal-content card">
+            <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="mb-0">🔗 Подключение к чату</h2>
+                    <button class="close-connect btn btn-outline" title="Закрыть">×</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <p class="text-muted mb-3">Введите код подключения для доступа к внешнему чату:</p>
+                    <div class="form-group">
+                        <label for="connection-code" class="form-label">Код подключения</label>
+                        <input
+                            type="text"
+                            id="connection-code"
+                            class="form-control"
+                            placeholder="Введите код подключения..."
+                            maxlength="50"
+                        >
+                        <div class="form-text">Код должен содержать только буквы и цифры</div>
+                    </div>
+                </div>
+
+                <div class="connection-status mb-4" id="connection-status" style="display: none;">
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Проверка подключения...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connection-result mb-4" id="connection-result" style="display: none;">
+                    <!-- Результат проверки подключения -->
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button id="test-connection-btn" class="btn btn-primary flex-fill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                        </svg>
+                        Проверить подключение
+                    </button>
+                    <button id="connect-btn-modal" class="btn btn-success flex-fill" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Подключиться
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
 </html>
-
-

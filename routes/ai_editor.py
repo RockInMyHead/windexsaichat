@@ -1,23 +1,29 @@
-import os
+# flake8: noqa
 import json
+import os
 import re
+from datetime import datetime
+from typing import Dict, List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from typing import List, Dict, Optional
-from datetime import datetime
 from sqlalchemy.orm import Session
 
-from routes.auth import get_current_user, User
+from database import Conversation as DBConversation
+from database import Message as DBMessage
+from database import get_db
+from routes.auth import User, get_current_user
 from utils.openai_client import openai_client
-from utils.web_search import search_web, format_search_results
-from database import get_db, Conversation as DBConversation, Message as DBMessage
+from utils.web_search import format_search_results, search_web
 
 router = APIRouter()
+
 
 class AIEditorRequest(BaseModel):
     messages: List[Dict[str, str]]
     model: str = "gpt-4o-mini"
     conversation_id: Optional[int] = None
+
 
 class AIEditorResponse(BaseModel):
     content: str
@@ -25,114 +31,82 @@ class AIEditorResponse(BaseModel):
     status: str
     timestamp: str
 
+
 class ElementEditRequest(BaseModel):
     element_type: str
     current_text: str
     edit_instruction: str
     html_content: str
 
+
 def should_search_web(message: str) -> bool:
     """Определяет, нужен ли веб-поиск для сообщения"""
     search_keywords = [
-        'найди', 'поиск', 'актуальн', 'новости', 'сейчас', 'сегодня', 
-        'последние', 'тренд', 'курс', 'погода', 'цены', 'события',
-        'что происходит', 'как дела', 'статистика', 'данные',
-        'информация о', 'расскажи про', 'что нового'
+        "найди",
+        "поиск",
+        "актуальн",
+        "новости",
+        "сейчас",
+        "сегодня",
+        "последние",
+        "тренд",
+        "курс",
+        "погода",
+        "цены",
+        "события",
+        "что происходит",
+        "как дела",
+        "статистика",
+        "данные",
+        "информация о",
+        "расскажи про",
+        "что нового",
     ]
-    
+
     message_lower = message.lower()
     return any(keyword in message_lower for keyword in search_keywords)
+
 
 def extract_search_query(message: str) -> str:
     """Извлекает поисковый запрос из сообщения"""
     # Убираем общие фразы и оставляем суть
     query = message
     
-    # Убираем фразы типа "найди информацию о", "расскажи про" и т.д.
-    patterns_to_remove = [
-        r'найди информацию о\s*',
-        r'расскажи про\s*',
-        r'что ты знаешь о\s*',
-        r'найди\s*',
-        r'поиск\s*',
-        r'актуальн.*информацию о\s*',
-        r'новости о\s*',
-        r'события.*о\s*'
-    ]
-    
-    for pattern in patterns_to_remove:
-        query = re.sub(pattern, '', query, flags=re.IGNORECASE)
+    # Убираем вопросительные слова
+    question_words = ["что", "как", "где", "когда", "почему", "зачем", "кто"]
+    for word in question_words:
+        query = query.replace(word, "").strip()
     
     return query.strip()
 
+
 @router.post("/api/ai-editor", response_model=AIEditorResponse)
-async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Editor endpoint for website generation with web search capability"""
-    
+async def ai_editor(
+    request: AIEditorRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Основной endpoint для AI редактора"""
     try:
-        
         # Получаем последнее сообщение пользователя
-        last_message = request.messages[-1] if request.messages else None
-        user_message = last_message.get('content', '') if last_message else ''
+        if not request.messages:
+            raise HTTPException(status_code=400, detail="No messages provided")
         
-        # Управление разговором
-        if not request.conversation_id:
-            # Создаем новый разговор для AI редактора
-            conversation = DBConversation(
-                title="Новый проект сайта",
-                conversation_type="ai_editor",
-                user_id=current_user.id
-            )
-            db.add(conversation)
-            db.commit()
-            db.refresh(conversation)
-            conversation_id = conversation.id
-        else:
-            conversation_id = request.conversation_id
-            # Проверяем, что разговор принадлежит пользователю
-            conversation = db.query(DBConversation).filter(
-                DBConversation.id == conversation_id,
-                DBConversation.user_id == current_user.id,
-                DBConversation.conversation_type == "ai_editor"
-            ).first()
-            if not conversation:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Conversation not found"
-                )
-        
-        # Добавляем сообщение пользователя в базу данных
-        if last_message and last_message.get('role') == 'user':
-            user_message_db = DBMessage(
-                role="user",
-                content=user_message,
-                conversation_id=conversation_id
-            )
-            db.add(user_message_db)
-            db.commit()
+        last_message = request.messages[-1]["content"]
         
         # Проверяем, нужен ли веб-поиск
-        web_search_results = ""
-        if last_message and last_message.get('role') == 'user' and should_search_web(user_message):
-            
-            # Извлекаем поисковый запрос
-            search_query = extract_search_query(user_message)
-            if not search_query:
-                search_query = user_message
-            
-            # Выполняем поиск
-            try:
-                search_results = search_web(search_query, num_results=3)
-                web_search_results = format_search_results(search_results)
-            except Exception as e:
-                web_search_results = "Ошибка при поиске в интернете."
+        web_search_results = None
+        if should_search_web(last_message):
+            search_query = extract_search_query(last_message)
+            search_results = await search_web(search_query)
+            web_search_results = format_search_results(search_results)
         
         # Определяем системный промт в зависимости от типа запроса
         if web_search_results:
             # Для запросов с веб-поиском
             system_message = {
                 "role": "system",
-                "content": f"""Ты - WindexsAI, искусственный интеллект с доступом к актуальной информации из интернета. 
+                "content": f"""Ты - WindexsAI, искусственный интеллект с доступом к актуальной информации из интернета.
 
 Твоя задача - дать полный и точный ответ на основе найденной информации.
 
@@ -146,417 +120,140 @@ async def ai_editor(request: AIEditorRequest, current_user: User = Depends(get_c
 РЕЗУЛЬТАТЫ ПОИСКА:
 {web_search_results}
 
-Теперь ответь на вопрос пользователя, используя эту информацию."""
+Теперь ответь на вопрос пользователя, используя эту информацию.""",
             }
         else:
             # Для обычных запросов создания сайтов
             system_message = {
                 "role": "system",
-                "content": """Ты senior React/Next.js разработчик и UI/UX дизайнер. Создавай современные, премиальные веб-приложения на Next.js с правильной модульной архитектурой и TypeScript.
+                "content": """Ты senior React/Next.js разработчик. Создавай СЛОЖНЫЕ, ПРОДВИНУТЫЕ веб-приложения с современным дизайном, анимациями и интерактивностью.
 
-ОБЯЗАТЕЛЬНО:
-• Используй Next.js 14+ с App Router
-• TypeScript для типизации
-• Tailwind CSS для стилизации  
-• Модульная архитектура с компонентами
-• Responsive дизайн (Mobile-first)
-• Семантический HTML и accessibility
-• Оптимизированные изображения с next/image
+КРИТИЧЕСКИ ВАЖНО:
+• Создавай ПОЛНОЦЕННЫЕ приложения с бизнес-логикой
+• Используй современные UI/UX паттерны
+• Добавляй анимации, переходы, hover-эффекты
+• Включай интерактивные элементы (формы, модалы, слайдеры)
+• Используй градиенты, тени, скругления
+• Добавляй адаптивный дизайн для всех устройств
+• Создавай реалистичный контент и функциональность
 
-СТРУКТУРА NEXT.JS ПРОЕКТА:
-```
-project-name/
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-├── next.config.js
-├── app/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── globals.css
-│   ├── dashboard/
-│   │   ├── page.tsx
-│   │   ├── profile/
-│   │   │   └── page.tsx
-│   │   └── settings/
-│   │       └── page.tsx
-│   └── components/
-│       ├── ui/
-│       │   ├── Button.tsx
-│       │   ├── Card.tsx
-│       │   ├── Input.tsx
-│       │   ├── Modal.tsx
-│       │   └── ThemeToggle.tsx
-│       ├── layout/
-│       │   ├── Header.tsx
-│       │   ├── Navigation.tsx
-│       │   └── Footer.tsx
-│       ├── sections/
-│       │   ├── Hero.tsx
-│       │   ├── Features.tsx
-│       │   ├── About.tsx
-│       │   ├── Services.tsx
-│       │   ├── Portfolio.tsx
-│       │   ├── Testimonials.tsx
-│       │   ├── Contact.tsx
-│       │   ├── Footer.tsx
-│       │   └── Dashboard.tsx
-│       └── animations/
-│           ├── FadeIn.tsx
-│           ├── SlideUp.tsx
-│           └── ScaleIn.tsx
-├── lib/
-│   ├── types.ts
-│   ├── utils.ts
-│   └── store.ts
-└── public/
-    ├── images/
-    └── icons/
-```
+ТРЕБОВАНИЯ К ДИЗАЙНУ:
+• Современные градиенты и цветовые схемы
+• Анимации при скролле и наведении
+• Интерактивные кнопки с эффектами
+• Карточки с тенями и hover-эффектами
+• Адаптивная сетка (grid/flexbox)
+• Красивые типографика и spacing
 
-ТЕХНОЛОГИИ:
-• Next.js 14+ (App Router, Server Components)
-• TypeScript (строгая типизация)
-• Tailwind CSS (utility-first)
-• Framer Motion (анимации)
-• Lucide React (иконки)
-• Next.js Image (оптимизация)
-• React Hook Form (формы)
-• Zustand (state management)
-• Responsive design patterns
-• Modern CSS (Container queries, Grid, Flexbox)
+ТРЕБОВАНИЯ К ФУНКЦИОНАЛЬНОСТИ:
+• Рабочие формы с валидацией
+• Модальные окна и попапы
+• Слайдеры и карусели
+• Анимации появления элементов
+• Интерактивные кнопки и ссылки
+• Состояния загрузки и ошибок
 
-ФОРМАТ ОТВЕТА (строго):
-1) Краткое описание проекта (1–2 предложения)
-2) Структура файлов:
-FILE_STRUCTURE_START
-project-name/
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-├── next.config.js
-├── app/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── globals.css
-│   ├── dashboard/
-│   │   ├── page.tsx
-│   │   ├── profile/
-│   │   │   └── page.tsx
-│   │   └── settings/
-│   │       └── page.tsx
-│   └── components/
-│       ├── ui/
-│       ├── layout/
-│       ├── sections/
-│       └── animations/
-├── lib/
-│   ├── types.ts
-│   ├── utils.ts
-│   └── store.ts
-└── public/
-    ├── images/
-    └── icons/
-FILE_STRUCTURE_END
-
-3) Содержимое каждого файла:
+ФОРМАТ ОТВЕТА - ТОЛЬКО КОД:
 
 PACKAGE_JSON_START
-{
-  "name": "project-name",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "next": "14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "framer-motion": "^10.16.0",
-    "lucide-react": "^0.292.0",
-    "react-hook-form": "^7.47.0",
-    "zustand": "^4.4.0",
-    "clsx": "^2.0.0",
-    "tailwind-merge": "^2.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "autoprefixer": "^10.0.0",
-    "postcss": "^8.0.0",
-    "tailwindcss": "^3.0.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "14.0.0"
-  }
-}
+```json
+{полный package.json с современными зависимостями}
+```
 PACKAGE_JSON_END
 
 TSCONFIG_START
-{
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "es6"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
+```json
+{полный tsconfig.json}
+```
 TSCONFIG_END
 
 TAILWIND_CONFIG_START
-import type { Config } from 'tailwindcss'
-
-const config: Config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-        },
-      },
-    },
-  },
-  plugins: [],
-}
-export default config
+```js
+{полный tailwind.config.js с кастомными цветами и анимациями}
+```
 TAILWIND_CONFIG_END
 
 NEXT_CONFIG_START
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
-  images: {
-    domains: ['images.unsplash.com', 'images.pexels.com'],
-  },
-}
-
-module.exports = nextConfig
+```js
+{полный next.config.js}
+```
 NEXT_CONFIG_END
 
 LAYOUT_TSX_START
-import type { Metadata } from 'next'
-import './globals.css'
-
-export const metadata: Metadata = {
-  title: 'Project Name',
-  description: 'Project description',
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="ru">
-      <body>{children}</body>
-    </html>
-  )
-}
+```tsx
+{полный app/layout.tsx с мета-тегами}
+```
 LAYOUT_TSX_END
 
 PAGE_TSX_START
-import Hero from './components/sections/Hero'
-import Features from './components/sections/Features'
-import Footer from './components/sections/Footer'
-
-export default function Home() {
-  return (
-    <main>
-      <Hero />
-      <Features />
-      <Footer />
-  </main>
-  )
-}
+```tsx
+{полный app/page.tsx с главной страницей}
+```
 PAGE_TSX_END
 
 GLOBALS_CSS_START
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+```css
+{полный app/globals.css с кастомными стилями и анимациями}
+```
 GLOBALS_CSS_END
 
-Далее создавай компоненты в соответствующих папках с TypeScript типизацией.
+HERO_COMPONENT_START
+```tsx
+{сложный Hero с анимациями и интерактивностью}
+```
+HERO_COMPONENT_END
 
-ПРИМЕРЫ КОМПОНЕНТОВ:
+FEATURES_COMPONENT_START
+```tsx
+{интерактивные Features с hover-эффектами}
+```
+FEATURES_COMPONENT_END
 
-ANIMATION_FADEIN_START
-'use client'
-import { motion } from 'framer-motion'
+FOOTER_COMPONENT_START
+```tsx
+{красивый Footer с ссылками и соцсетями}
+```
+FOOTER_COMPONENT_END
 
-interface FadeInProps {
-  children: React.ReactNode
-  delay?: number
-  duration?: number
-}
+BUTTON_COMPONENT_START
+```tsx
+{анимированные кнопки с состояниями}
+```
+BUTTON_COMPONENT_END
 
-export default function FadeIn({ children, delay = 0, duration = 0.6 }: FadeInProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration, ease: "easeOut" }}
-    >
-      {children}
-    </motion.div>
-  )
-}
-ANIMATION_FADEIN_END
+CARD_COMPONENT_START
+```tsx
+{интерактивные карточки с анимациями}
+```
+CARD_COMPONENT_END
 
-UI_BUTTON_START
-'use client'
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
+CONTAINER_COMPONENT_START
+```tsx
+{адаптивный контейнер}
+```
+CONTAINER_COMPONENT_END
 
-interface ButtonProps {
-  children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'outline'
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
-  onClick?: () => void
-}
+MODAL_COMPONENT_START
+```tsx
+{модальные окна с анимациями}
+```
+MODAL_COMPONENT_END
 
-export default function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className,
-  onClick 
-}: ButtonProps) {
-  const baseClasses = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-  
-  const variants = {
-    primary: "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500",
-    outline: "border-2 border-gray-300 text-gray-700 hover:border-gray-400 focus:ring-gray-500"
-  }
-  
-  const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg"
-  }
+FORM_COMPONENT_START
+```tsx
+{формы с валидацией и стилями}
+```
+FORM_COMPONENT_END
 
-  return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={cn(baseClasses, variants[variant], sizes[size], className)}
-      onClick={onClick}
-    >
-      {children}
-    </motion.button>
-  )
-}
-UI_BUTTON_END
+НЕ ДОБАВЛЯЙ:
+- Простые статичные сайты
+- Базовые стили без анимаций
+- Отсутствие интерактивности
+- Простые карточки без эффектов
 
-SECTION_HERO_START
-'use client'
-import { motion } from 'framer-motion'
-import Button from '../ui/Button'
-import FadeIn from '../animations/FadeIn'
-
-export default function Hero() {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 text-center">
-        <FadeIn delay={0.2}>
-          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            Современный сайт
-          </h1>
-        </FadeIn>
-        
-        <FadeIn delay={0.4}>
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Создан с использованием Next.js, TypeScript и современных технологий
-          </p>
-        </FadeIn>
-        
-        <FadeIn delay={0.6}>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => window.scrollTo({ top: 1000, behavior: 'smooth' })}>
-              Начать работу
-            </Button>
-            <Button variant="outline" size="lg">
-              Узнать больше
-            </Button>
-        </div>
-        </FadeIn>
-      </div>
-      
-      {/* Анимированный фон */}
-      <motion.div
-        className="absolute inset-0 -z-10"
-        animate={{
-          background: [
-            "radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)",
-            "radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.1) 0%, transparent 50%)",
-            "radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)"
-          ]
-        }}
-        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-      />
-    </section>
-  )
-}
-SECTION_HERO_END
-
-4) Инструкции по запуску:
-- npm install
-- npm run dev
-- Открыть http://localhost:3000
-
-ВАЖНО: Генерируй ПОЛНЫЕ, ДЕТАЛЬНЫЕ сайты с множеством компонентов, секций и функций. 
-Используй весь доступный лимит токенов для создания максимально подробного и функционального сайта.
-Включай все возможные секции: Hero, Features, About, Services, Portfolio, Testimonials, 
-Contact, Footer, Dashboard, Profile, Settings и другие релевантные разделы."""
+СОЗДАВАЙ СЛОЖНЫЕ, СОВРЕМЕННЫЕ ПРИЛОЖЕНИЯ!""",
             }
-        
+
         # Подготавливаем сообщения
         messages = [system_message] + request.messages
         
@@ -567,236 +264,471 @@ Contact, Footer, Dashboard, Profile, Settings и другие релевантн
             response = openai_client.chat.completions.create(
                 model=preferred_model,
                 messages=messages,
-                max_tokens=15000  # Увеличено в 5 раз с 3000
+                max_tokens=8000,
+                temperature=0.3,
             )
-        except Exception as _:
+        except Exception as e:
+            print(f"Ошибка с основной моделью {preferred_model}: {e}")
+            # Фолбэк на более дешевую модель
             response = openai_client.chat.completions.create(
                 model=fallback_model,
-            messages=messages,
-                max_tokens=12500  # Увеличено в 5 раз с 2500
+                messages=messages,
+                max_tokens=8000,
+                temperature=0.3,
             )
         
-        # Получаем ответ
-        content = response.choices[0].message.content
+        ai_response = response.choices[0].message.content
         
-        # Добавляем ответ AI в базу данных
-        ai_message_db = DBMessage(
-            role="assistant",
-            content=content or "Извините, не удалось сгенерировать сайт.",
-            conversation_id=conversation_id
-        )
-        db.add(ai_message_db)
-        
-        # Обновляем заголовок разговора на основе первого сообщения пользователя
-        if len(request.messages) == 1:  # Первый обмен
-            title = user_message[:50] + "..." if len(user_message) > 50 else user_message
-            conversation.title = title
-        
-        db.commit()
+        # Сохраняем или обновляем разговор
+        if request.conversation_id:
+            # Обновляем существующий разговор
+            conversation = (
+                db.query(DBConversation)
+                .filter(
+                DBConversation.id == request.conversation_id,
+                    DBConversation.user_id == current_user.id,
+                )
+                .first()
+            )
+            
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+            
+            # Добавляем сообщения
+            user_message = DBMessage(
+                conversation_id=conversation.id,
+                role="user",
+                content=last_message,
+                timestamp=datetime.utcnow(),
+            )
+            ai_message = DBMessage(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=ai_response,
+                timestamp=datetime.utcnow(),
+            )
+            
+            db.add(user_message)
+            db.add(ai_message)
+            db.commit()
+            
+            conversation_id = conversation.id
+        else:
+            # Создаем новый разговор
+            conversation = DBConversation(
+                user_id=current_user.id,
+                title=(
+                    last_message[:50] + "..."
+                    if len(last_message) > 50
+                    else last_message
+                ),
+                created_at=datetime.utcnow(),
+            )
+            db.add(conversation)
+            db.flush()  # Получаем ID
+            
+            # Добавляем сообщения
+            user_message = DBMessage(
+                conversation_id=conversation.id,
+                role="user",
+                content=last_message,
+                timestamp=datetime.utcnow(),
+            )
+            ai_message = DBMessage(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=ai_response,
+                timestamp=datetime.utcnow(),
+            )
+            
+            db.add(user_message)
+            db.add(ai_message)
+            db.commit()
+            
+            conversation_id = conversation.id
         
         return AIEditorResponse(
-            content=content or "Извините, не удалось сгенерировать сайт.",
+            content=ai_response,
             conversation_id=conversation_id,
-            status="completed",
-            timestamp=datetime.now().isoformat()
+            status="success",
+            timestamp=datetime.utcnow().isoformat(),
         )
         
     except Exception as e:
-        return AIEditorResponse(
-            content=f"Ошибка генерации: {str(e)}",
-            conversation_id=conversation_id if 'conversation_id' in locals() else 0,
-            status="error",
-            timestamp=datetime.now().isoformat()
+        print(f"Ошибка в AI редакторе: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/ai-editor/conversations")
+async def get_conversations(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    """Получить список разговоров пользователя"""
+    try:
+        conversations = (
+            db.query(DBConversation)
+            .filter(DBConversation.user_id == current_user.id)
+            .order_by(DBConversation.created_at.desc())
+            .all()
         )
+        
+        return {
+            "conversations": [
+                {
+                    "id": conv.id,
+                    "title": conv.title,
+                    "date": conv.created_at.isoformat(),
+                    "message_count": len(conv.messages),
+                }
+                for conv in conversations
+            ]
+        }
+    except Exception as e:
+        print(f"Ошибка получения разговоров: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/ai-editor/conversations/{conversation_id}")
+async def get_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Получить конкретный разговор"""
+    try:
+        conversation = (
+            db.query(DBConversation)
+            .filter(
+            DBConversation.id == conversation_id,
+                DBConversation.user_id == current_user.id,
+            )
+            .first()
+        )
+        
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        return {
+            "conversation": {
+                "id": conversation.id,
+                "title": conversation.title,
+                "created_at": conversation.created_at.isoformat(),
+                "messages": [
+                    {
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": msg.timestamp.isoformat(),
+                    }
+                    for msg in conversation.messages
+                ],
+            }
+        }
+    except Exception as e:
+        print(f"Ошибка получения разговора: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/api/ai-editor/conversations/{conversation_id}")
+async def delete_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Удалить разговор"""
+    try:
+        conversation = (
+            db.query(DBConversation)
+            .filter(
+            DBConversation.id == conversation_id,
+                DBConversation.user_id == current_user.id,
+            )
+            .first()
+        )
+        
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Удаляем все сообщения разговора
+        db.query(DBMessage).filter(
+            DBMessage.conversation_id == conversation_id
+        ).delete()
+        
+        # Удаляем разговор
+        db.delete(conversation)
+        db.commit()
+        
+        return {"status": "success", "message": "Conversation deleted"}
+    except Exception as e:
+        print(f"Ошибка удаления разговора: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/api/ai-editor/edit-element")
 async def edit_element(
-    request: ElementEditRequest,
-    user: User = Depends(get_current_user)
+    request: ElementEditRequest, current_user: User = Depends(get_current_user)
 ):
-    """Редактирование конкретного элемента на сайте"""
+    """Редактирование конкретного элемента"""
     try:
-        
-        # Создаем промпт для редактирования элемента
         edit_prompt = f"""
-Ты - эксперт по веб-разработке. Пользователь хочет отредактировать элемент на своем сайте.
+Ты - эксперт по веб-разработке и HTML/CSS.
 
-ИНФОРМАЦИЯ ОБ ЭЛЕМЕНТЕ:
-- Тип элемента: {request.element_type}
-- Текущий текст: "{request.current_text}"
-- Инструкция по редактированию: {request.edit_instruction}
+ЗАДАЧА: Отредактируй элемент "{request.element_type}" в HTML коде.
 
-ТЕКУЩИЙ HTML КОД САЙТА:
-{request.html_content}
-
-ЗАДАЧА:
-Отредактируй указанный элемент согласно инструкции пользователя. Сохрани весь остальной HTML код без изменений.
+ТЕКУЩИЙ ТЕКСТ: {request.current_text}
+ИНСТРУКЦИЯ ПО РЕДАКТИРОВАНИЮ: {request.edit_instruction}
+ТЕКУЩИЙ HTML: {request.html_content}
 
 ТРЕБОВАНИЯ:
-1. Найди элемент с текстом "{request.current_text}" в HTML
-2. Примени изменения согласно инструкции "{request.edit_instruction}"
-3. Сохрани структуру и стили сайта
-4. Верни полный обновленный HTML код
-5. Объясни, что именно было изменено
-
-ИЗОБРАЖЕНИЯ ИЗ ИНТЕРНЕТА:
-• Если пользователь просит добавить изображение, используй прямые ссылки на изображения
-• Хорошие источники: Unsplash, Pexels, Pixabay
-• Всегда добавляй alt-текст для доступности
-• Используй адаптивные CSS стили для изображений
+1. Сохрани структуру и стили
+2. Примени изменения точно по инструкции
+3. Убедись, что HTML остается валидным
+4. Сохрани все классы и атрибуты
 
 ФОРМАТ ОТВЕТА:
-Ответь в формате:
-RESPONSE_START
-[Твое объяснение изменений]
-RESPONSE_END
-
 HTML_START
-[Полный обновленный HTML код]
+{{обновленный HTML код}}
 HTML_END
+
+RESPONSE_START
+{{краткое описание изменений}}
+RESPONSE_END
 """
 
         # Отправляем запрос к OpenAI
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "Ты - эксперт по веб-разработке и HTML/CSS."},
-                {"role": "user", "content": edit_prompt}
+                {
+                    "role": "system",
+                    "content": "Ты - эксперт по веб-разработке и HTML/CSS.",
+                },
+                {"role": "user", "content": edit_prompt},
             ],
             max_tokens=4000,
-            temperature=0.3
+            temperature=0.3,
         )
         
         response_text = response.choices[0].message.content
         
         # Извлекаем HTML код из ответа
-        html_match = re.search(r'HTML_START\s*(.*?)\s*HTML_END', response_text, re.DOTALL)
-        response_match = re.search(r'RESPONSE_START\s*(.*?)\s*RESPONSE_END', response_text, re.DOTALL)
+        html_match = re.search(
+            r"HTML_START\s*(.*?)\s*HTML_END", response_text, re.DOTALL
+        )
+        response_match = re.search(
+            r"RESPONSE_START\s*(.*?)\s*RESPONSE_END", response_text, re.DOTALL
+        )
         
         if html_match:
             updated_html = html_match.group(1).strip()
-            response_text = response_match.group(1).strip() if response_match else "Элемент успешно отредактирован."
+            response_text = (
+                response_match.group(1).strip()
+                if response_match
+                else "Элемент успешно отредактирован."
+            )
             
             return {
                 "html_content": updated_html,
                 "response": response_text,
-                "status": "success"
+                "status": "success",
             }
         else:
-            # Если не удалось извлечь HTML, возвращаем оригинальный код
             return {
                 "html_content": request.html_content,
-                "response": "Не удалось применить изменения. Попробуйте более конкретную инструкцию.",
-                "status": "error"
+                "response": "Не удалось извлечь обновленный HTML код.",
+                "status": "error",
             }
-        
+            
     except Exception as e:
-        return {
-            "html_content": request.html_content,
-            "response": f"Ошибка при редактировании: {str(e)}",
-            "status": "error"
-        }
+        print(f"Ошибка редактирования элемента: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/ai-editor/conversations")
-async def get_ai_editor_conversations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all AI editor conversations for current user"""
-    conversations = db.query(DBConversation).filter(
-        DBConversation.user_id == current_user.id,
-        DBConversation.conversation_type == "ai_editor"
-    ).order_by(DBConversation.updated_at.desc()).all()
-    
-    user_conversations = []
-    for conv in conversations:
-        # Count messages
-        message_count = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).count()
-        # Get last message for preview
-        last_msg = db.query(DBMessage).filter(DBMessage.conversation_id == conv.id).order_by(DBMessage.timestamp.desc()).first()
-        snippet = last_msg.content if last_msg else ''
-        snippet_date = last_msg.timestamp.isoformat() if last_msg else conv.created_at.isoformat()
-        user_conversations.append({
-            "id": conv.id,
-            "title": conv.title,
-            "preview": snippet,
-            "date": snippet_date,
-            "message_count": message_count
-        })
-    
-    return {"conversations": user_conversations}
 
-@router.get("/api/ai-editor/conversations/{conversation_id}")
-async def get_ai_editor_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get AI editor conversation history"""
-    conversation = db.query(DBConversation).filter(
-        DBConversation.id == conversation_id,
-        DBConversation.user_id == current_user.id,
-        DBConversation.conversation_type == "ai_editor"
-    ).first()
-    
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    messages = db.query(DBMessage).filter(
-        DBMessage.conversation_id == conversation_id
-    ).order_by(DBMessage.timestamp).all()
-    
-    conversation_data = {
-        "id": conversation.id,
-        "title": conversation.title,
-        "timestamp": conversation.created_at.isoformat(),
-        "messages": [
-            {
-                "role": msg.role,
-                "content": msg.content,
-                "timestamp": msg.timestamp.isoformat()
-            }
-            for msg in messages
-        ]
-    }
-    
-    return {"conversation": conversation_data}
-
-@router.post("/api/ai-editor/conversations")
-async def create_ai_editor_conversation(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Create a new AI editor conversation"""
-    conversation = DBConversation(
-        title="Новый проект сайта",
-        conversation_type="ai_editor",
-        user_id=current_user.id
-    )
-    db.add(conversation)
-    db.commit()
-    db.refresh(conversation)
-    
-    return {"conversation_id": conversation.id}
-
-@router.delete("/api/ai-editor/conversations/{conversation_id}")
-async def delete_ai_editor_conversation(conversation_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Delete AI editor conversation"""
-    conversation = db.query(DBConversation).filter(
-        DBConversation.id == conversation_id,
-        DBConversation.user_id == current_user.id,
-        DBConversation.conversation_type == "ai_editor"
-    ).first()
-    
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    # Delete all messages first
-    db.query(DBMessage).filter(DBMessage.conversation_id == conversation_id).delete()
-    
-    # Delete conversation
-    db.delete(conversation)
-    db.commit()
-    
-    return {"message": "Conversation deleted"}
-
-@router.get("/api/ai-editor/page")
-async def get_editor_page():
-    """Serve the Editor page"""
-    from fastapi.responses import FileResponse
-    return FileResponse("static/editor.html")
-
-@router.get("/api/ai-editor/test")
-async def test_ai_editor():
-    """Test endpoint"""
+@router.get("/api/ai-editor/status")
+async def get_status():
+    """Проверка статуса AI редактора"""
     return {"status": "Editor working"}
+
+
+def extract_files_from_code(code_content):
+    """Извлекает файлы из кода Next.js проекта"""
+    files = {}
+
+    # Парсим файлы по маркерам
+    markers = [
+        ("PACKAGE_JSON_START", "PACKAGE_JSON_END", "package.json"),
+        ("TSCONFIG_START", "TSCONFIG_END", "tsconfig.json"),
+        ("TAILWIND_CONFIG_START", "TAILWIND_CONFIG_END", "tailwind.config.js"),
+        ("NEXT_CONFIG_START", "NEXT_CONFIG_END", "next.config.js"),
+        ("LAYOUT_TSX_START", "LAYOUT_TSX_END", "app/layout.tsx"),
+        ("PAGE_TSX_START", "PAGE_TSX_END", "app/page.tsx"),
+        ("GLOBALS_CSS_START", "GLOBALS_CSS_END", "app/globals.css"),
+        ("HERO_COMPONENT_START", "HERO_COMPONENT_END", "components/Hero.tsx"),
+        ("FEATURES_COMPONENT_START", "FEATURES_COMPONENT_END", "components/Features.tsx"),
+        ("FOOTER_COMPONENT_START", "FOOTER_COMPONENT_END", "components/Footer.tsx"),
+        ("BUTTON_COMPONENT_START", "BUTTON_COMPONENT_END", "components/Button.tsx"),
+        ("CARD_COMPONENT_START", "CARD_COMPONENT_END", "components/Card.tsx"),
+        ("CONTAINER_COMPONENT_START", "CONTAINER_COMPONENT_END", "components/Container.tsx"),
+        ("MODAL_COMPONENT_START", "MODAL_COMPONENT_END", "components/Modal.tsx"),
+        ("FORM_COMPONENT_START", "FORM_COMPONENT_END", "components/Form.tsx"),
+    ]
+
+    for start_marker, end_marker, filename in markers:
+        start = code_content.find(start_marker)
+        end = code_content.find(end_marker)
+
+        if start != -1 and end != -1:
+            start += len(start_marker)
+            content = code_content[start:end].strip()
+
+            # Удаляем markdown-разметку из всех файлов
+            import re
+            if filename.endswith('.json'):
+                # Удаляем ```json и ``` в начале и конце
+                content = re.sub(r'^```json\s*', '', content)
+                content = re.sub(r'\s*```$', '', content)
+            elif filename.endswith('.js') or filename.endswith('.tsx') or filename.endswith('.ts') or filename.endswith('.css'):
+                # Удаляем ```js, ```tsx, ```ts, ```css и ``` в начале и конце
+                content = re.sub(r'^```(?:js|tsx|ts|css)?\s*', '', content)
+                content = re.sub(r'\s*```$', '', content)
+
+            # Исправляем next.config.js для поддержки App Router
+            if filename == "next.config.js":
+                if "experimental" not in content:
+                    content = content.replace(
+                        "module.exports = {",
+                        "module.exports = {\n  experimental: {\n    appDir: true\n  },"
+                    )
+            
+            # Исправляем package.json для совместимости версий
+            if filename == "package.json":
+                # Заменяем несовместимые версии
+                content = content.replace('"framer-motion": "^6.0.0"', '"framer-motion": "^10.16.16"')
+                content = content.replace('"react": "latest"', '"react": "^18.2.0"')
+                content = content.replace('"react-dom": "latest"', '"react-dom": "^18.2.0"')
+                content = content.replace('"next": "latest"', '"next": "^14.0.0"')
+                content = content.replace('"tailwindcss": "^3.0.0"', '"tailwindcss": "^3.3.0"')
+
+            # Исправляем layout.tsx для правильного импорта globals.css
+            if filename == "app/layout.tsx":
+                content = content.replace("import '../globals.css';", "import './globals.css';")
+
+            files[filename] = content
+
+    return files
+
+
+@router.get("/api/ai-editor/download/{conversation_id}")
+async def download_project(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Скачать Next.js проект как ZIP файл"""
+    # Проверяем, что conversation принадлежит пользователю
+    conversation = (
+        db.query(DBConversation)
+        .filter(
+            DBConversation.id == conversation_id,
+            DBConversation.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Получаем последнее AI-сообщение
+    ai_message = (
+        db.query(DBMessage)
+        .filter(
+            DBMessage.conversation_id == conversation_id,
+            DBMessage.role == "assistant"
+        )
+        .order_by(DBMessage.timestamp.desc())
+        .first()
+    )
+    if not ai_message:
+        raise HTTPException(status_code=404, detail="AI message not found")
+
+    # Ищем код проекта в сообщении
+    if "PACKAGE_JSON_START" in ai_message.content:
+        import zipfile
+        import io
+
+        # Извлекаем файлы из кода
+        files = extract_files_from_code(ai_message.content)
+
+        # Создаем ZIP
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for filename, content in files.items():
+                zip_file.writestr(filename, content)
+
+        zip_buffer.seek(0)
+
+        # Возвращаем ZIP файл
+        from fastapi.responses import StreamingResponse
+        return StreamingResponse(
+            io.BytesIO(zip_buffer.read()),
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename=nextjs-project-{conversation_id}.zip"}
+        )
+
+    return {"message": "Код проекта не найден", "status": "error"}
+
+
+@router.get("/api/ai-editor/project/{conversation_id}/preview")
+async def preview_project(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Запускает и возвращает URL live-превью Next.js проекта"""
+    # Проверяем, что conversation принадлежит пользователю
+    conversation = (
+        db.query(DBConversation)
+        .filter(
+            DBConversation.id == conversation_id,
+            DBConversation.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Получаем последнее AI-сообщение
+    ai_message = (
+        db.query(DBMessage)
+        .filter(
+            DBMessage.conversation_id == conversation_id,
+            DBMessage.role == "assistant"
+        )
+        .order_by(DBMessage.timestamp.desc())
+        .first()
+    )
+    if not ai_message or "PACKAGE_JSON_START" not in ai_message.content:
+        raise HTTPException(status_code=404, detail="Project code not found")
+
+    # Собираем файлы проекта
+    files = extract_files_from_code(ai_message.content)
+
+    # Путь к папке проекта
+    project_dir = os.path.join("./uploads/projects", str(conversation_id))
+
+    # Создаем каталог
+    os.makedirs(project_dir, exist_ok=True)
+
+    # Записываем файлы
+    for path, content in files.items():
+        full_path = os.path.join(project_dir, path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    # Запускаем сервер
+    try:
+        from utils.nextjs_manager import NextJSServerManager
+        manager = NextJSServerManager()
+        server_info = manager.start_nextjs_server(str(conversation_id), project_dir)
+        return {"status": "running", "url": server_info["url"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start Next.js server: {e}")

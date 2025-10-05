@@ -28,6 +28,30 @@ class ProjectsManager {
             });
         });
 
+        // User info click handlers
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const profileModal = document.getElementById('profile-modal');
+        const closeProfileBtn = document.querySelector('.close-profile');
+
+        if (userAvatar) {
+            userAvatar.addEventListener('click', () => {
+                this.showProfileModal();
+            });
+        }
+
+        if (userName) {
+            userName.addEventListener('click', () => {
+                this.showProfileModal();
+            });
+        }
+
+        if (closeProfileBtn) {
+            closeProfileBtn.addEventListener('click', () => {
+                this.hideProfileModal();
+            });
+        }
+
         // Модальное окно удаления
         const deleteModal = document.getElementById('delete-modal');
         const closeModal = deleteModal.querySelector('.close');
@@ -99,8 +123,8 @@ class ProjectsManager {
             year: 'numeric'
         });
 
-        const preview = project.preview.length > 150 
-            ? project.preview.substring(0, 150) + '...' 
+        const preview = project.preview.length > 150
+            ? project.preview.substring(0, 150) + '...'
             : project.preview;
 
         return `
@@ -184,11 +208,11 @@ class ProjectsManager {
             if (response.ok) {
                 const data = await response.json();
                 const conversation = data.conversation;
-                
+
                 // Находим последнее сообщение AI с проектом
                 const aiMessages = conversation.messages.filter(msg => msg.role === 'assistant');
                 const lastAiMessage = aiMessages[aiMessages.length - 1];
-                
+
                 if (lastAiMessage && lastAiMessage.content) {
                     this.downloadProjectFiles(lastAiMessage.content, conversation.title);
                 } else {
@@ -206,7 +230,7 @@ class ProjectsManager {
     downloadProjectFiles(content, projectTitle) {
         // Парсим файлы из содержимого
         const files = this.parseProjectFiles(content);
-        
+
         if (Object.keys(files).length === 0) {
             this.showError('Не найдены файлы для скачивания');
             return;
@@ -306,6 +330,27 @@ class ProjectsManager {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+
+    showProfileModal() {
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal) {
+            // Populate profile data
+            const usernameSpan = document.getElementById('profile-username');
+            const emailSpan = document.getElementById('profile-email');
+            if (this.user) {
+                if (usernameSpan) usernameSpan.textContent = this.user.username;
+                if (emailSpan) emailSpan.textContent = this.user.email;
+            }
+            profileModal.classList.remove('hidden');
+        }
+    }
+
+    hideProfileModal() {
+        const profileModal = document.getElementById('profile-modal');
+        if (profileModal) {
+            profileModal.classList.add('hidden');
+        }
     }
 }
 

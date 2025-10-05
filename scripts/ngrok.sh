@@ -20,4 +20,3 @@ echo ""
 
 # Запускаем ngrok
 ngrok http 8003 --log=stdout
-
