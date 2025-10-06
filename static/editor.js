@@ -282,6 +282,10 @@ class AIEditor {
                 throw new Error('Токен авторизации не найден');
             }
 
+            // Создаем AbortController для контроля таймаута
+            var controller = new AbortController();
+            var timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут
+            
             var response = await fetch('/api/ai-editor', {
                 method: 'POST',
                 headers: {
@@ -292,8 +296,13 @@ class AIEditor {
                     messages: this.conversationHistory,
                     model: 'gpt-4o-mini',
                     conversation_id: this.currentConversationId
-                })
+                }),
+                signal: controller.signal,
+                // Увеличиваем таймаут keep-alive
+                keepalive: true
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -341,7 +350,13 @@ class AIEditor {
 
         } catch (error) {
             console.error('Generation error:', error);
-            this.showError(`Ошибка: ${error.message}`);
+            if (error.name === 'AbortError') {
+                this.showError('Генерация заняла слишком много времени и была прервана. Попробуйте создать более простой сайт или уменьшить количество функций.');
+            } else if (error.message.includes('Load failed') || error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                this.showError('Потеряно соединение с сервером. Проверьте подключение к интернету и попробуйте снова.');
+            } else {
+                this.showError(`Ошибка: ${error.message}`);
+            }
         } finally {
             this.stopGeneration();
         }

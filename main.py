@@ -140,5 +140,11 @@ async def serve_public_deployment(deploy_url: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=1107)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=1107,
+        timeout_keep_alive=300,  # 5 минут для долгих запросов
+        timeout_graceful_shutdown=30
+    )
 # flake8: noqa
