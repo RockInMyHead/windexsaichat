@@ -615,6 +615,13 @@ def extract_files_from_code(code_content):
             # Исправляем page.tsx для правильного импорта компонентов
             if filename == "app/page.tsx":
                 content = content.replace("from './components/", "from '../components/")
+                # Удаляем неправильный импорт Layout
+                content = content.replace("import Layout from './layout';", "")
+                content = content.replace("import Layout from '../layout';", "")
+                content = content.replace("import Layout from './layout'", "")
+                # Удаляем обертку Layout
+                content = content.replace("<Layout>", "<>")
+                content = content.replace("</Layout>", "</>")
 
             files[filename] = content
 
