@@ -181,13 +181,13 @@ NEXT_CONFIG_END
 
 LAYOUT_TSX_START
 ```tsx
-{полный app/layout.tsx с мета-тегами}
+{полный app/layout.tsx с мета-тегами. ВАЖНО: используй import './globals.css' а НЕ '../globals.css'}
 ```
 LAYOUT_TSX_END
 
 PAGE_TSX_START
 ```tsx
-{полный app/page.tsx с главной страницей}
+{полный app/page.tsx с главной страницей. ВАЖНО: импортируй компоненты из '../components/' а НЕ из './components/'}
 ```
 PAGE_TSX_END
 
@@ -610,7 +610,12 @@ def extract_files_from_code(code_content):
 
             # Исправляем layout.tsx для правильного импорта globals.css
             if filename == "app/layout.tsx":
-                content = content.replace("import '../globals.css';", "import './globals.css';")
+                content = content.replace("import '../globals.css'", "import './globals.css'")
+                content = content.replace("import \"../globals.css\"", "import \"./globals.css\"")
+                content = content.replace("import '../styles/globals.css'", "import './globals.css'")
+                content = content.replace("import \"../styles/globals.css\"", "import \"./globals.css\"")
+                content = content.replace("import '@/styles/globals.css'", "import './globals.css'")
+                content = content.replace("import \"@/styles/globals.css\"", "import \"./globals.css\"")
             
             # Исправляем page.tsx для правильного импорта компонентов
             if filename == "app/page.tsx":
@@ -818,34 +823,19 @@ async def preview_proxy_root(
     server_info = nextjs_manager.servers[str(conversation_id)]
     server_url = f"http://localhost:{server_info['port']}"
     
-    # Ждем, пока сервер будет готов (до 60 секунд)
-    max_retries = 60
-    server_ready = False
+    # Ждем, пока сервер будет готов
+    max_retries = 30
     for i in range(max_retries):
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                # Делаем запрос к корню и проверяем, что сервер отвечает без ошибок компиляции
-                resp = await client.get(server_url)
-                # Если получили HTML (не ошибку 500), сервер готов
-                if resp.status_code in [200, 304]:
-                    server_ready = True
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                resp = await client.get(f"{server_url}/_next/static/development/_devPagesManifest.json")
+                if resp.status_code in [200, 404]:
+                    # Сервер готов
                     break
-                elif resp.status_code == 500:
-                    # Сервер компилирует, ждем еще
-                    if i == max_retries - 1:
-                        raise HTTPException(status_code=503, detail="Next.js server compilation error. Check project files.")
-        except httpx.TimeoutException:
+        except:
             if i == max_retries - 1:
-                raise HTTPException(status_code=503, detail="Next.js server timeout during startup.")
-        except Exception as e:
-            # Сервер еще не запустился
-            if i == max_retries - 1:
-                raise HTTPException(status_code=503, detail=f"Next.js server not ready: {str(e)}")
-        
-        await asyncio.sleep(1)
-    
-    if not server_ready:
-        raise HTTPException(status_code=503, detail="Next.js server is not ready. Please try again.")
+                raise HTTPException(status_code=503, detail="Next.js server is not ready yet. Please try again in a few seconds.")
+            await asyncio.sleep(1)
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
