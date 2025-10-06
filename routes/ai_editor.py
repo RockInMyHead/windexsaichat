@@ -615,13 +615,6 @@ def extract_files_from_code(code_content):
             # Исправляем page.tsx для правильного импорта компонентов
             if filename == "app/page.tsx":
                 content = content.replace("from './components/", "from '../components/")
-                # Удаляем неправильный импорт Layout
-                content = content.replace("import Layout from './layout';", "")
-                content = content.replace("import Layout from '../layout';", "")
-                content = content.replace("import Layout from './layout'", "")
-                # Удаляем обертку Layout
-                content = content.replace("<Layout>", "<>")
-                content = content.replace("</Layout>", "</>")
 
             files[filename] = content
 
@@ -825,19 +818,34 @@ async def preview_proxy_root(
     server_info = nextjs_manager.servers[str(conversation_id)]
     server_url = f"http://localhost:{server_info['port']}"
     
-    # Ждем, пока сервер будет готов
-    max_retries = 30
+    # Ждем, пока сервер будет готов (до 60 секунд)
+    max_retries = 60
+    server_ready = False
     for i in range(max_retries):
         try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                resp = await client.get(f"{server_url}/_next/static/development/_devPagesManifest.json")
-                if resp.status_code in [200, 404]:
-                    # Сервер готов
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                # Делаем запрос к корню и проверяем, что сервер отвечает без ошибок компиляции
+                resp = await client.get(server_url)
+                # Если получили HTML (не ошибку 500), сервер готов
+                if resp.status_code in [200, 304]:
+                    server_ready = True
                     break
-        except:
+                elif resp.status_code == 500:
+                    # Сервер компилирует, ждем еще
+                    if i == max_retries - 1:
+                        raise HTTPException(status_code=503, detail="Next.js server compilation error. Check project files.")
+        except httpx.TimeoutException:
             if i == max_retries - 1:
-                raise HTTPException(status_code=503, detail="Next.js server is not ready yet. Please try again in a few seconds.")
-            await asyncio.sleep(1)
+                raise HTTPException(status_code=503, detail="Next.js server timeout during startup.")
+        except Exception as e:
+            # Сервер еще не запустился
+            if i == max_retries - 1:
+                raise HTTPException(status_code=503, detail=f"Next.js server not ready: {str(e)}")
+        
+        await asyncio.sleep(1)
+    
+    if not server_ready:
+        raise HTTPException(status_code=503, detail="Next.js server is not ready. Please try again.")
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:

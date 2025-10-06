@@ -461,6 +461,19 @@ class AIEditor {
 
     generateWebsitePreview(projectId, iframe) {
         console.log('🚀 Запуск Next.js превью для проекта:', projectId);
+        
+        // Показываем индикатор загрузки
+        iframe.srcdoc = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+            <div style="text-align:center;">
+                <div style="width:60px;height:60px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px;"></div>
+                <h3 style="margin:10px 0;font-size:20px;font-weight:600;">Компилируем ваш сайт...</h3>
+                <p style="margin:5px 0;opacity:0.9;font-size:14px;">Это может занять до минуты</p>
+            </div>
+            <style>
+                @keyframes spin { to { transform: rotate(360deg); } }
+            </style>
+        </div>`;
+        
         // Загружаем live-превью Next.js проекта
         var authToken = localStorage.getItem('windexai_token');
         console.log('🔑 Токен авторизации:', authToken ? 'присутствует' : 'отсутствует');
