@@ -30,9 +30,19 @@ if PROXY_ENABLED and PROXY_HOST and PROXY_PORT:
 # Initialize OpenAI client always using a simple httpx Client
 if OPENAI_API_KEY and OPENAI_API_KEY != "sk-demo-key-replace-with-real-openai-key":
     try:
-        http_client = httpx.Client()
+        if proxy_url:
+            http_client = httpx.Client(
+                proxies={
+                    "http://": proxy_url,
+                    "https://": proxy_url,
+                }, 
+                timeout=30.0
+            )
+            print(f"✅ OpenAI client initialized successfully with proxy {proxy_url}")
+        else:
+            http_client = httpx.Client(timeout=30.0)
+            print("✅ OpenAI client initialized successfully")
         openai_client = OpenAI(api_key=OPENAI_API_KEY, http_client=http_client)
-        print("✅ OpenAI client initialized successfully")
     except Exception as e:
         print(f"❌ Warning: Failed to initialize OpenAI client: {e}")
         openai_client = None

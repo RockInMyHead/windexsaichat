@@ -71,9 +71,9 @@ class NextJSServerManager:
             
             # Команда для запуска с nvm
             if os.path.exists(nvm_script):
-                dev_cmd = f'source {nvm_script} && nvm use 18 && npm run dev -- --port {port}'
+                dev_cmd = f'source {nvm_script} && nvm use 18 && npm run dev -- --port {port} --hostname 0.0.0.0'
             else:
-                dev_cmd = f'npm run dev -- --port {port}'
+                dev_cmd = f'npm run dev -- --port {port} --hostname 0.0.0.0'
             
             process = subprocess.Popen(
                 ['bash', '-c', dev_cmd],
@@ -100,7 +100,7 @@ class NextJSServerManager:
             server_info = {
                 'process': process,
                 'port': port,
-                'url': f'http://localhost:{port}',
+                'url': f'http://37.110.51.35:{port}',
                 'status': 'running',
                 'project_dir': project_dir
             }

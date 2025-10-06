@@ -84,29 +84,16 @@
   transition: all var(--transition-normal);
 }
 
-.header-logo:hover {
-  transform: translateY(-1px);
+/* Анимация при наведении убрана */
+
+/* Стили для логотипа-иконки */
+.header-logo img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25), 0 2px 8px rgba(16, 185, 129, 0.15);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logo-icon:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), 0 3px 12px rgba(16, 185, 129, 0.25);
-}
+/* Анимация иконки при наведении убрана */
 
 .logo-text {
   font-size: 1.5rem;
@@ -312,10 +299,9 @@
     font-size: 1.3rem;
   }
 
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 1.1rem;
+  .header-logo img {
+    width: 28px;
+    height: 28px;
   }
 
   .user-info {
@@ -355,10 +341,9 @@
     font-size: 1.1rem;
   }
 
-  .logo-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
+  .header-logo img {
+    width: 24px;
+    height: 24px;
   }
 }
 
@@ -868,26 +853,10 @@ a:hover {
 }
 
 /* Дополнительные стили для исправления проблем */
-.logo-icon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
-    display: flex;
-    align-items: center;
-}
 
 .logo {
     cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.logo:hover {
-    transform: scale(1.05);
-    opacity: 0.8;
-    justify-content: center;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
-  border-radius: 50%;
-  color: var(--white);
+    /* Анимация убрана */
 }
 
 .auth-header h1 {
@@ -1541,7 +1510,7 @@ a:hover {
 
 .input-container textarea {
   resize: none;
-  min-height: 44px;
+  min-height: 50px;
   max-height: 200px;
   line-height: 1.5;
   /* Скрываем скроллбар */
@@ -2304,8 +2273,9 @@ a:hover {
     }
 }
 
-/* Выбранная модель */
+/* Выбранная модель - скрыта */
 .selected-model {
+  display: none !important;
   position: sticky;
   top: 0;
   background: var(--white);

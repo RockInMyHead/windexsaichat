@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -726,9 +726,92 @@ async def preview_project(
 
     # Запускаем сервер
     try:
-        from utils.nextjs_manager import NextJSServerManager
-        manager = NextJSServerManager()
+        from utils.nextjs_manager import nextjs_manager as manager
         server_info = manager.start_nextjs_server(str(conversation_id), project_dir)
-        return {"status": "running", "url": server_info["url"]}
+        # Получаем токен пользователя для прокси
+        from utils.auth_utils import create_access_token
+        token = create_access_token(data={"sub": current_user.username})
+        return {"status": "running", "url": f"/api/ai-editor/project/{conversation_id}/preview-proxy?token={token}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start Next.js server: {e}")
+
+
+@router.get("/api/ai-editor/project/{conversation_id}/preview-proxy/{path:path}")
+async def preview_proxy(
+    conversation_id: int,
+    path: str,
+    token: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Прокси для предварительного просмотра Next.js проекта"""
+    import httpx
+    from fastapi import Query
+    
+    # Проверяем токен если он передан
+    if token:
+        try:
+            from utils.auth_utils import decode_token
+            payload = decode_token(token)
+            if payload is None:
+                raise HTTPException(status_code=401, detail="Invalid token")
+            username = payload.get("sub")
+            if not username:
+                raise HTTPException(status_code=401, detail="Invalid token")
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Получаем информацию о сервере
+    from utils.nextjs_manager import nextjs_manager
+    if str(conversation_id) not in nextjs_manager.servers:
+        raise HTTPException(status_code=404, detail="Server not running")
+    
+    server_info = nextjs_manager.servers[str(conversation_id)]
+    server_url = f"http://localhost:{server_info['port']}"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{server_url}/{path}")
+            if resp.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"Proxy error: {resp.status_code}")
+            return Response(content=resp.content, media_type=resp.headers.get("content-type"), status_code=resp.status_code)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Provide exception type and message for debugging
+        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {e}")
+
+
+@router.get("/api/ai-editor/project/{conversation_id}/preview-proxy")
+async def preview_proxy_root(
+    conversation_id: int,
+    token: str = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Прокси для корня Next.js проекта"""
+    import httpx
+    # Проверяем токен, если он передан
+    if token:
+        try:
+            from utils.auth_utils import decode_token
+            payload = decode_token(token)
+            if payload is None or not payload.get("sub"):
+                raise HTTPException(status_code=401, detail="Invalid token")
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    # Получаем информацию о сервере
+    from utils.nextjs_manager import nextjs_manager
+    if str(conversation_id) not in nextjs_manager.servers:
+        raise HTTPException(status_code=404, detail="Server not running")
+    server_info = nextjs_manager.servers[str(conversation_id)]
+    server_url = f"http://localhost:{server_info['port']}"
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(server_url)
+            if resp.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"Proxy error: {resp.status_code}")
+            return Response(content=resp.content, media_type=resp.headers.get("content-type"), status_code=resp.status_code)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Provide exception type and message for debugging
+        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {e}")

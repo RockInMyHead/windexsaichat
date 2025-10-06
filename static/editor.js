@@ -449,14 +449,37 @@ class AIEditor {
         // Загружаем live-превью Next.js проекта
         var authToken = localStorage.getItem('windexai_token');
         console.log('🔑 Токен авторизации:', authToken ? 'присутствует' : 'отсутствует');
+        
+        // Проверяем наличие токена
+        if (!authToken) {
+            console.error('❌ Токен авторизации отсутствует');
+            iframe.srcdoc = `<div style="padding:20px;text-align:center;color:#666;">
+                <h3>❌ Ошибка авторизации</h3>
+                <p>Требуется войти в систему для просмотра превью</p>
+                <button onclick="window.location.href='/'">Войти</button>
+            </div>`;
+            return;
+        }
+        
         fetch(`/api/ai-editor/project/${projectId}/preview`, {
-            headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
+            headers: { 'Authorization': 'Bearer ' + authToken }
         })
         .then(res => {
-            if (!res.ok) throw new Error(`Preview API error: ${res.status}`);
+            console.log('📡 Статус ответа:', res.status);
+            if (res.status === 401) {
+                // Токен недействителен, перенаправляем на страницу входа
+                console.error('❌ Токен недействителен, перенаправляем на страницу входа');
+                localStorage.removeItem('windexai_token');
+                window.location.href = '/';
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Preview API error: ${res.status}`);
+            }
             return res.json();
         })
         .then(data => {
+            if (!data) return; // Если произошло перенаправление
             console.log('📡 Ответ от preview API:', data);
             if (data.url) {
                 console.log('✅ Получен URL для превью:', data.url);
@@ -475,6 +498,7 @@ class AIEditor {
             iframe.srcdoc = `<div style="padding:20px;text-align:center;color:#666;">
                 <h3>❌ Ошибка превью</h3>
                 <p>${err.message}</p>
+                <button onclick="location.reload()">Попробовать снова</button>
             </div>`;
             iframe.style.border = 'none';
         });
