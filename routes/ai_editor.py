@@ -611,6 +611,10 @@ def extract_files_from_code(code_content):
             # Исправляем layout.tsx для правильного импорта globals.css
             if filename == "app/layout.tsx":
                 content = content.replace("import '../globals.css';", "import './globals.css';")
+            
+            # Исправляем page.tsx для правильного импорта компонентов
+            if filename == "app/page.tsx":
+                content = content.replace("from './components/", "from '../components/")
 
             files[filename] = content
 
@@ -769,16 +773,21 @@ async def preview_proxy(
     server_url = f"http://localhost:{server_info['port']}"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(f"{server_url}/{path}")
-            if resp.status_code != 200:
-                raise HTTPException(status_code=502, detail=f"Proxy error: {resp.status_code}")
-            return Response(content=resp.content, media_type=resp.headers.get("content-type"), status_code=resp.status_code)
+            return Response(
+                content=resp.content,
+                media_type=resp.headers.get("content-type", "text/html"),
+                status_code=resp.status_code
+            )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Next.js server timeout")
     except HTTPException:
         raise
     except Exception as e:
         # Provide exception type and message for debugging
-        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {e}")
+        print(f"Proxy error details for path {path}: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {str(e)}")
 
 
 @router.get("/api/ai-editor/project/{conversation_id}/preview-proxy")
@@ -789,6 +798,8 @@ async def preview_proxy_root(
 ):
     """Прокси для корня Next.js проекта"""
     import httpx
+    import asyncio
+    
     # Проверяем токен, если он передан
     if token:
         try:
@@ -798,20 +809,42 @@ async def preview_proxy_root(
                 raise HTTPException(status_code=401, detail="Invalid token")
         except Exception:
             raise HTTPException(status_code=401, detail="Invalid token")
+    
     # Получаем информацию о сервере
     from utils.nextjs_manager import nextjs_manager
     if str(conversation_id) not in nextjs_manager.servers:
         raise HTTPException(status_code=404, detail="Server not running")
+    
     server_info = nextjs_manager.servers[str(conversation_id)]
     server_url = f"http://localhost:{server_info['port']}"
+    
+    # Ждем, пока сервер будет готов
+    max_retries = 30
+    for i in range(max_retries):
+        try:
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                resp = await client.get(f"{server_url}/_next/static/development/_devPagesManifest.json")
+                if resp.status_code in [200, 404]:
+                    # Сервер готов
+                    break
+        except:
+            if i == max_retries - 1:
+                raise HTTPException(status_code=503, detail="Next.js server is not ready yet. Please try again in a few seconds.")
+            await asyncio.sleep(1)
+    
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(server_url)
-            if resp.status_code != 200:
-                raise HTTPException(status_code=502, detail=f"Proxy error: {resp.status_code}")
-            return Response(content=resp.content, media_type=resp.headers.get("content-type"), status_code=resp.status_code)
+            return Response(
+                content=resp.content, 
+                media_type=resp.headers.get("content-type", "text/html"),
+                status_code=resp.status_code
+            )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Next.js server timeout")
     except HTTPException:
         raise
     except Exception as e:
         # Provide exception type and message for debugging
-        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {e}")
+        print(f"Proxy error details: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Proxy error: {type(e).__name__}: {str(e)}")
