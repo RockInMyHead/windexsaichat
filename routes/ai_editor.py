@@ -840,8 +840,14 @@ async def preview_proxy_root(
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(server_url)
+            # Rewrite asset URLs so they pass through the preview-proxy endpoint
+            html_text = resp.content.decode('utf-8', errors='ignore')
+            proxy_prefix = f"/api/ai-editor/project/{conversation_id}/preview-proxy"
+            # Adjust all src and href references to /_next/* to route through proxy
+            html_text = html_text.replace('="/_next/', f'="{proxy_prefix}/_next/')
+            # Return rewritten HTML
             return Response(
-                content=resp.content, 
+                content=html_text.encode('utf-8'),
                 media_type=resp.headers.get("content-type", "text/html"),
                 status_code=resp.status_code
             )
