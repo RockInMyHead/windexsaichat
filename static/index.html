@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WindexsAI - Искусственный интеллект нового поколения</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=20241225-7">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -70,6 +70,15 @@
         <!-- Единый красивый хедер -->
         <header class="unified-header">
             <div class="header-container">
+                <!-- Мобильная кнопка меню -->
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Открыть меню">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
                 <a href="/" class="header-logo">
                     <img src="/static/round_logo-07.svg" alt="WindexsAI" width="32" height="32">
                     <span class="logo-text">WindexsAI</span>
@@ -77,8 +86,8 @@
 
                 <nav class="header-nav">
                     <div class="nav-links">
-                        <a href="/static/editor.html" class="nav-link">Создание сайтов</a>
-                        <a href="/static/projects.html" class="nav-link">Мои проекты</a>
+                        <a href="/editor" class="nav-link">Создание сайтов</a>
+                        <a href="/dashboard" class="nav-link">Кабинет</a>
                     </div>
                 </nav>
 
@@ -91,10 +100,13 @@
             </div>
         </header>
 
+        <!-- Sidebar Overlay для мобильных устройств -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
         <!-- Main Content -->
         <main class="main-content d-flex">
             <!-- Sidebar -->
-            <aside class="sidebar card">
+            <aside class="sidebar card" id="sidebar">
                 <div class="card-header">
                     <div class="d-flex align-items-center justify-content-between">
                         <h3 class="mb-0">История чатов</h3>
@@ -270,10 +282,21 @@
 
                     <!-- Typing Indicator -->
                     <div id="typing-indicator" class="typing-indicator hidden">
-                        <div class="typing-dots">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
+                        <div class="chat-avatar">🤖</div>
+                        <div class="typing-bubble">
+                            <div class="typing-text">
+                                <span class="typing-char">W</span>
+                                <span class="typing-char">i</span>
+                                <span class="typing-char">n</span>
+                                <span class="typing-char">d</span>
+                                <span class="typing-char">e</span>
+                                <span class="typing-char">x</span>
+                                <span class="typing-char">A</span>
+                                <span class="typing-char">I</span>
+                                <span class="typing-char">.</span>
+                                <span class="typing-char">.</span>
+                                <span class="typing-char">.</span>
+                            </div>
                         </div>
                     </div>
 
@@ -310,36 +333,27 @@
                                 maxlength="4000"
                             ></textarea>
                             <input type="file" id="document-input" accept=".pdf,.docx,.doc,.txt,.csv,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.tiff" style="display: none;">
-                            <button id="document-btn" class="btn btn-outline" title="Загрузить документ или изображение">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14,2 14,8 20,8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10,9 9,9 8,9"></polyline>
-                                </svg>
+                            
+                            <!-- Кнопка с выдвижным меню -->
+                            <div class="dropdown-menu-container" style="position: relative !important; display: inline-block !important;">
+                                <button id="tools-btn" class="btn btn-outline" title="Инструменты" style="position: relative; z-index: 100;">
+                                    Инструменты
+                                </button>
+
+                                <div id="tools-dropdown" class="tools-dropdown">
+                                    <button id="document-btn" class="dropdown-item" onclick="handleDocument()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important; border-bottom: 1px solid #eee !important;">
+                                        📄 Документ
                             </button>
-                            <button id="voice-btn" class="btn btn-outline" title="Голосовое сообщение">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                                </svg>
+
+                                    <button id="voice-btn" class="dropdown-item" onclick="handleVoice()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important; border-bottom: 1px solid #eee !important;">
+                                        🎤 Голос
                             </button>
-                            <button id="connect-btn" class="btn btn-outline" title="Подключить к чату">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path d="M12 1v6"></path>
-                                    <path d="M12 17v6"></path>
-                                    <path d="M4.22 4.22l4.24 4.24"></path>
-                                    <path d="M15.54 15.54l4.24 4.24"></path>
-                                    <path d="M1 12h6"></path>
-                                    <path d="M17 12h6"></path>
-                                    <path d="M4.22 19.78l4.24-4.24"></path>
-                                    <path d="M15.54 8.46l4.24-4.24"></path>
-                                </svg>
+
+                                    <button id="connect-btn" class="dropdown-item" onclick="handleConnect()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important;">
+                                        🔗 Подключение
                             </button>
+                                </div>
+                            </div>
                             <button id="send-btn" class="btn btn-primary" disabled>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -442,6 +456,85 @@
         </div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <script src="/static/script.js?v=20241225-16"></script>
+
+    <!-- Mermaid.js для диаграмм -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.esm.min.mjs';
+
+        // Настройка Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 14,
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // Функция для рендеринга диаграмм
+        window.renderDiagrams = async function() {
+            // Обрабатываем Mermaid диаграммы
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            for (const element of mermaidElements) {
+                if (element.getAttribute('data-processed') === 'true') continue;
+
+                try {
+                    const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+                    element.id = id;
+                    element.setAttribute('data-processed', 'true');
+
+                    const { svg } = await mermaid.render(id, element.textContent);
+                    element.innerHTML = svg;
+                } catch (error) {
+                    console.error('Ошибка рендеринга Mermaid диаграммы:', error);
+                    element.innerHTML = '<div class="mermaid-error">Ошибка при рендеринге диаграммы Mermaid</div>';
+                }
+            }
+
+            // Обрабатываем текстовые диаграммы (ASCII art)
+            const textDiagrams = document.querySelectorAll('.diagram-content');
+            for (const element of textDiagrams) {
+                if (element.getAttribute('data-processed') === 'true') continue;
+
+                try {
+                    element.setAttribute('data-processed', 'true');
+                    // Добавляем красивые стили для текстовых диаграмм
+                    element.style.fontFamily = 'JetBrains Mono, Fira Code, Monaco, Courier New, monospace';
+                    element.style.lineHeight = '1.5';
+                    element.style.letterSpacing = '0.5px';
+                } catch (error) {
+                    console.error('Ошибка обработки текстовой диаграммы:', error);
+                }
+            }
+        };
+
+        // Автоматический рендеринг при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                window.renderDiagrams();
+            }, 100);
+        });
+
+        // MutationObserver для динамически добавляемого контента
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    setTimeout(() => {
+                        window.renderDiagrams();
+                    }, 100);
+                }
+            });
+        });
+
+        observer.observe(document.getElementById('chat-messages'), {
+            childList: true,
+            subtree: true
+        });
+    </script>
 </body>
 </html>

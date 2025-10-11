@@ -199,13 +199,15 @@ GLOBALS_CSS_END
 
 HERO_COMPONENT_START
 ```tsx
-{сложный Hero с анимациями и интерактивностью}
+"use client";
+{сложный Hero с анимациями и интерактивностью. ОБЯЗАТЕЛЬНО добавь "use client" в начало файла}
 ```
 HERO_COMPONENT_END
 
 FEATURES_COMPONENT_START
 ```tsx
-{интерактивные Features с hover-эффектами}
+"use client";
+{интерактивные Features с hover-эффектами. ОБЯЗАТЕЛЬНО добавь "use client" в начало файла}
 ```
 FEATURES_COMPONENT_END
 
@@ -217,13 +219,14 @@ FOOTER_COMPONENT_END
 
 BUTTON_COMPONENT_START
 ```tsx
-{анимированные кнопки с состояниями}
+"use client";
+{анимированные кнопки с состояниями. ОБЯЗАТЕЛЬНО добавь "use client" в начало файла}
 ```
 BUTTON_COMPONENT_END
 
 CARD_COMPONENT_START
 ```tsx
-{интерактивные карточки с анимациями}
+{интерактивные карточки с анимациями. Если используешь framer-motion, добавь "use client" в начало}
 ```
 CARD_COMPONENT_END
 
@@ -235,13 +238,15 @@ CONTAINER_COMPONENT_END
 
 MODAL_COMPONENT_START
 ```tsx
-{модальные окна с анимациями}
+"use client";
+{модальные окна с анимациями. ОБЯЗАТЕЛЬНО добавь "use client" в начало файла}
 ```
 MODAL_COMPONENT_END
 
 FORM_COMPONENT_START
 ```tsx
-{формы с валидацией и стилями}
+"use client";
+{формы с валидацией и стилями. ОБЯЗАТЕЛЬНО добавь "use client" в начало файла, так как используется useState}
 ```
 FORM_COMPONENT_END
 
@@ -733,9 +738,16 @@ async def preview_project(
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-    # Запускаем сервер
+    # Restart server to pick up updated files
+    from utils.nextjs_manager import nextjs_manager as manager
+    if str(conversation_id) in manager.servers:
+        old_info = manager.servers.pop(str(conversation_id))
+        try:
+            old_info['process'].terminate()
+        except Exception:
+            pass
+    # Start new Next.js server instance
     try:
-        from utils.nextjs_manager import nextjs_manager as manager
         server_info = manager.start_nextjs_server(str(conversation_id), project_dir)
         # Получаем токен пользователя для прокси
         from utils.auth_utils import create_access_token
@@ -843,8 +855,15 @@ async def preview_proxy_root(
             # Rewrite asset URLs so they pass through the preview-proxy endpoint
             html_text = resp.content.decode('utf-8', errors='ignore')
             proxy_prefix = f"/api/ai-editor/project/{conversation_id}/preview-proxy"
-            # Adjust all src and href references to /_next/* to route through proxy
-            html_text = html_text.replace('="/_next/', f'="{proxy_prefix}/_next/')
+            
+            # Replace all absolute paths to _next/ with proxy paths using regex
+            import re
+            # Replace src="/_next/ with src="/api/ai-editor/project/{id}/preview-proxy/_next/
+            html_text = re.sub(r'src="/_next/', f'src="{proxy_prefix}/_next/', html_text)
+            # Replace href="/_next/ with href="/api/ai-editor/project/{id}/preview-proxy/_next/
+            html_text = re.sub(r'href="/_next/', f'href="{proxy_prefix}/_next/', html_text)
+            # Replace any other "/_next/ references
+            html_text = re.sub(r'"/_next/', f'"{proxy_prefix}/_next/', html_text)
             # Return rewritten HTML
             return Response(
                 content=html_text.encode('utf-8'),

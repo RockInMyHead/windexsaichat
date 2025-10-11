@@ -1,3 +1,6 @@
+// Тестовый вывод для диагностики
+console.log('JavaScript файл загружен и выполняется!');
+
 class AuthManager {
     constructor() {
         this.token = localStorage.getItem('windexai_token');
@@ -125,6 +128,8 @@ class WindexAI {
         this.connectBtn = document.getElementById('connect-btn');
         this.documentBtn = document.getElementById('document-btn');
         this.documentInput = document.getElementById('document-input');
+        this.toolsBtn = document.getElementById('tools-btn');
+        this.toolsDropdown = document.getElementById('tools-dropdown');
         this.chatContainer = document.getElementById('chat-container');
         this.chatMessages = document.getElementById('chat-messages');
         this.welcomeMessage = document.getElementById('welcome-message');
@@ -179,6 +184,13 @@ class WindexAI {
             }
         });
 
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.toolsDropdown && !this.toolsDropdown.contains(e.target) && !this.toolsBtn.contains(e.target)) {
+                this.hideToolsDropdown();
+            }
+        });
+
         // Logo click handler
         const logoClickable = document.getElementById('logo-clickable');
         if (logoClickable) {
@@ -196,6 +208,7 @@ class WindexAI {
         if (this.voiceBtn) {
             this.voiceBtn.addEventListener('click', () => {
                 this.toggleVoiceRecording();
+                this.hideToolsDropdown();
             });
         }
 
@@ -203,6 +216,15 @@ class WindexAI {
         if (this.connectBtn) {
             this.connectBtn.addEventListener('click', () => {
                 this.showConnectModal();
+                this.hideToolsDropdown();
+            });
+        }
+
+        // Tools dropdown button - enable toggling
+        if (this.toolsBtn) {
+            this.toolsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleToolsDropdown();
             });
         }
 
@@ -210,6 +232,7 @@ class WindexAI {
         if (this.documentBtn) {
             this.documentBtn.addEventListener('click', () => {
                 this.documentInput.click();
+                this.hideToolsDropdown();
             });
         }
 
@@ -578,6 +601,62 @@ class WindexAI {
         text = text.replace(/\n\n/g, '</p><p>');
         text = '<p>' + text + '</p>';
 
+        // Обрабатываем различные форматы диаграмм
+        // Mermaid диаграммы
+        text = text.replace(/```mermaid\s*([\s\S]*?)```/g, (match, diagramCode) => {
+            const cleanCode = diagramCode.trim();
+            return `<div class="mermaid-diagram">
+                <div class="diagram-header">
+                    <span class="diagram-title">Диаграмма Mermaid</span>
+                    <button class="diagram-copy-btn" onclick="copyDiagramCode(this)">📋</button>
+                </div>
+                <div class="mermaid" data-code="${btoa(cleanCode)}">${cleanCode}</div>
+            </div>`;
+        });
+
+        // Диаграммы в формате блок-схем (flowchart)
+        text = text.replace(/```flowchart\s*([\s\S]*?)```/g, (match, diagramCode) => {
+            const cleanCode = diagramCode.trim();
+            return `<div class="flowchart-diagram">
+                <div class="diagram-header">
+                    <span class="diagram-title">Блок-схема</span>
+                    <button class="diagram-copy-btn" onclick="copyDiagramCode(this)">📋</button>
+                </div>
+                <div class="flowchart" data-code="${btoa(cleanCode)}">${cleanCode}</div>
+            </div>`;
+        });
+
+        // Диаграммы последовательности (sequence)
+        text = text.replace(/```sequence\s*([\s\S]*?)```/g, (match, diagramCode) => {
+            const cleanCode = diagramCode.trim();
+            return `<div class="sequence-diagram">
+                <div class="diagram-header">
+                    <span class="diagram-title">Диаграмма последовательности</span>
+                    <button class="diagram-copy-btn" onclick="copyDiagramCode(this)">📋</button>
+                </div>
+                <div class="sequence" data-code="${btoa(cleanCode)}">${cleanCode}</div>
+            </div>`;
+        });
+
+        // Автоматическое распознавание диаграмм в тексте
+        text = text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
+            const cleanCode = code.trim();
+            const lowerLang = (lang || '').toLowerCase();
+
+            // Определяем тип диаграммы
+            if (lowerLang.includes('diagram') || lowerLang.includes('chart') || lowerLang.includes('graph')) {
+                return `<div class="auto-diagram">
+                    <div class="diagram-header">
+                        <span class="diagram-title">Диаграмма</span>
+                        <button class="diagram-copy-btn" onclick="copyDiagramCode(this)">📋</button>
+                    </div>
+                    <div class="diagram-content" data-code="${btoa(cleanCode)}">${cleanCode}</div>
+                </div>`;
+            }
+
+            return match; // Оставляем как есть для других типов кода
+        });
+
         // Убираем пустые параграфы
         text = text.replace(/<p><\/p>/g, '');
         text = text.replace(/<p>\s*<\/p>/g, '');
@@ -620,6 +699,20 @@ class WindexAI {
 
         this.chatMessages.appendChild(messageDiv);
         setTimeout(() => this.scrollToBottom(), 50);
+    }
+
+    // Функция копирования кода диаграммы
+    copyDiagramCode(button) {
+        const diagramContainer = button.closest('.mermaid-diagram, .flowchart-diagram, .sequence-diagram, .auto-diagram');
+        const codeElement = diagramContainer.querySelector('.mermaid, .flowchart, .sequence, .diagram-content');
+        const code = atob(codeElement.getAttribute('data-code'));
+
+        navigator.clipboard.writeText(code).then(() => {
+            // Показываем уведомление о копировании
+            showNotification('Код диаграммы скопирован в буфер обмена', 'success');
+        }).catch(() => {
+            showNotification('Ошибка при копировании кода', 'error');
+        });
     }
 
     showChatMessages() {
@@ -1397,6 +1490,18 @@ class WindexAI {
         }
     }
 
+    toggleToolsDropdown() {
+        if (this.toolsDropdown) {
+            this.toolsDropdown.classList.toggle('show');
+        }
+    }
+
+    hideToolsDropdown() {
+        if (this.toolsDropdown) {
+            this.toolsDropdown.classList.remove('show');
+        }
+    }
+
     resetConnectModal() {
         if (this.connectionCodeInput) {
             this.connectionCodeInput.value = '';
@@ -1737,13 +1842,109 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Inside DOMContentLoaded listener, add mobile menu toggle logic
+    // Мобильное меню
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.querySelector('.sidebar');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    
     if (mobileMenuBtn && sidebar) {
-      mobileMenuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('mobile-open');
-      });
+        // Открытие/закрытие мобильного меню
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+        
+        // Закрытие меню при клике на overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                closeMobileMenu();
+            });
+        }
+        
+        // Закрытие меню при клике на элемент списка чатов
+        const conversationItems = sidebar.querySelectorAll('.conversation-item');
+        conversationItems.forEach(item => {
+            item.addEventListener('click', () => {
+                closeMobileMenu();
+            });
+        });
+        
+        // Закрытие меню при изменении размера окна (если переходим на десктоп)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                closeMobileMenu();
+            }
+        });
+    }
+    
+    function toggleMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            const isOpen = sidebar.classList.contains('mobile-open');
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        }
+    }
+    
+    function openMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.add('mobile-open');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Предотвращаем скролл фона
+        }
+    }
+    
+    function closeMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.remove('mobile-open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Восстанавливаем скролл
+        }
+    }
+    
+    // Обработка свайпов для закрытия мобильного меню
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    if (sidebar) {
+        sidebar.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        sidebar.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+    }
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const swipeDistance = touchStartX - touchEndX;
+        
+        // Свайп влево для закрытия меню
+        if (swipeDistance > swipeThreshold && sidebar.classList.contains('mobile-open')) {
+            closeMobileMenu();
+        }
+    }
+    
+    // Предотвращаем зум при двойном тапе на кнопках
+    document.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.btn, .nav-link, .conversation-item')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Улучшенная обработка клавиатуры на мобильных
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('focus', () => {
+            // Небольшая задержка для корректного позиционирования
+            setTimeout(() => {
+                messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
     }
 });
 
@@ -1977,3 +2178,4 @@ async function checkProSubscription() {
         return false;
     }
 }
+// Force cache refresh 1760126317

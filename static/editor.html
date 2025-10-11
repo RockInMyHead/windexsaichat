@@ -991,10 +991,18 @@
                     <div id="typing-indicator" class="typing-indicator hidden">
                         <div class="chat-avatar">🤖</div>
                         <div class="typing-bubble">
-                            <div class="typing-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
+                            <div class="typing-text">
+                                <span class="typing-char">W</span>
+                                <span class="typing-char">i</span>
+                                <span class="typing-char">n</span>
+                                <span class="typing-char">d</span>
+                                <span class="typing-char">e</span>
+                                <span class="typing-char">x</span>
+                                <span class="typing-char">A</span>
+                                <span class="typing-char">I</span>
+                                <span class="typing-char">.</span>
+                                <span class="typing-char">.</span>
+                                <span class="typing-char">.</span>
                             </div>
                         </div>
                     </div>
@@ -1103,6 +1111,84 @@
     </div>
 
     <script src="/static/editor.js"></script>
+
+    <!-- Mermaid.js для диаграмм -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.esm.min.mjs';
+
+        // Настройка Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 14,
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // Функция для рендеринга диаграмм
+        window.renderDiagrams = async function() {
+            // Обрабатываем Mermaid диаграммы
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            for (const element of mermaidElements) {
+                if (element.getAttribute('data-processed') === 'true') continue;
+
+                try {
+                    const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+                    element.id = id;
+                    element.setAttribute('data-processed', 'true');
+
+                    const { svg } = await mermaid.render(id, element.textContent);
+                    element.innerHTML = svg;
+                } catch (error) {
+                    console.error('Ошибка рендеринга Mermaid диаграммы:', error);
+                    element.innerHTML = '<div class="mermaid-error">Ошибка при рендеринге диаграммы Mermaid</div>';
+                }
+            }
+
+            // Обрабатываем текстовые диаграммы (ASCII art)
+            const textDiagrams = document.querySelectorAll('.diagram-content');
+            for (const element of textDiagrams) {
+                if (element.getAttribute('data-processed') === 'true') continue;
+
+                try {
+                    element.setAttribute('data-processed', 'true');
+                    // Добавляем красивые стили для текстовых диаграмм
+                    element.style.fontFamily = 'JetBrains Mono, Fira Code, Monaco, Courier New, monospace';
+                    element.style.lineHeight = '1.5';
+                    element.style.letterSpacing = '0.5px';
+                } catch (error) {
+                    console.error('Ошибка обработки текстовой диаграммы:', error);
+                }
+            }
+        };
+
+        // Автоматический рендеринг при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                window.renderDiagrams();
+            }, 100);
+        });
+
+        // MutationObserver для динамически добавляемого контента
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    setTimeout(() => {
+                        window.renderDiagrams();
+                    }, 100);
+                }
+            });
+        });
+
+        observer.observe(document.getElementById('chat-messages'), {
+            childList: true,
+            subtree: true
+        });
+    </script>
 </body>
-</html>
 </html>

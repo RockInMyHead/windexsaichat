@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from database import create_tables
 # Import routers
 from routes import (admin, ai_editor, auth, chat, conversations, dashboard,
-                    deploy, documents, voice)
+                    deploy, documents, profile, voice)
 
 # Create tables on startup
 create_tables()
@@ -40,6 +40,7 @@ app.include_router(deploy.router)
 app.include_router(voice.router)
 app.include_router(documents.router)
 app.include_router(dashboard.router)
+app.include_router(profile.router)
 
 
 # Pydantic models for API documentation
@@ -86,6 +87,36 @@ async def read_pricing():
 async def read_editor():
     """Serve the AI editor HTML page"""
     return FileResponse("static/editor.html")
+
+
+@app.get("/profile", response_class=HTMLResponse)
+async def read_profile():
+    """Serve the profile HTML page"""
+    return FileResponse("static/profile.html")
+
+
+@app.get("/test-dropdown", response_class=HTMLResponse)
+async def read_test_dropdown():
+    """Serve the test dropdown HTML page"""
+    return FileResponse("static/test-dropdown.html")
+
+
+@app.get("/simple-test", response_class=HTMLResponse)
+async def read_simple_test():
+    """Serve the simple test HTML page"""
+    return FileResponse("static/simple-test.html")
+
+
+@app.get("/minimal-test", response_class=HTMLResponse)
+async def read_minimal_test():
+    """Serve the minimal test HTML page"""
+    return FileResponse("static/minimal-test.html")
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def read_dashboard():
+    """Serve the dashboard HTML page"""
+    return FileResponse("static/dashboard.html")
 
 
 @app.get("/style.css")

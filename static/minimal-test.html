@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Минимальный тест меню</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .input-area { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        .input-container { display: flex; gap: 10px; align-items: center; }
+        .btn { padding: 10px 15px; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px; }
+        .btn:hover { background: #10b981; color: white; border-color: #10b981; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+        .dropdown-menu.show { display: block !important; }
+        .dropdown-item {
+            display: block;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+        }
+        .dropdown-item:hover { background: #f8f9fa; }
+        .dropdown-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Минимальный тест выпадающего меню</h1>
+
+        <div class="input-area">
+            <div class="input-container">
+                <input type="text" placeholder="Сообщение..." style="flex: 1; padding: 10px;">
+                <div class="dropdown">
+                    <button class="btn" onclick="toggleMenu()">Инструменты</button>
+                    <div class="dropdown-menu" id="menu">
+                        <div class="dropdown-item" onclick="alert('Документ')">📄 Документ</div>
+                        <div class="dropdown-item" onclick="alert('Голос')">🎤 Голос</div>
+                        <div class="dropdown-item" onclick="alert('Подключение')">🔗 Подключение</div>
+                    </div>
+                </div>
+                <button class="btn">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Минимальный тест загружен');
+
+        function toggleMenu() {
+            console.log('Кнопка нажата');
+            const menu = document.getElementById('menu');
+            console.log('Меню до:', menu.style.display);
+            menu.classList.toggle('show');
+            console.log('Меню после:', menu.style.display);
+        }
+
+        // Закрытие при клике вне меню
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('menu');
+            const button = document.querySelector('.dropdown button');
+
+            if (!menu.contains(e.target) && !button.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

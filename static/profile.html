@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - WindexsAI</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="unified-header">
+            <div class="header-container">
+                <a href="/" class="header-logo">
+                    <img src="/static/round_logo-07.svg" alt="WindexsAI" width="32" height="32">
+                    <span class="logo-text">WindexsAI</span>
+                </a>
+                
+                <nav class="nav-links">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        Главная
+                    </a>
+                    <a href="/editor.html" class="nav-link">
+                        <i class="fas fa-code"></i>
+                        Редактор
+                    </a>
+                    <a href="/profile.html" class="nav-link active">
+                        <i class="fas fa-user"></i>
+                        Профиль
+                    </a>
+                </nav>
+                
+                <div class="user-info">
+                    <span class="user-name" id="user-name">Загрузка...</span>
+                    <div class="user-avatar" id="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <button class="logout-btn" id="logout-btn" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="profile-main">
+            <div class="profile-container">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h1 class="profile-name" id="profile-name">Загрузка...</h1>
+                        <p class="profile-email" id="profile-email">Загрузка...</p>
+                        <div class="profile-badges">
+                            <span class="badge" id="subscription-badge">Free</span>
+                            <span class="badge badge-success" id="member-since">Участник с 2024</span>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" id="edit-profile-btn">
+                            <i class="fas fa-edit"></i>
+                            Редактировать
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-conversations">0</h3>
+                            <p class="stat-label">Разговоров</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-message"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-messages">0</h3>
+                            <p class="stat-label">Сообщений</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-documents">0</h3>
+                            <p class="stat-label">Документов</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-deployments">0</h3>
+                            <p class="stat-label">Деплоев</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Tabs -->
+                <div class="profile-tabs">
+                    <div class="tab-nav">
+                        <button class="tab-btn active" data-tab="overview">
+                            <i class="fas fa-chart-line"></i>
+                            Обзор
+                        </button>
+                        <button class="tab-btn" data-tab="activity">
+                            <i class="fas fa-history"></i>
+                            Активность
+                        </button>
+                        <button class="tab-btn" data-tab="settings">
+                            <i class="fas fa-cog"></i>
+                            Настройки
+                        </button>
+                        <button class="tab-btn" data-tab="subscription">
+                            <i class="fas fa-crown"></i>
+                            Подписка
+                        </button>
+                    </div>
+
+                    <!-- Overview Tab -->
+                    <div class="tab-content active" id="overview-tab">
+                        <div class="overview-grid">
+                            <div class="overview-card">
+                                <h3>Статистика за месяц</h3>
+                                <div class="monthly-stats">
+                                    <div class="monthly-stat">
+                                        <span class="monthly-number" id="messages-this-month">0</span>
+                                        <span class="monthly-label">Сообщений</span>
+                                    </div>
+                                    <div class="monthly-stat">
+                                        <span class="monthly-number" id="conversations-this-month">0</span>
+                                        <span class="monthly-label">Разговоров</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="overview-card">
+                                <h3>Активность</h3>
+                                <div class="activity-info">
+                                    <p><strong>Последняя активность:</strong> <span id="last-activity">Неизвестно</span></p>
+                                    <p><strong>Самый активный день:</strong> <span id="most-active-day">Неизвестно</span></p>
+                                    <p><strong>Среднее сообщений на разговор:</strong> <span id="avg-messages">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Tab -->
+                    <div class="tab-content" id="activity-tab">
+                        <div class="activity-section">
+                            <h3>Последние разговоры</h3>
+                            <div class="activity-list" id="recent-conversations">
+                                <div class="loading">Загрузка...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-section">
+                            <h3>Последние документы</h3>
+                            <div class="activity-list" id="recent-documents">
+                                <div class="loading">Загрузка...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-section">
+                            <h3>Последние деплои</h3>
+                            <div class="activity-list" id="recent-deployments">
+                                <div class="loading">Загрузка...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-content" id="settings-tab">
+                        <div class="settings-section">
+                            <h3>Личная информация</h3>
+                            <form class="settings-form" id="profile-form">
+                                <div class="form-group">
+                                    <label for="username">Имя пользователя</label>
+                                    <input type="text" id="username" name="username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Сохранить изменения
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>Безопасность</h3>
+                            <form class="settings-form" id="password-form">
+                                <div class="form-group">
+                                    <label for="current-password">Текущий пароль</label>
+                                    <input type="password" id="current-password" name="current_password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-password">Новый пароль</label>
+                                    <input type="password" id="new-password" name="new_password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirm-password">Подтвердите пароль</label>
+                                    <input type="password" id="confirm-password" name="confirm_password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key"></i>
+                                    Изменить пароль
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-section danger-zone">
+                            <h3>Опасная зона</h3>
+                            <p>Удаление аккаунта необратимо. Все ваши данные будут удалены навсегда.</p>
+                            <button class="btn btn-danger" id="delete-account-btn">
+                                <i class="fas fa-trash"></i>
+                                Удалить аккаунт
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Tab -->
+                    <div class="tab-content" id="subscription-tab">
+                        <div class="subscription-info">
+                            <div class="subscription-card">
+                                <h3>Текущий план</h3>
+                                <div class="plan-info">
+                                    <div class="plan-name" id="current-plan">Free</div>
+                                    <div class="plan-status" id="plan-status">Активен</div>
+                                </div>
+                            </div>
+                            
+                            <div class="features-comparison">
+                                <h3>Сравнение планов</h3>
+                                <div class="features-table">
+                                    <div class="feature-row">
+                                        <span class="feature-name">Максимум разговоров</span>
+                                        <span class="feature-free">10</span>
+                                        <span class="feature-pro">Безлимит</span>
+                                    </div>
+                                    <div class="feature-row">
+                                        <span class="feature-name">Максимум документов</span>
+                                        <span class="feature-free">5</span>
+                                        <span class="feature-pro">Безлимит</span>
+                                    </div>
+                                    <div class="feature-row">
+                                        <span class="feature-name">Максимум деплоев</span>
+                                        <span class="feature-free">2</span>
+                                        <span class="feature-pro">Безлимит</span>
+                                    </div>
+                                    <div class="feature-row">
+                                        <span class="feature-name">AI модели</span>
+                                        <span class="feature-free">GPT-4o Mini</span>
+                                        <span class="feature-pro">Все модели</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="upgrade-section">
+                                <button class="btn btn-primary btn-large" id="upgrade-btn">
+                                    <i class="fas fa-crown"></i>
+                                    Обновить до Pro
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="edit-profile-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактировать профиль</h3>
+                <button class="modal-close" id="close-edit-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-profile-form">
+                    <div class="form-group">
+                        <label for="edit-username">Имя пользователя</label>
+                        <input type="text" id="edit-username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">Email</label>
+                        <input type="email" id="edit-email" name="email" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-edit">Отмена</button>
+                <button class="btn btn-primary" id="save-edit">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="delete-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Подтверждение удаления</h3>
+                <button class="modal-close" id="close-delete-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить свой аккаунт? Это действие необратимо.</p>
+                <p><strong>Все ваши данные будут удалены:</strong></p>
+                <ul>
+                    <li>Все разговоры и сообщения</li>
+                    <li>Все загруженные документы</li>
+                    <li>Все деплои</li>
+                    <li>Настройки профиля</li>
+                </ul>
+                <div class="form-group">
+                    <label for="confirm-delete">Введите "УДАЛИТЬ" для подтверждения</label>
+                    <input type="text" id="confirm-delete" placeholder="УДАЛИТЬ">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-delete">Отмена</button>
+                <button class="btn btn-danger" id="confirm-delete-btn" disabled>Удалить аккаунт</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script src="/static/profile.js"></script>
+</body>
+</html>
+

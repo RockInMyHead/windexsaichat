@@ -9,7 +9,7 @@ import httpx
 load_dotenv()
 
 # OpenAI API Configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("WINDEXAI_API_KEY")
 
 # Proxy Configuration
 PROXY_ENABLED = os.getenv("PROXY_ENABLED", "false").lower() == "true"
