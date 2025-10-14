@@ -4,6 +4,13 @@ class AIEditor {
         this.currentGeneration = null;
         this.currentConversationId = null;
         this.authToken = localStorage.getItem('windexai_token');
+        this.currentMode = 'lite'; // Default to Lite mode
+        this.useTwoStage = true; // Default to two-stage LLM system
+        this.thinkingStep = 0;
+        this.thinkingInterval = null;
+        this.thinkingPollingInterval = null;
+        console.log('🎯 Initial mode set to:', this.currentMode);
+        console.log('🎯 Two-stage LLM system enabled:', this.useTwoStage);
         this.initializeElements();
         this.setupEventListeners();
         this.toggleSendButton(); // Инициализируем состояние кнопки
@@ -16,7 +23,313 @@ class AIEditor {
 
         this.checkAuth();
         this.loadConversations();
+        
+        // Clear iframe on page load
+        this.clearIframe();
+        
+        // Test iframe functionality
+        this.testIframe();
         this.checkUrlParams();
+        
+        // Restore project content if there's an active conversation
+        setTimeout(() => {
+            this.restoreProjectContent();
+        }, 1000);
+    }
+    
+    clearIframe() {
+        if (this.previewIframe) {
+            console.log('🧹 Clearing iframe content...');
+            this.previewIframe.srcdoc = `
+                <!DOCTYPE html>
+                <html lang='ru'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Превью сайта</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            font-family: 'Inter', sans-serif;
+                            background: #f8f9fa;
+                            color: #333;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100vh;
+                            text-align: center;
+                        }
+                        .placeholder {
+                            background: white;
+                            padding: 2rem;
+                            border-radius: 10px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            max-width: 400px;
+                        }
+                        .placeholder-icon {
+                            font-size: 3rem;
+                            margin-bottom: 1rem;
+                        }
+                        .placeholder-title {
+                            font-size: 1.5rem;
+                            font-weight: 600;
+                            margin-bottom: 0.5rem;
+                            color: #667eea;
+                        }
+                        .placeholder-desc {
+                            color: #666;
+                            line-height: 1.5;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class='placeholder'>
+                        <div class='placeholder-icon'>🚀</div>
+                        <div class='placeholder-title'>Готов к созданию</div>
+                        <div class='placeholder-desc'>
+                            Отправьте запрос в чат, чтобы начать создание сайта
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+    }
+    
+    restoreProjectContent() {
+        if (this.currentConversationId && this.previewIframe) {
+            console.log('🔄 Restoring project content for conversation:', this.currentConversationId);
+            
+            // Получаем последнее сообщение из истории беседы
+            if (this.conversationHistory.length > 0) {
+                const lastMessage = this.conversationHistory[this.conversationHistory.length - 1];
+                if (lastMessage.role === 'assistant' && lastMessage.content) {
+                    // Обновляем превью с последним сгенерированным контентом
+                    this.updatePreview(lastMessage.content);
+                }
+            }
+        }
+    }
+    
+    forceRestoreContent() {
+        // Принудительно восстанавливаем сгенерированный контент
+        if (this.lastGeneratedHtml && this.previewIframe) {
+            console.log('🔄 Force restoring generated content...');
+            this.previewIframe.srcdoc = this.lastGeneratedHtml;
+            // Скрываем кнопку восстановления после успешного восстановления
+            if (this.restoreContentBtn) {
+                this.restoreContentBtn.style.display = 'none';
+            }
+        }
+    }
+    
+    showRestoreButton() {
+        // Показываем кнопку восстановления
+        if (this.restoreContentBtn && this.lastGeneratedHtml) {
+            this.restoreContentBtn.style.display = 'inline-block';
+        }
+    }
+    
+    hideRestoreButton() {
+        // Скрываем кнопку восстановления
+        if (this.restoreContentBtn) {
+            this.restoreContentBtn.style.display = 'none';
+        }
+    }
+    
+    testIframe() {
+        // Проверяем, есть ли уже сгенерированный контент
+        if (this.previewIframe && !this.currentConversationId && !this.previewIframe.srcdoc) {
+            console.log('🧪 Testing iframe functionality...');
+            var testHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head><title>Test</title></head>
+                <body>
+                    <h1>Iframe Test</h1>
+                    <p>If you can see this, the iframe is working!</p>
+                </body>
+                </html>
+            `;
+            this.previewIframe.srcdoc = testHtml;
+            console.log('🧪 Test HTML set in iframe');
+            
+            // Убираем тестовый контент через 3 секунды, только если нет активного проекта
+            setTimeout(() => {
+                if (this.previewIframe && this.previewIframe.srcdoc === testHtml && !this.currentConversationId && !this.lastGeneratedHtml) {
+                    this.previewIframe.srcdoc = `
+                        <!DOCTYPE html>
+                        <html lang='ru'>
+                        <head>
+                            <meta charset='UTF-8'>
+                            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                            <title>WindexsAI - Искусственный интеллект нового поколения</title>
+                            <style>
+                                body {
+                                    margin: 0;
+                                    font-family: 'Inter', sans-serif;
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    height: 100vh;
+                                    text-align: center;
+                                }
+                                .container {
+                                    max-width: 600px;
+                                    padding: 2rem;
+                                }
+                                .logo {
+                                    font-size: 3rem;
+                                    font-weight: 700;
+                                    margin-bottom: 1rem;
+                                    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    background-clip: text;
+                                }
+                                .subtitle {
+                                    font-size: 1.2rem;
+                                    margin-bottom: 2rem;
+                                    opacity: 0.9;
+                                }
+                                .description {
+                                    font-size: 1rem;
+                                    line-height: 1.6;
+                                    opacity: 0.8;
+                                    margin-bottom: 2rem;
+                                }
+                                .features {
+                                    display: grid;
+                                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                                    gap: 1rem;
+                                    margin-top: 2rem;
+                                }
+                                .feature {
+                                    background: rgba(255, 255, 255, 0.1);
+                                    padding: 1rem;
+                                    border-radius: 10px;
+                                    backdrop-filter: blur(10px);
+                                }
+                                .feature-icon {
+                                    font-size: 2rem;
+                                    margin-bottom: 0.5rem;
+                                }
+                                .feature-title {
+                                    font-weight: 600;
+                                    margin-bottom: 0.5rem;
+                                }
+                                .feature-desc {
+                                    font-size: 0.9rem;
+                                    opacity: 0.8;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>WindexsAI</div>
+                                <div class='subtitle'>Искусственный интеллект нового поколения</div>
+                                <div class='description'>
+                                    Добро пожаловать в будущее AI-технологий. Создавайте сайты, анализируйте данные, 
+                                    генерируйте контент и решайте сложные задачи с помощью передового искусственного интеллекта.
+                                </div>
+                                <div class='features'>
+                                    <div class='feature'>
+                                        <div class='feature-icon'>🌐</div>
+                                        <div class='feature-title'>Создание сайтов</div>
+                                        <div class='feature-desc'>Генерируйте современные веб-сайты с помощью AI</div>
+                                    </div>
+                                    <div class='feature'>
+                                        <div class='feature-icon'>💬</div>
+                                        <div class='feature-title'>Умный чат</div>
+                                        <div class='feature-desc'>Общайтесь с AI-ассистентами разных специализаций</div>
+                                    </div>
+                                    <div class='feature'>
+                                        <div class='feature-icon'>📊</div>
+                                        <div class='feature-title'>Анализ данных</div>
+                                        <div class='feature-desc'>Обрабатывайте и анализируйте информацию</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+                    console.log('🧪 Test content removed, showing WindexsAI default message');
+                }
+            }, 3000);
+        } else {
+            console.log('❌ Preview iframe not found!');
+        }
+    }
+    
+    // Manual test function for debugging
+    testHtmlExtraction() {
+        var testContent = `Create a blog HTML_START \`\`\`html
+<!DOCTYPE html>
+<html>
+<head><title>Test Blog</title></head>
+<body><h1>Test Blog</h1></body>
+</html>
+\`\`\` HTML_END`;
+        
+        console.log('🧪 Testing HTML extraction...');
+        console.log('🧪 Test content:', testContent);
+        
+        var htmlMatch = testContent.match(/HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/);
+        console.log('🧪 HTML match result:', htmlMatch);
+        
+        if (htmlMatch && htmlMatch[1]) {
+            var html = htmlMatch[1].trim();
+            console.log('🧪 Extracted HTML:', html);
+            if (this.previewIframe) {
+                this.previewIframe.srcdoc = html;
+                console.log('🧪 HTML set in iframe');
+            }
+        } else {
+            console.log('🧪 HTML extraction failed');
+        }
+    }
+    
+    tryExtractHtmlFromAnyFormat(content) {
+        console.log('🔍 Trying to extract HTML from any format...');
+        
+        // Различные паттерны для поиска HTML
+        var patterns = [
+            // Стандартные маркеры
+            /HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/,
+            /HTML_START\s*```html\s*([\s\S]*?)\s*```\s*HTML_END/,
+            /HTML_START\s*```\s*([\s\S]*?)\s*```\s*HTML_END/,
+            /HTML_START\s*([\s\S]*?)\s*HTML_END/,
+            
+            // Обычные code blocks
+            /```html\s*([\s\S]*?)\s*```/,
+            /```\s*([\s\S]*?)\s*```/,
+            
+            // Поиск HTML тегов напрямую
+            /<!DOCTYPE html>[\s\S]*?<\/html>/i,
+            /<html[\s\S]*?<\/html>/i,
+            
+            // Поиск HTML без DOCTYPE
+            /<html[\s\S]*?<\/html>/i
+        ];
+        
+        for (var i = 0; i < patterns.length; i++) {
+            var match = content.match(patterns[i]);
+            if (match && match[1]) {
+                var html = match[1].trim();
+                // Проверяем, что это действительно HTML
+                if (html.includes('<html') || html.includes('<!DOCTYPE')) {
+                    console.log('✅ HTML найден с паттерном', i, 'длина:', html.length);
+                    console.log('✅ Первые 200 символов:', html.substring(0, 200));
+                    return html;
+                }
+            }
+        }
+        
+        console.log('❌ HTML не найден ни одним паттерном');
+        return null;
     }
 
     initializeElements() {
@@ -24,6 +337,11 @@ class AIEditor {
         this.chatInput = document.getElementById('chat-input');
         this.sendBtn = document.getElementById('send-chat-btn');
         this.chatMessages = document.getElementById('chat-messages');
+        
+        // Mode selector elements
+        this.liteModeBtn = document.getElementById('lite-mode-btn');
+        this.proModeBtn = document.getElementById('pro-mode-btn');
+        this.twoStageToggle = document.getElementById('two-stage-toggle');
 
         // Отладочная информация
         console.log('Editor elements initialized:', {
@@ -32,6 +350,35 @@ class AIEditor {
             chatMessages: !!this.chatMessages
         });
         this.previewIframe = document.getElementById('preview');
+        if (this.previewIframe) {
+            console.log('✅ Preview iframe found');
+            
+            // Добавляем обработчик для восстановления контента при кликах
+            this.previewIframe.addEventListener('load', () => {
+                console.log('🔄 Iframe loaded, checking content...');
+                // Если iframe загрузился с дефолтным контентом, но у нас есть сгенерированный контент
+                if (this.lastGeneratedHtml && this.previewIframe.srcdoc && this.previewIframe.srcdoc.includes('WindexsAI')) {
+                    console.log('🔄 Showing restore button...');
+                    this.showRestoreButton();
+                } else if (this.lastGeneratedHtml && this.previewIframe.srcdoc && !this.previewIframe.srcdoc.includes('WindexsAI')) {
+                    // Контент восстановлен, скрываем кнопку
+                    this.hideRestoreButton();
+                }
+            });
+            
+            // Предотвращаем навигацию в iframe, которая может привести к потере контента
+            this.previewIframe.addEventListener('beforeunload', (e) => {
+                console.log('🔄 Iframe beforeunload event');
+                // Если у нас есть сгенерированный контент, предотвращаем навигацию
+                if (this.lastGeneratedHtml) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                }
+            });
+        } else {
+            console.log('❌ Preview iframe not found');
+        }
         this.typingIndicator = document.getElementById('typing-indicator');
         this.errorContainer = document.getElementById('error-container');
         this.statusText = document.getElementById('status-text');
@@ -39,6 +386,7 @@ class AIEditor {
         this.downloadBtn = document.getElementById('download-html-btn');
         this.deployBtn = document.getElementById('deploy-btn');
         this.editModeBtn = document.getElementById('edit-mode-btn');
+        this.restoreContentBtn = document.getElementById('restore-content-btn');
         this.userNameSpan = document.getElementById('user-name');
         this.userAvatar = document.getElementById('user-avatar');
         this.userName = document.getElementById('user-name');
@@ -121,6 +469,27 @@ class AIEditor {
             });
         }
 
+        // Mode selector event listeners
+        if (this.liteModeBtn) {
+            this.liteModeBtn.addEventListener('click', () => {
+                this.setMode('lite');
+            });
+        }
+        
+        if (this.proModeBtn) {
+            this.proModeBtn.addEventListener('click', () => {
+                this.setMode('pro');
+            });
+        }
+        
+        // Two-stage toggle event listener
+        if (this.twoStageToggle) {
+            this.twoStageToggle.addEventListener('change', (e) => {
+                this.useTwoStage = e.target.checked;
+                console.log('🎯 Two-stage LLM system:', this.useTwoStage ? 'enabled' : 'disabled');
+            });
+        }
+
         // Кнопки копирования и скачивания
         if (this.copyBtn) {
             this.copyBtn.addEventListener('click', () => this.copyHtml());
@@ -191,16 +560,24 @@ class AIEditor {
         // Load saved panel sizes
         this.loadPanelSizes();
 
-        // User info click handlers
+        // User info click handlers - navigate to profile page
         if (this.userAvatar) {
             this.userAvatar.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
             });
         }
 
         if (this.userName) {
             this.userName.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
+            });
+        }
+        
+        // Also add click handler to the entire user-info container
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.addEventListener('click', () => {
+                this.openUserProfile();
             });
         }
 
@@ -208,6 +585,13 @@ class AIEditor {
         if (this.closeProfileBtn) {
             this.closeProfileBtn.addEventListener('click', () => {
                 this.hideProfileModal();
+            });
+        }
+
+        // Restore content button
+        if (this.restoreContentBtn) {
+            this.restoreContentBtn.addEventListener('click', () => {
+                this.forceRestoreContent();
             });
         }
 
@@ -242,6 +626,71 @@ class AIEditor {
         } catch (error) {
             console.error('Auth check failed:', error);
             window.location.href = '/';
+        }
+    }
+
+    setMode(mode) {
+        this.currentMode = mode;
+        
+        // Update button states
+        if (this.liteModeBtn && this.proModeBtn) {
+            this.liteModeBtn.classList.toggle('active', mode === 'lite');
+            this.proModeBtn.classList.toggle('active', mode === 'pro');
+        }
+        
+        // Update placeholder text based on mode
+        if (this.chatInput) {
+            if (mode === 'lite') {
+                this.chatInput.placeholder = 'Опишите сайт для создания (один HTML файл)...';
+            } else {
+                this.chatInput.placeholder = 'Опишите изменения для сайта...';
+            }
+        }
+        
+        console.log('🎯 Mode changed to:', mode);
+        console.log('🎯 Current mode value:', this.currentMode);
+    }
+
+    processLiteModeContent(content) {
+        console.log('🚀 Обработка Lite режима - извлечение HTML...');
+        console.log('🔍 Содержимое для поиска:', content.substring(0, 200) + '...');
+        console.log('🔍 Preview iframe exists:', !!this.previewIframe);
+        
+        // Извлекаем HTML из ответа - более гибкий паттерн
+        var htmlMatch = content.match(/HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/);
+        
+        console.log('🔍 Результат regex:', htmlMatch);
+        
+        if (htmlMatch && htmlMatch[1]) {
+            var htmlContent = htmlMatch[1].trim();
+            console.log('✅ HTML извлечен, длина:', htmlContent.length);
+            console.log('✅ Первые 100 символов HTML:', htmlContent.substring(0, 100));
+            
+            // Обновляем превью с HTML контентом
+            console.log('🔄 Вызываем updatePreview...');
+            this.previewIframe.srcdoc = htmlContent;
+            console.log('✅ HTML content set directly in iframe');
+            
+            // Сохраняем HTML для деплоя
+            this.lastGeneratedHtml = htmlContent;
+            
+            this.updateStatus('HTML сайт создан');
+        } else {
+            console.log('❌ HTML не найден в ответе');
+            console.log('❌ Попробуем альтернативный паттерн...');
+            
+            // Попробуем альтернативный паттерн
+            var altMatch = content.match(/HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/);
+            if (altMatch && altMatch[1]) {
+                console.log('✅ HTML найден альтернативным паттерном');
+                var htmlContent = altMatch[1].trim();
+                this.previewIframe.srcdoc = htmlContent;
+                this.lastGeneratedHtml = htmlContent;
+                this.updateStatus('HTML сайт создан');
+            } else {
+                console.log('❌ Альтернативный паттерн тоже не сработал');
+                this.updatePreview(content);
+            }
         }
     }
 
@@ -286,6 +735,8 @@ class AIEditor {
             var controller = new AbortController();
             var timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут
             
+            console.log('🚀 Sending request with mode:', this.currentMode);
+            
             var response = await fetch('/api/ai-editor', {
                 method: 'POST',
                 headers: {
@@ -295,7 +746,9 @@ class AIEditor {
                 body: JSON.stringify({
                     messages: this.conversationHistory,
                     model: 'gpt-4o-mini',
-                    conversation_id: this.currentConversationId
+                    mode: this.currentMode,
+                    conversation_id: this.currentConversationId,
+                    use_two_stage: this.useTwoStage
                 }),
                 signal: controller.signal,
                 // Увеличиваем таймаут keep-alive
@@ -327,19 +780,43 @@ class AIEditor {
             // Извлекаем описание для чата
             var description = this.extractDescription(content);
             this.addChatMessage('assistant', description, data.conversation_id);
+            
+            // Проверяем, есть ли информация о запущенном проекте
+            if (description.includes('🚀 **Проект запущен!**')) {
+                this.showProjectLaunchInfo(description);
+            }
 
-        // Для Next.js проектов запускаем живой сервер
+        // Обрабатываем контент в зависимости от режима
         console.log('🔍 Проверяем контент:', content);
         console.log('🔍 Conversation ID:', data.conversation_id);
+        console.log('🔍 Текущий режим:', this.currentMode);
+        console.log('🔍 Содержит HTML_START:', content.includes('HTML_START'));
         console.log('🔍 Содержит PACKAGE_JSON_START:', content.includes('PACKAGE_JSON_START'));
-        console.log('🔍 Содержит LAYOUT_TSX_START:', content.includes('LAYOUT_TSX_START'));
-        console.log('🔍 Содержит PAGE_TSX_START:', content.includes('PAGE_TSX_START'));
         
-        if (data.conversation_id && (content.includes('PACKAGE_JSON_START') || content.includes('LAYOUT_TSX_START') || content.includes('PAGE_TSX_START'))) {
-            console.log('🎯 Обнаружен Next.js проект, запускаем превью...');
+        if (this.currentMode === 'lite' && content.includes('HTML_START')) {
+            console.log('🎯 Обнаружен HTML файл (Lite режим), обрабатываем...');
+            console.log('🔍 Full content for debugging:', content);
+            this.processLiteModeContent(content);
+        } else if (this.currentMode === 'pro' && data.conversation_id && (content.includes('PACKAGE_JSON_START') || content.includes('LAYOUT_TSX_START') || content.includes('PAGE_TSX_START'))) {
+            console.log('🎯 Обнаружен Next.js проект (Pro режим), запускаем превью...');
             this.generateWebsitePreview(data.conversation_id, this.previewIframe);
         } else {
             console.log('📄 Обычный контент, используем стандартный превью');
+            console.log('🔍 Content does not contain HTML_START, full content:', content);
+            
+            // Попробуем найти HTML в любом формате для Lite режима
+            if (this.currentMode === 'lite') {
+                console.log('🔍 Lite режим: пытаемся найти HTML в любом формате...');
+                var htmlFound = this.tryExtractHtmlFromAnyFormat(content);
+                if (htmlFound) {
+                    console.log('✅ HTML найден в альтернативном формате');
+                    this.previewIframe.srcdoc = htmlFound;
+                    this.lastGeneratedHtml = htmlFound;
+                    this.updateStatus('HTML сайт создан');
+                    return;
+                }
+            }
+            
             this.updatePreview(content);
         }
 
@@ -372,19 +849,116 @@ class AIEditor {
 
         var avatar = document.createElement('div');
         avatar.className = 'chat-avatar';
-        avatar.textContent = role === 'user' ? '👤' : '🤖';
+        avatar.textContent = role === 'user' ? '👤' : '';
 
         var bubble = document.createElement('div');
         bubble.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
 
-        var text = document.createElement('div');
-        text.className = 'chat-text';
-        text.textContent = safeContent;
+        // Обрабатываем контент с мыслями LLM
+        this.processLLMContent(bubble, safeContent, role);
 
-        bubble.appendChild(text);
+        // Добавляем превью если нужно
+        this.addPreviewIfNeeded(bubble, role, projectId, safeContent);
 
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(bubble);
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+
+    processLLMContent(container, content, role) {
+        if (role === 'user') {
+            // Для пользователя просто добавляем текст
+            var text = document.createElement('div');
+            text.className = 'chat-text';
+            text.textContent = content;
+            container.appendChild(text);
+            return;
+        }
+
+        // Для AI обрабатываем мысли и контент
+        var lines = content.split('\n');
+        var currentSection = null;
+        var currentContent = [];
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            
+            // Определяем тип секции
+            if (line.includes('🏗️') && line.includes('Planning') || line.includes('Анализирую запрос')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'planning';
+                currentContent = [line];
+            } else if (line.includes('👨‍💻') && line.includes('Processing') || line.includes('Генерирую')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'generating';
+                currentContent = [line];
+            } else if (line.includes('📋') && line.includes('ПЛАН') || line.includes('План разработки')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'plan';
+                currentContent = [line];
+            } else if (line.includes('✅') && line.includes('ВЫПОЛНЕННЫЕ') || line.includes('Выполненные этапы')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'completed';
+                currentContent = [line];
+            } else if (line.includes('HTML_START') || line.includes('```html')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'code';
+                currentContent = [line];
+            } else if (line.startsWith('💭') || line.startsWith('🤔') || line.startsWith('⚡')) {
+                this.finishCurrentSection(container, currentSection, currentContent);
+                currentSection = 'thinking';
+                currentContent = [line];
+            } else {
+                currentContent.push(line);
+            }
+        }
+
+        // Завершаем последнюю секцию
+        this.finishCurrentSection(container, currentSection, currentContent);
+    }
+
+    finishCurrentSection(container, sectionType, content) {
+        if (!content || content.length === 0) return;
+
+        var text = content.join('\n').trim();
+        if (!text) return;
+
+        var element = document.createElement('div');
+        
+        switch (sectionType) {
+            case 'thinking':
+                element.className = 'llm-thinking';
+                element.textContent = text;
+                break;
+            case 'planning':
+                element.className = 'llm-planning';
+                element.textContent = text;
+                break;
+            case 'generating':
+                element.className = 'llm-generating';
+                element.textContent = text;
+                break;
+            case 'plan':
+            case 'completed':
+                element.className = 'chat-text';
+                element.innerHTML = text.replace(/\n/g, '<br>');
+                break;
+            case 'code':
+                element.className = 'chat-text';
+                element.innerHTML = text.replace(/\n/g, '<br>');
+                break;
+            default:
+                element.className = 'chat-text';
+                element.textContent = text;
+        }
+
+        container.appendChild(element);
+    }
+
+    addPreviewIfNeeded(container, role, projectId, content) {
         // Добавляем превью сайта, если это ответ AI с проектом
-        if (role === 'assistant' && projectId && safeContent.includes('Проект успешно создан')) {
+        if (role === 'assistant' && projectId && content.includes('Проект успешно создан')) {
             var previewContainer = document.createElement('div');
             previewContainer.className = 'website-preview-container';
             previewContainer.style.cssText = `
@@ -421,11 +995,11 @@ class AIEditor {
 
             previewContainer.appendChild(previewHeader);
             previewContainer.appendChild(previewFrame);
-            bubble.appendChild(previewContainer);
+            container.appendChild(previewContainer);
         }
 
         // Добавляем кнопку скачивания, если есть project_id
-        if (role === 'assistant' && projectId && safeContent.includes('Проект успешно создан')) {
+        if (role === 'assistant' && projectId && content.includes('Проект успешно создан')) {
             var downloadBtn = document.createElement('button');
             downloadBtn.className = 'download-project-btn';
             downloadBtn.innerHTML = '📦 Скачать проект';
@@ -449,14 +1023,8 @@ class AIEditor {
             downloadBtn.addEventListener('mouseleave', () => {
                 downloadBtn.style.background = '#4CAF50';
             });
-            bubble.appendChild(downloadBtn);
+            container.appendChild(downloadBtn);
         }
-
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(bubble);
-
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
     }
 
     generateWebsitePreview(projectId, iframe) {
@@ -475,6 +1043,10 @@ class AIEditor {
             </div>`;
             return;
         }
+        
+        // Добавляем sandbox атрибуты для предотвращения проблем с навигацией
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+        iframe.setAttribute('loading', 'lazy');
         
         fetch(`/api/ai-editor/project/${projectId}/preview`, {
             headers: { 'Authorization': 'Bearer ' + authToken }
@@ -503,6 +1075,23 @@ class AIEditor {
                 iframe.style.border = 'none';
                 // Убираем srcdoc, чтобы загрузить реальный URL
                 iframe.removeAttribute('srcdoc');
+                
+                // Добавляем обработчик для предотвращения дублирования при навигации
+                iframe.onload = function() {
+                    console.log('🔄 Iframe загружен, предотвращаем дублирование навигации');
+                    try {
+                        // Блокируем навигацию, которая может вызвать дублирование
+                        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        if (iframeDoc) {
+                            // Предотвращаем множественные загрузки
+                            iframeDoc.addEventListener('DOMContentLoaded', function() {
+                                console.log('🔄 DOM загружен в iframe');
+                            }, { once: true });
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Не удалось получить доступ к содержимому iframe (CORS)');
+                    }
+                };
             } else {
                 throw new Error('Preview URL not returned');
             }
@@ -520,7 +1109,17 @@ class AIEditor {
     }
 
     extractDescription(fullText) {
-        // Ищем первую строку до маркеров
+        // Проверяем, есть ли информация о двухэтапном процессе
+        if (fullText.includes('📋 ПЛАН РАЗРАБОТКИ:') || fullText.includes('✅ ВЫПОЛНЕННЫЕ ЭТАПЫ:')) {
+            return this.extractTwoStageDescription(fullText);
+        }
+
+        // Проверяем, это Lite режим с HTML
+        if (this.currentMode === 'lite' && fullText.includes('HTML_START')) {
+            return this.generateLiteDescription(fullText);
+        }
+
+        // Ищем первую строку до маркеров для Pro режима
         var lines = fullText.split('\n');
         var description = '';
 
@@ -537,8 +1136,142 @@ class AIEditor {
         return description.trim() || '✅ Проект Next.js успешно создан и готов к запуску командой "npm run dev".';
     }
 
+    extractTwoStageDescription(fullText) {
+        // Извлекаем информацию о двухэтапном процессе
+        var lines = fullText.split('\n');
+        var description = '';
+        var inArchitecturalPlan = false;
+        var inCompletedTasks = false;
+        var inFinalStructure = false;
+        var planSteps = [];
+        
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            
+            if (line.includes('📋 ПЛАН РАЗРАБОТКИ:')) {
+                inArchitecturalPlan = true;
+                inCompletedTasks = false;
+                inFinalStructure = false;
+                description += '📋 **ПЛАН РАЗРАБОТКИ:**\n';
+                continue;
+            }
+            
+            if (line.includes('✅ ВЫПОЛНЕННЫЕ ЭТАПЫ:')) {
+                inArchitecturalPlan = false;
+                inCompletedTasks = true;
+                inFinalStructure = false;
+                description += '\n✅ **ВЫПОЛНЕННЫЕ ЭТАПЫ:**\n';
+                continue;
+            }
+            
+            if (line.includes('🔧 ИТОГОВАЯ СТРУКТУРА:')) {
+                inArchitecturalPlan = false;
+                inCompletedTasks = false;
+                inFinalStructure = true;
+                description += '\n🔧 **ИТОГОВАЯ СТРУКТУРА:**\n';
+                continue;
+            }
+            
+            if (line.includes('HTML_START') || line.includes('PACKAGE_JSON_START')) {
+                // Достигли кода, останавливаемся
+                break;
+            }
+            
+            if (inArchitecturalPlan) {
+                if (line && line.match(/^\d+\./)) {
+                    // Это пункт плана
+                    planSteps.push(line);
+                    description += line + '\n';
+                }
+            } else if (inCompletedTasks || inFinalStructure) {
+                if (line) {
+                    description += line + '\n';
+                }
+            }
+        }
+        
+        // Если есть план, показываем его в кратком описании
+        if (planSteps.length > 0) {
+            var shortDescription = '📋 **ПЛАН РАЗРАБОТКИ:**\n';
+            shortDescription += planSteps.slice(0, 3).join('\n'); // Показываем первые 3 пункта
+            if (planSteps.length > 3) {
+                shortDescription += `\n... и еще ${planSteps.length - 3} этапов`;
+            }
+            shortDescription += '\n\n✅ **РЕЗУЛЬТАТ:** Сайт успешно создан!';
+            return shortDescription;
+        }
+        
+        // Добавляем информацию о результате
+        if (fullText.includes('HTML_START')) {
+            description += '\n✅ **РЕЗУЛЬТАТ:** HTML сайт успешно создан и готов к просмотру!';
+        } else if (fullText.includes('PACKAGE_JSON_START')) {
+            description += '\n✅ **РЕЗУЛЬТАТ:** Next.js проект успешно создан и готов к запуску!';
+        }
+        
+        return description.trim();
+    }
+
+    generateLiteDescription(fullText) {
+        // Извлекаем HTML для анализа
+        var htmlMatch = fullText.match(/HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/);
+        if (!htmlMatch || !htmlMatch[1]) {
+            return '✅ HTML сайт успешно создан и готов к просмотру.';
+        }
+
+        var html = htmlMatch[1];
+        
+        // Извлекаем заголовок
+        var titleMatch = html.match(/<title>(.*?)<\/title>/i);
+        var title = titleMatch ? titleMatch[1].trim() : 'Веб-сайт';
+        
+        // Извлекаем основной заголовок
+        var h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+        var mainHeading = h1Match ? h1Match[1].trim() : '';
+        
+        // Определяем тип сайта по содержимому
+        var siteType = this.detectSiteType(html);
+        
+        // Генерируем описание
+        var description = `✅ Создан ${siteType} "${title}"`;
+        
+        if (mainHeading && mainHeading !== title) {
+            description += ` с заголовком "${mainHeading}"`;
+        }
+        
+        description += '. Сайт включает современный дизайн с адаптивной версткой, интерактивные элементы и готов к использованию.';
+        
+        return description;
+    }
+
+    detectSiteType(html) {
+        var lowerHtml = html.toLowerCase();
+        
+        if (lowerHtml.includes('магазин') || lowerHtml.includes('store') || lowerHtml.includes('купить') || lowerHtml.includes('товар') || lowerHtml.includes('цена')) {
+            return 'интернет-магазин';
+        } else if (lowerHtml.includes('компания') || lowerHtml.includes('company') || lowerHtml.includes('корпоративный') || lowerHtml.includes('бизнес')) {
+            return 'корпоративный сайт';
+        } else if (lowerHtml.includes('портфолио') || lowerHtml.includes('portfolio') || lowerHtml.includes('работы') || lowerHtml.includes('проекты')) {
+            return 'сайт-портфолио';
+        } else if (lowerHtml.includes('блог') || lowerHtml.includes('blog') || lowerHtml.includes('статьи') || lowerHtml.includes('новости')) {
+            return 'блог';
+        } else if (lowerHtml.includes('лендинг') || lowerHtml.includes('landing') || lowerHtml.includes('продажа') || lowerHtml.includes('услуги')) {
+            return 'лендинг-страница';
+        } else if (lowerHtml.includes('ресторан') || lowerHtml.includes('кафе') || lowerHtml.includes('меню') || lowerHtml.includes('еда')) {
+            return 'сайт ресторана';
+        } else if (lowerHtml.includes('отель') || lowerHtml.includes('hotel') || lowerHtml.includes('бронирование') || lowerHtml.includes('номер')) {
+            return 'сайт отеля';
+        } else {
+            return 'веб-сайт';
+        }
+    }
+
     updatePreview(content) {
-        if (!content || !this.previewIframe) return;
+        console.log('🔄 updatePreview called with content length:', content ? content.length : 0);
+        console.log('🔄 Preview iframe exists:', !!this.previewIframe);
+        if (!content || !this.previewIframe) {
+            console.log('❌ updatePreview: missing content or iframe');
+            return;
+        }
 
         // Проверяем, есть ли Next.js проект
         if (content.includes('PACKAGE_JSON_START')) {
@@ -549,8 +1282,49 @@ class AIEditor {
             return;
         }
 
+        // Проверяем, есть ли HTML_START (Lite mode)
+        if (content.includes('HTML_START')) {
+            console.log('🎯 Found HTML_START, extracting HTML...');
+            var htmlMatch = content.match(/HTML_START\s*`{0,3}html\s*([\s\S]*?)\s*`{0,3}\s*HTML_END/);
+            console.log('🔍 HTML match result:', htmlMatch);
+            if (htmlMatch && htmlMatch[1]) {
+                var html = htmlMatch[1].trim();
+                console.log('✅ HTML extracted, setting iframe content, length:', html.length);
+                console.log('✅ First 200 chars of HTML:', html.substring(0, 200));
+                this.previewIframe.srcdoc = html;
+                this.lastGeneratedHtml = html; // Сохраняем HTML для восстановления
+                this.hideRestoreButton(); // Скрываем кнопку восстановления
+                console.log('✅ Iframe content set successfully');
+                return;
+            } else {
+                console.log('❌ HTML extraction failed, trying alternative patterns...');
+                
+                // Попробуем другие паттерны
+                var altPatterns = [
+                    /HTML_START\s*```html\s*([\s\S]*?)\s*```\s*HTML_END/,
+                    /HTML_START\s*```\s*([\s\S]*?)\s*```\s*HTML_END/,
+                    /HTML_START\s*([\s\S]*?)\s*HTML_END/,
+                    /```html\s*([\s\S]*?)\s*```/
+                ];
+                
+                for (var i = 0; i < altPatterns.length; i++) {
+                    var match = content.match(altPatterns[i]);
+                    if (match && match[1]) {
+                        var html = match[1].trim();
+                        console.log('✅ HTML found with pattern', i, 'length:', html.length);
+                        this.previewIframe.srcdoc = html;
+                        this.lastGeneratedHtml = html; // Сохраняем HTML для восстановления
+                        this.hideRestoreButton(); // Скрываем кнопку восстановления
+                        return;
+                    }
+                }
+                
+                console.log('❌ All HTML extraction patterns failed');
+            }
+        }
+
         // Проверяем, есть ли файловая структура в ответе
-        var hasFileStructure = content.includes('FILE_STRUCTURE_START') || content.includes('HTML_START');
+        var hasFileStructure = content.includes('FILE_STRUCTURE_START');
 
         if (hasFileStructure) {
             this.displayFileStructure(content);
@@ -560,12 +1334,16 @@ class AIEditor {
         if (htmlMatch) {
             var html = htmlMatch[1].trim();
             this.previewIframe.srcdoc = html;
+            this.lastGeneratedHtml = html; // Сохраняем HTML для восстановления
+            this.hideRestoreButton(); // Скрываем кнопку восстановления
         } else {
             // Пробуем найти HTML код без маркеров (fallback)
             var htmlCodeMatch = content.match(/```html([\s\S]*?)```/);
             if (htmlCodeMatch) {
                 var html = htmlCodeMatch[1].trim();
                 this.previewIframe.srcdoc = html;
+                this.lastGeneratedHtml = html; // Сохраняем HTML для восстановления
+                this.hideRestoreButton(); // Скрываем кнопку восстановления
                 }
             }
         }
@@ -986,6 +1764,7 @@ project-name/
 
         if (this.typingIndicator) {
             this.typingIndicator.classList.remove('hidden');
+            this.startThinkingAnimation();
         }
 
         this.updateStatus('Генерация сайта...');
@@ -999,9 +1778,168 @@ project-name/
 
         if (this.typingIndicator) {
             this.typingIndicator.classList.add('hidden');
+            this.stopThinkingAnimation();
         }
     }
-
+    
+    startThinkingAnimation() {
+        // Очищаем историю мыслей
+        const historyContainer = this.typingIndicator.querySelector('.thinking-history');
+        if (historyContainer) {
+            historyContainer.innerHTML = '';
+        }
+        
+        // Устанавливаем начальную мысль
+        this.updateCurrentThought('💭', 'Начинаю анализ...');
+        
+        // Начинаем получение реальных мыслей LLM
+        this.startRealThinkingPolling();
+    }
+    
+    nextThinkingThought() {
+        const thoughts = [
+            { icon: '💭', text: 'Анализирую запрос пользователя...' },
+            { icon: '🏗️', text: 'Создаю архитектурный план разработки...' },
+            { icon: '📋', text: 'Разрабатываю пошаговый план...' },
+            { icon: '🎨', text: 'Продумываю дизайн и структуру...' },
+            { icon: '👨‍💻', text: 'Генерирую HTML код...' },
+            { icon: '🎯', text: 'Добавляю CSS стили и анимации...' },
+            { icon: '⚡', text: 'Создаю интерактивность...' },
+            { icon: '📱', text: 'Обеспечиваю адаптивность...' },
+            { icon: '✨', text: 'Завершаю создание сайта...' },
+            { icon: '🔍', text: 'Проверяю качество кода...' },
+            { icon: '🚀', text: 'Подготавливаю финальный результат...' }
+        ];
+        
+        // Перемещаем текущую мысль в историю
+        this.moveCurrentToHistory();
+        
+        // Устанавливаем новую мысль
+        const thought = thoughts[this.thinkingStep % thoughts.length];
+        this.updateCurrentThought(thought.icon, thought.text);
+        
+        this.thinkingStep++;
+    }
+    
+    updateCurrentThought(icon, text) {
+        const currentContainer = this.typingIndicator.querySelector('.thinking-current');
+        if (currentContainer) {
+            const iconElement = currentContainer.querySelector('.thinking-icon');
+            const textElement = currentContainer.querySelector('.thinking-text');
+            
+            if (iconElement) iconElement.textContent = icon;
+            if (textElement) textElement.textContent = text;
+        }
+    }
+    
+    moveCurrentToHistory() {
+        const currentContainer = this.typingIndicator.querySelector('.thinking-current');
+        const historyContainer = this.typingIndicator.querySelector('.thinking-history');
+        
+        if (currentContainer && historyContainer) {
+            const icon = currentContainer.querySelector('.thinking-icon').textContent;
+            const text = currentContainer.querySelector('.thinking-text').textContent;
+            
+            // Создаем элемент истории
+            const historyItem = document.createElement('div');
+            historyItem.className = 'thinking-item';
+            historyItem.innerHTML = `
+                <div class="thinking-icon">${icon}</div>
+                <div class="thinking-text">${text}</div>
+            `;
+            
+            // Добавляем в историю
+            historyContainer.appendChild(historyItem);
+            
+            // Ограничиваем количество элементов в истории
+            const items = historyContainer.querySelectorAll('.thinking-item');
+            if (items.length > 5) {
+                items[0].remove();
+            }
+            
+            // Прокручиваем вниз
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+    }
+    
+    stopThinkingAnimation() {
+        if (this.thinkingInterval) {
+            clearInterval(this.thinkingInterval);
+            this.thinkingInterval = null;
+        }
+        
+        // Останавливаем polling реальных мыслей
+        this.stopRealThinkingPolling();
+        
+        // Очищаем контейнеры
+        const historyContainer = this.typingIndicator.querySelector('.thinking-history');
+        if (historyContainer) {
+            historyContainer.innerHTML = '';
+        }
+        
+        this.thinkingStep = 0;
+    }
+    
+    startRealThinkingPolling() {
+        if (!this.currentConversationId) return;
+        
+        this.thinkingPollingInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/ai-editor/thoughts/${this.currentConversationId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${this.authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const thoughts = data.thoughts || [];
+                    
+                    if (thoughts.length > 0) {
+                        // Показываем последнюю мысль как текущую
+                        const lastThought = thoughts[thoughts.length - 1];
+                        this.updateCurrentThought(lastThought.icon, lastThought.text);
+                        
+                        // Показываем предыдущие мысли в истории
+                        this.updateThinkingHistory(thoughts.slice(0, -1));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching LLM thoughts:', error);
+            }
+        }, 1000); // Проверяем каждую секунду
+    }
+    
+    updateThinkingHistory(thoughts) {
+        const historyContainer = this.typingIndicator.querySelector('.thinking-history');
+        if (!historyContainer) return;
+        
+        // Очищаем историю
+        historyContainer.innerHTML = '';
+        
+        // Добавляем мысли в историю (показываем последние 5)
+        const recentThoughts = thoughts.slice(-5);
+        recentThoughts.forEach(thought => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'thinking-item';
+            historyItem.innerHTML = `
+                <div class="thinking-icon">${thought.icon}</div>
+                <div class="thinking-text">${thought.text}</div>
+            `;
+            historyContainer.appendChild(historyItem);
+        });
+        
+        // Прокручиваем вниз
+        historyContainer.scrollTop = historyContainer.scrollHeight;
+    }
+    
+    stopRealThinkingPolling() {
+        if (this.thinkingPollingInterval) {
+            clearInterval(this.thinkingPollingInterval);
+            this.thinkingPollingInterval = null;
+        }
+    }
+    
     showError(message) {
         if (!this.errorContainer) return;
 
@@ -1741,13 +2679,43 @@ project-name/
         // Проверяем URL параметры для открытия конкретного проекта
         var urlParams = new URLSearchParams(window.location.search);
         var projectId = urlParams.get('project');
+        var returnToChat = urlParams.get('returnToChat');
 
         if (projectId) {
             // Загружаем конкретный проект
             this.loadConversation(parseInt(projectId));
+            
+            // Если это возврат к чату, фокусируемся на чате
+            if (returnToChat === 'true') {
+                this.focusOnChat();
+            }
+            
             // Очищаем URL от параметров
             window.history.replaceState({}, document.title, window.location.pathname);
         }
+    }
+
+    focusOnChat() {
+        // Фокусируемся на чате при возврате к проекту
+        setTimeout(() => {
+            // Прокручиваем к последнему сообщению в чате
+            if (this.chatMessages) {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+            
+            // Фокусируемся на поле ввода
+            if (this.chatInput) {
+                this.chatInput.focus();
+            }
+            
+            // Показываем уведомление
+            this.showSuccess('Проект загружен! Вы можете продолжить работу в чате.');
+        }, 1000);
+    }
+
+    openUserProfile() {
+        // Navigate to the user's profile/dashboard page
+        window.location.href = '/profile';
     }
 
     showProfileModal() {
@@ -1766,6 +2734,61 @@ project-name/
     hideProfileModal() {
         if (this.profileModal) {
             this.profileModal.classList.add('hidden');
+        }
+    }
+    
+    showProjectLaunchInfo(content) {
+        console.log('🚀 Showing project launch info');
+        
+        // Извлекаем URL проекта из контента
+        var urlMatch = content.match(/\*\*URL для просмотра:\*\* (http:\/\/localhost:\d+)/);
+        if (urlMatch) {
+            var projectUrl = urlMatch[1];
+            console.log('🔗 Project URL found:', projectUrl);
+            
+            // Создаем кнопку для открытия проекта
+            var launchButton = document.createElement('button');
+            launchButton.className = 'project-launch-btn';
+            launchButton.innerHTML = '🚀 Открыть проект';
+            launchButton.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #22c55e;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            
+            launchButton.addEventListener('click', () => {
+                window.open(projectUrl, '_blank');
+            });
+            
+            launchButton.addEventListener('mouseenter', () => {
+                launchButton.style.transform = 'translateY(-2px)';
+                launchButton.style.boxShadow = '0 6px 16px rgba(34, 197, 94, 0.4)';
+            });
+            
+            launchButton.addEventListener('mouseleave', () => {
+                launchButton.style.transform = 'translateY(0)';
+                launchButton.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.3)';
+            });
+            
+            // Добавляем кнопку на страницу
+            document.body.appendChild(launchButton);
+            
+            // Автоматически удаляем кнопку через 30 секунд
+            setTimeout(() => {
+                if (launchButton.parentNode) {
+                    launchButton.parentNode.removeChild(launchButton);
+                }
+            }, 30000);
         }
     }
 }

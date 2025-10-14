@@ -38,15 +38,22 @@ class VoiceMessageResponse(BaseModel):
 @router.post("/api/voice/upload", response_model=VoiceMessageResponse)
 async def upload_voice_message(
     audio_file: UploadFile = File(...),
-    conversation_id: Optional[int] = Form(None),
+    conversation_id: Optional[str] = Form(None),
     model: str = Form(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Upload and process voice message"""
+    
+    print(f"🎤 Voice upload request received:")
+    print(f"  - Audio file: {audio_file.filename}, type: {audio_file.content_type}, size: {audio_file.size}")
+    print(f"  - Conversation ID: {conversation_id} (type: {type(conversation_id)})")
+    print(f"  - Model: {model} (type: {type(model)})")
+    print(f"  - User: {current_user.username}")
 
     # Validate audio file
     if not audio_file.content_type or not audio_file.content_type.startswith("audio/"):
+        print(f"❌ Invalid audio file type: {audio_file.content_type}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File must be an audio file"
         )
@@ -84,6 +91,15 @@ async def upload_voice_message(
             db.refresh(conversation)
             conversation_id = conversation.id
         else:
+            # Convert string to int
+            try:
+                conversation_id = int(conversation_id)
+            except (ValueError, TypeError):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid conversation ID format",
+                )
+            
             # Verify conversation belongs to user
             conversation = (
                 db.query(DBConversation)
@@ -186,6 +202,55 @@ async def upload_voice_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing voice message: {str(e)}",
+        )
+
+
+@router.post("/api/tts/generate")
+async def generate_tts(
+    text: str = Form(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Generate TTS audio for given text"""
+    
+    if not text or len(text.strip()) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Text is required"
+        )
+    
+    # Limit text length to prevent abuse
+    if len(text) > 1000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Text too long (max 1000 characters)"
+        )
+    
+    try:
+        # Generate audio using OpenAI TTS
+        audio_response_path = text_to_speech(text)
+        if not audio_response_path:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate audio"
+            )
+        
+        # Move to uploads directory
+        uploads_dir = "uploads/audio"
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        response_filename = f"{uuid.uuid4()}.mp3"
+        response_file_path = os.path.join(uploads_dir, response_filename)
+        shutil.move(audio_response_path, response_file_path)
+        
+        audio_url = f"/uploads/audio/{response_filename}"
+        
+        return {"audio_url": audio_url}
+        
+    except Exception as e:
+        print(f"TTS generation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating TTS: {str(e)}"
         )
 
 

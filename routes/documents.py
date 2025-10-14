@@ -108,6 +108,10 @@ async def upload_document(
 
         # Parse document content
         extracted_content = parse_document(file_path, file.content_type)
+        
+        print(f"Document parsing result: {len(extracted_content) if extracted_content else 0} characters extracted")
+        if extracted_content:
+            print(f"First 200 chars: {extracted_content[:200]}")
 
         if not extracted_content:
             raise HTTPException(
@@ -171,18 +175,18 @@ async def upload_document(
                 "role": "system",
                 "content": f"""Ты - WIndexAI, искусственный интеллект, созданный командой разработчиков компании Windex.
 
-Твоя задача - проанализировать загруженный документ и ответить на вопросы пользователя.
+Пользователь загрузил документ "{file.filename}" и хочет, чтобы ты его проанализировал.
 
-ВАЖНО:
-• Используй информацию из документа для ответа
+ТВОЯ ЗАДАЧА:
+• Проанализируй загруженный документ
 • Если пользователь не задал конкретный вопрос, дай краткое резюме документа
+• Если задал вопрос - ответь на него, используя информацию из документа
 • Отвечай на русском языке, будь полезным и дружелюбным
-• Если информации в документе недостаточно, скажи об этом честно
 
-СОДЕРЖИМОЕ ДОКУМЕНТА:
+СОДЕРЖИМОЕ ЗАГРУЖЕННОГО ДОКУМЕНТА:
 {extracted_content[:4000] if extracted_content else "Содержимое документа не удалось извлечь"}
 
-Теперь ответь на вопрос пользователя, используя эту информацию.""",
+ВАЖНО: Документ был успешно загружен и обработан. Используй информацию выше для ответа пользователю.""",
             }
         ]
 
@@ -199,6 +203,8 @@ async def upload_document(
 
         # Generate AI response
         try:
+            print(f"Sending {len(messages)} messages to OpenAI API")
+            print(f"System message length: {len(messages[0]['content'])} characters")
             ai_response = generate_response(messages, model)
         except Exception as e:
             print(f"OpenAI API error: {e}")

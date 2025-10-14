@@ -137,8 +137,7 @@ class WindexAI {
         this.modelIcon = document.getElementById('model-icon');
         this.modelName = document.getElementById('model-name');
         this.modelDescription = document.getElementById('model-description');
-        this.typingIndicator = document.getElementById('typing-indicator');
-        this.voiceRecordingIndicator = document.getElementById('voice-recording-indicator');
+        // Typing indicator is now created dynamically
         this.documentUploadIndicator = document.getElementById('document-upload-indicator');
         this.conversationsList = document.getElementById('conversations-list');
         this.clearHistoryBtn = document.getElementById('clear-history-btn');
@@ -153,7 +152,8 @@ class WindexAI {
         // Connect modal elements
         this.connectModal = document.getElementById('connect-modal');
         this.closeConnectBtn = document.querySelector('.close-connect');
-        this.connectionCodeInput = document.getElementById('connection-code');
+        this.connectionUsernameInput = document.getElementById('connection-username');
+        this.connectionPasswordInput = document.getElementById('connection-password');
         this.testConnectionBtn = document.getElementById('test-connection-btn');
         this.connectBtnModal = document.getElementById('connect-btn-modal');
         this.connectionStatus = document.getElementById('connection-status');
@@ -208,7 +208,6 @@ class WindexAI {
         if (this.voiceBtn) {
             this.voiceBtn.addEventListener('click', () => {
                 this.toggleVoiceRecording();
-                this.hideToolsDropdown();
             });
         }
 
@@ -269,16 +268,24 @@ class WindexAI {
             this.clearHistory();
         });
 
-        // User info click handler
+        // User info click handler - navigate to profile page
         if (this.userAvatar) {
             this.userAvatar.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
             });
         }
 
         if (this.userName) {
             this.userName.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
+            });
+        }
+        
+        // Also add click handler to the entire user-info container
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.addEventListener('click', () => {
+                this.openUserProfile();
             });
         }
 
@@ -308,11 +315,6 @@ class WindexAI {
             });
         }
 
-        if (this.connectionCodeInput) {
-            this.connectionCodeInput.addEventListener('input', () => {
-                this.validateConnectionCode();
-            });
-        }
     }
 
     async selectModel(model) {
@@ -405,7 +407,7 @@ class WindexAI {
                 description: 'Специалист по анализу данных и бизнес-процессов'
             },
             'general': {
-                icon: '🤖',
+                icon: '',
                 name: 'Универсальный AI',
                 description: 'Многофункциональный помощник для любых задач'
             }
@@ -668,9 +670,13 @@ class WindexAI {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role} fade-in`;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = role === 'user' ? 'Вы' : '🤖';
+        // Добавляем аватар только для ассистента
+        if (role === 'assistant') {
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '';
+            messageDiv.appendChild(avatar);
+        }
 
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -694,11 +700,102 @@ class WindexAI {
 
         messageContent.appendChild(bubble);
         messageContent.appendChild(time);
-        messageDiv.appendChild(avatar);
+        
+        // Add action text for assistant messages
+        if (role === 'assistant') {
+            const copyText = document.createElement('span');
+            copyText.className = 'action-text copy-text';
+            copyText.textContent = 'Копировать';
+            copyText.style.cursor = 'pointer';
+            copyText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.copyMessage(messageDiv);
+            });
+            time.appendChild(copyText);
+            
+            
+            const voiceText = document.createElement('span');
+            voiceText.className = 'action-text voice-text';
+            voiceText.textContent = 'Озвучить';
+            voiceText.style.cursor = 'pointer';
+            voiceText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.speakMessage(messageDiv);
+            });
+            time.appendChild(voiceText);
+        }
+        
         messageDiv.appendChild(messageContent);
 
         this.chatMessages.appendChild(messageDiv);
         setTimeout(() => this.scrollToBottom(), 50);
+    }
+
+
+    copyMessage(messageElement) {
+        const bubble = messageElement.querySelector('.message-bubble');
+        if (bubble) {
+            const text = bubble.textContent || bubble.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Сообщение скопировано в буфер обмена', 'success');
+            }).catch(() => {
+                showNotification('Не удалось скопировать сообщение', 'error');
+            });
+        }
+    }
+
+    startNewChat() {
+        this.currentConversationId = null;
+        this.chatMessages.innerHTML = '';
+        this.hideChatMessages();
+        this.showWelcomeMessage();
+        showNotification('Начат новый чат', 'success');
+    }
+
+    async speakMessage(messageElement) {
+        const bubble = messageElement.querySelector('.message-bubble');
+        if (!bubble) return;
+        
+        const text = bubble.textContent || bubble.innerText;
+        if (!text || text.trim().length === 0) {
+            showNotification('Нет текста для озвучивания', 'error');
+            return;
+        }
+        
+        // Limit text length for TTS
+        const textToSpeak = text.length > 1000 ? text.substring(0, 1000) + '...' : text;
+        
+        try {
+            showNotification('Генерация аудио...', 'info');
+            
+            const formData = new FormData();
+            formData.append('text', textToSpeak);
+            
+            const response = await fetch('/api/tts/generate', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.authManager.token}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Ошибка генерации аудио');
+            }
+            
+            const data = await response.json();
+            
+            // Play the generated audio
+            const audio = new Audio(data.audio_url);
+            audio.play();
+            
+            showNotification('Озвучивание начато', 'success');
+            
+        } catch (error) {
+            console.error('TTS error:', error);
+            showNotification(`Ошибка озвучивания: ${error.message}`, 'error');
+        }
     }
 
     // Функция копирования кода диаграммы
@@ -724,12 +821,11 @@ class WindexAI {
     }
 
     showTypingIndicator() {
-        this.typingIndicator.classList.remove('hidden');
-        setTimeout(() => this.scrollToBottom(), 100);
+        this.createTypingIndicator();
     }
 
     hideTypingIndicator() {
-        this.typingIndicator.classList.add('hidden');
+        this.removeTypingIndicator();
     }
 
 
@@ -989,7 +1085,8 @@ class WindexAI {
     }
 
     showLoading() {
-        // Simple loading indicator - disable send button and show loading state
+        // Create and show typing indicator at the end of messages
+        this.createTypingIndicator();
         this.sendBtn.disabled = true;
         this.sendBtn.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="loading-spinner">
@@ -1002,7 +1099,8 @@ class WindexAI {
     }
 
     hideLoading() {
-        // Restore send button
+        // Remove typing indicator and restore send button
+        this.removeTypingIndicator();
         this.sendBtn.disabled = false;
         this.sendBtn.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1010,6 +1108,55 @@ class WindexAI {
                 <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
             </svg>
         `;
+    }
+
+    createTypingIndicator() {
+        // Remove existing typing indicator if any
+        this.removeTypingIndicator();
+        
+        // Create new typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.className = 'typing-indicator';
+        
+        typingDiv.innerHTML = `
+            <div class="chat-avatar"></div>
+            <div class="typing-bubble">
+                <div class="typing-text">
+                    <span class="typing-char">W</span>
+                    <span class="typing-char">i</span>
+                    <span class="typing-char">n</span>
+                    <span class="typing-char">d</span>
+                    <span class="typing-char">e</span>
+                    <span class="typing-char">x</span>
+                    <span class="typing-char">A</span>
+                    <span class="typing-char">I</span>
+                    <span class="typing-char">.</span>
+                    <span class="typing-char">.</span>
+                    <span class="typing-char">.</span>
+                </div>
+            </div>
+        `;
+        
+        // Add to the end of chat messages (same as addMessageToChat)
+        this.chatMessages.appendChild(typingDiv);
+        
+        // Debug: log the position
+        console.log('Typing indicator added, chat messages children count:', this.chatMessages.children.length);
+        console.log('Typing indicator position:', Array.from(this.chatMessages.children).indexOf(typingDiv));
+        console.log('Chat messages container:', this.chatMessages);
+        console.log('All children:', Array.from(this.chatMessages.children).map(child => child.className));
+        
+        // Ensure it's visible and scroll to it
+        this.chatMessages.classList.remove('hidden');
+        setTimeout(() => this.scrollToBottom(), 50);
+    }
+
+    removeTypingIndicator() {
+        const existingIndicator = document.getElementById('typing-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
     }
 
     // Voice recording methods
@@ -1023,12 +1170,18 @@ class WindexAI {
 
     async startVoiceRecording() {
         try {
+            console.log('Starting voice recording...');
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('Audio stream obtained:', stream);
+            
             this.mediaRecorder = new MediaRecorder(stream);
             this.audioChunks = [];
 
             this.mediaRecorder.ondataavailable = (event) => {
-                this.audioChunks.push(event.data);
+                console.log('Audio data available:', event.data.size, 'bytes');
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
             };
 
             this.mediaRecorder.onstop = () => {
@@ -1039,7 +1192,6 @@ class WindexAI {
             this.isRecording = true;
             this.recordingStartTime = Date.now();
 
-            this.showVoiceRecordingIndicator();
             this.updateVoiceButton();
             this.startRecordingTimer();
 
@@ -1054,7 +1206,6 @@ class WindexAI {
             this.mediaRecorder.stop();
             this.isRecording = false;
 
-            this.hideVoiceRecordingIndicator();
             this.updateVoiceButton();
             this.stopRecordingTimer();
 
@@ -1063,18 +1214,6 @@ class WindexAI {
         }
     }
 
-    showVoiceRecordingIndicator() {
-        if (this.voiceRecordingIndicator) {
-            this.voiceRecordingIndicator.classList.remove('hidden');
-            setTimeout(() => this.scrollToBottom(), 100);
-        }
-    }
-
-    hideVoiceRecordingIndicator() {
-        if (this.voiceRecordingIndicator) {
-            this.voiceRecordingIndicator.classList.add('hidden');
-        }
-    }
 
     updateVoiceButton() {
         if (this.voiceBtn) {
@@ -1107,10 +1246,7 @@ class WindexAI {
                 const seconds = elapsed % 60;
                 const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-                const timerElement = this.voiceRecordingIndicator?.querySelector('.recording-timer');
-                if (timerElement) {
-                    timerElement.textContent = timeString;
-                }
+                // Timer display removed with voice recording indicator
             }
         }, 1000);
     }
@@ -1123,9 +1259,19 @@ class WindexAI {
     }
 
     async processVoiceRecording() {
-        if (this.audioChunks.length === 0) return;
+        if (this.audioChunks.length === 0) {
+            console.error('No audio chunks recorded');
+            showNotification('Не удалось записать аудио. Попробуйте еще раз.', 'error');
+            return;
+        }
 
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        console.log('Audio blob created:', {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            chunks: this.audioChunks.length
+        });
+        
         await this.sendVoiceMessage(audioBlob);
     }
 
@@ -1141,10 +1287,37 @@ class WindexAI {
         this.showTypingIndicator();
 
         try {
+            // Validate audio blob
+            if (!audioBlob || audioBlob.size === 0) {
+                throw new Error('Аудио файл пуст или поврежден');
+            }
+            
+            if (audioBlob.size > 25 * 1024 * 1024) { // 25MB limit
+                throw new Error('Аудио файл слишком большой (максимум 25MB)');
+            }
+
+            console.log('Sending voice message:', {
+                size: audioBlob.size,
+                type: audioBlob.type,
+                conversationId: this.currentConversationId,
+                model: this.currentModel
+            });
+
             const formData = new FormData();
             formData.append('audio_file', audioBlob, 'voice-message.webm');
-            formData.append('conversation_id', this.currentConversationId || '');
+            
+            // Send conversation_id as integer or omit if null/undefined
+            if (this.currentConversationId) {
+                formData.append('conversation_id', this.currentConversationId.toString());
+            }
+            
             formData.append('model', this.currentModel);
+            
+            // Debug: log what we're sending
+            console.log('FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
 
             const response = await fetch('/api/voice/upload', {
                 method: 'POST',
@@ -1159,7 +1332,27 @@ class WindexAI {
                     this.authManager.logout();
                     throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
                 }
-                throw new Error('Ошибка при отправке голосового сообщения');
+                
+                // Try to get error details from response
+                let errorMessage = 'Ошибка при отправке голосового сообщения';
+                let errorDetails = null;
+                try {
+                    const errorData = await response.json();
+                    console.error('Server error response:', errorData);
+                    if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+                    errorDetails = errorData;
+                } catch (e) {
+                    // If we can't parse JSON, use status text
+                    errorMessage = response.statusText || errorMessage;
+                    console.error('Could not parse error response:', e);
+                }
+                
+                const error = new Error(errorMessage);
+                error.status = response.status;
+                error.details = errorDetails;
+                throw error;
             }
 
             const data = await response.json();
@@ -1182,9 +1375,20 @@ class WindexAI {
             this.loadConversations();
 
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Voice message error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                status: error.status,
+                response: error.response
+            });
             this.hideTypingIndicator();
-            this.addMessageToChat('assistant', 'Извините, произошла ошибка при обработке голосового сообщения. Попробуйте еще раз.');
+            
+            // Show more detailed error message
+            let errorMessage = 'Извините, произошла ошибка при обработке голосового сообщения. Попробуйте еще раз.';
+            if (error.message) {
+                errorMessage += ` Детали: ${error.message}`;
+            }
+            this.addMessageToChat('assistant', errorMessage);
         } finally {
             this.isLoading = false;
             this.hideLoading();
@@ -1195,9 +1399,13 @@ class WindexAI {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role} voice fade-in`;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = role === 'user' ? 'Вы' : '🤖';
+        // Добавляем аватар только для ассистента
+        if (role === 'assistant') {
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '';
+            messageDiv.appendChild(avatar);
+        }
 
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -1209,26 +1417,13 @@ class WindexAI {
         if (role === 'assistant') {
             bubble.innerHTML = this.convertMarkdownToHtml(content);
         } else {
-            bubble.textContent = content;
-        }
-
-        // Add voice controls if audio URL exists
-        if (audioUrl) {
-            const voiceControls = document.createElement('div');
-            voiceControls.className = 'voice-controls';
-
-            const playBtn = document.createElement('button');
-            playBtn.className = 'voice-play-btn';
-            playBtn.innerHTML = '▶️';
-            playBtn.addEventListener('click', () => this.playAudio(audioUrl, playBtn));
-
-            const duration = document.createElement('span');
-            duration.className = 'voice-duration';
-            duration.textContent = '00:00';
-
-            voiceControls.appendChild(playBtn);
-            voiceControls.appendChild(duration);
-            bubble.appendChild(voiceControls);
+            // For user voice messages, show audio visualization instead of text
+            if (role === 'user') {
+                const audioVisualization = this.createAudioVisualization();
+                bubble.appendChild(audioVisualization);
+            } else {
+                bubble.textContent = content;
+            }
         }
 
         const time = document.createElement('div');
@@ -1240,11 +1435,151 @@ class WindexAI {
 
         messageContent.appendChild(bubble);
         messageContent.appendChild(time);
-        messageDiv.appendChild(avatar);
+        
+        // Add action buttons for assistant messages
+        if (role === 'assistant') {
+            const copyText = document.createElement('span');
+            copyText.className = 'action-text copy-text';
+            copyText.textContent = 'Копировать';
+            copyText.style.cursor = 'pointer';
+            copyText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.copyMessage(messageDiv);
+            });
+            time.appendChild(copyText);
+            
+            const voiceText = document.createElement('span');
+            voiceText.className = 'action-text voice-text';
+            voiceText.textContent = 'Озвучить';
+            voiceText.style.cursor = 'pointer';
+            voiceText.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.speakMessage(messageDiv);
+            });
+            time.appendChild(voiceText);
+        }
+        
         messageDiv.appendChild(messageContent);
 
         this.chatMessages.appendChild(messageDiv);
         setTimeout(() => this.scrollToBottom(), 50);
+    }
+
+    createAudioVisualization() {
+        const container = document.createElement('div');
+        container.className = 'audio-visualization';
+        
+        // Create waveform container
+        const waveformContainer = document.createElement('div');
+        waveformContainer.className = 'waveform-container';
+        
+        // Generate random waveform data for visualization
+        const waveformData = this.generateWaveformData();
+        
+        // Create SVG for the waveform
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 300 60');
+        svg.setAttribute('class', 'waveform-svg');
+        
+        // Create waveform path
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', this.createWaveformPath(waveformData));
+        path.setAttribute('class', 'waveform-path');
+        
+        svg.appendChild(path);
+        waveformContainer.appendChild(svg);
+        
+        // Add duration only
+        const audioInfo = document.createElement('div');
+        audioInfo.className = 'audio-info';
+        
+        const duration = document.createElement('span');
+        duration.className = 'audio-duration';
+        duration.textContent = this.formatDuration(this.getRandomDuration());
+        
+        audioInfo.appendChild(duration);
+        
+        container.appendChild(waveformContainer);
+        container.appendChild(audioInfo);
+        
+        // Add click to play functionality
+        container.style.cursor = 'pointer';
+        container.addEventListener('click', () => {
+            // Add a subtle animation when clicked
+            container.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                container.style.transform = 'scale(1)';
+            }, 150);
+        });
+        
+        return container;
+    }
+
+    generateWaveformData() {
+        const data = [];
+        const numBars = 60;
+        
+        for (let i = 0; i < numBars; i++) {
+            // Create more realistic audio waveform with multiple frequency components
+            const t = i / numBars;
+            const baseHeight = 0.2 + Math.random() * 0.3;
+            
+            // Add multiple sine waves for more realistic audio pattern
+            const wave1 = Math.sin(t * Math.PI * 8) * 0.15;
+            const wave2 = Math.sin(t * Math.PI * 16) * 0.1;
+            const wave3 = Math.sin(t * Math.PI * 4) * 0.2;
+            const noise = (Math.random() - 0.5) * 0.1;
+            
+            const height = Math.max(0.05, Math.min(1, baseHeight + wave1 + wave2 + wave3 + noise));
+            data.push(height);
+        }
+        
+        return data;
+    }
+
+    createWaveformPath(data) {
+        const width = 300;
+        const height = 60;
+        const barWidth = width / data.length;
+        
+        let path = '';
+        
+        for (let i = 0; i < data.length; i++) {
+            const x = i * barWidth + barWidth / 2;
+            const barHeight = data[i] * height * 0.8;
+            const y1 = (height - barHeight) / 2;
+            const y2 = y1 + barHeight;
+            
+            if (i === 0) {
+                path += `M ${x} ${y1}`;
+            } else {
+                path += ` L ${x} ${y1}`;
+            }
+        }
+        
+        // Create the bottom part of the waveform
+        for (let i = data.length - 1; i >= 0; i--) {
+            const x = i * barWidth + barWidth / 2;
+            const barHeight = data[i] * height * 0.8;
+            const y1 = (height - barHeight) / 2;
+            const y2 = y1 + barHeight;
+            
+            path += ` L ${x} ${y2}`;
+        }
+        
+        path += ' Z';
+        return path;
+    }
+
+    getRandomDuration() {
+        // Generate random duration between 2-15 seconds
+        return Math.floor(Math.random() * 13) + 2;
+    }
+
+    formatDuration(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
     playAudio(audioUrl, playBtn) {
@@ -1387,7 +1722,7 @@ class WindexAI {
 
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.textContent = role === 'user' ? 'Вы' : '🤖';
+        avatar.textContent = '';
 
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -1455,6 +1790,11 @@ class WindexAI {
         window.open(`/api/documents/${documentId}`, '_blank');
     }
 
+    openUserProfile() {
+        // Navigate to the user's profile/dashboard page
+        window.location.href = '/profile';
+    }
+
     showProfileModal() {
         if (this.profileModal) {
             // Populate profile data
@@ -1478,7 +1818,7 @@ class WindexAI {
     showConnectModal() {
         if (this.connectModal) {
             this.connectModal.classList.remove('hidden');
-            this.connectionCodeInput.focus();
+            this.connectionUsernameInput.focus();
             this.resetConnectModal();
         }
     }
@@ -1503,11 +1843,14 @@ class WindexAI {
     }
 
     resetConnectModal() {
-        if (this.connectionCodeInput) {
-            this.connectionCodeInput.value = '';
+        if (this.connectionUsernameInput) {
+            this.connectionUsernameInput.value = 'admin';
+        }
+        if (this.connectionPasswordInput) {
+            this.connectionPasswordInput.value = 'admin123';
         }
         if (this.connectBtnModal) {
-            this.connectBtnModal.disabled = true;
+            this.connectBtnModal.disabled = false;
         }
         if (this.connectionStatus) {
             this.connectionStatus.style.display = 'none';
@@ -1517,20 +1860,13 @@ class WindexAI {
         }
     }
 
-    validateConnectionCode() {
-        const code = this.connectionCodeInput.value.trim();
-        const isValid = /^[a-zA-Z0-9]+$/.test(code) && code.length >= 4;
-
-        if (this.testConnectionBtn) {
-            this.testConnectionBtn.disabled = !isValid;
-        }
-
-        return isValid;
-    }
 
     async testConnection() {
-        const code = this.connectionCodeInput.value.trim();
-        if (!this.validateConnectionCode()) {
+        const username = document.getElementById('connection-username').value.trim();
+        const password = document.getElementById('connection-password').value.trim();
+        
+        if (!username || !password) {
+            this.showConnectionResult('error', 'Пожалуйста, введите имя пользователя и пароль');
             return;
         }
 
@@ -1543,17 +1879,9 @@ class WindexAI {
         }
 
         try {
-            // Симулируем проверку подключения
-            const response = await fetch('/api/chat/test-connection', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('windexai_token')}`
-                },
-                body: JSON.stringify({ connectionCode: code })
-            });
-
-            const result = await response.json();
+            // Test cloud API connection
+            const cloudApi = new WindexsCloudAPI({username, password}, 'http://localhost:8080/api');
+            const result = await cloudApi.testConnection();
 
             // Скрываем статус загрузки
             if (this.connectionStatus) {
@@ -1564,7 +1892,7 @@ class WindexAI {
             if (this.connectionResult) {
                 this.connectionResult.style.display = 'block';
 
-                if (response.ok && result.success) {
+                if (result.success) {
                     this.connectionResult.innerHTML = `
                         <div class="alert alert-success">
                             <div class="d-flex align-items-center">
@@ -1573,8 +1901,8 @@ class WindexAI {
                                     <polyline points="22,4 12,14.01 9,11.01"></polyline>
                                 </svg>
                                 <div>
-                                    <strong>Подключение успешно!</strong><br>
-                                    <small>${result.message || 'Чат доступен для подключения'}</small>
+                                    <strong>Подключение к облаку успешно!</strong><br>
+                                    <small>${result.message || 'Облачный сервис доступен для подключения'}</small>
                                 </div>
                             </div>
                         </div>
@@ -1633,36 +1961,39 @@ class WindexAI {
     }
 
     async connectToChat() {
-        const code = this.connectionCodeInput.value.trim();
-        if (!this.validateConnectionCode()) {
+        const username = document.getElementById('connection-username').value.trim();
+        const password = document.getElementById('connection-password').value.trim();
+        
+        if (!username || !password) {
+            this.showConnectionResult('error', 'Пожалуйста, введите имя пользователя и пароль');
             return;
         }
 
         try {
-            // Подключаемся к чату
-            const response = await fetch('/api/chat/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('windexai_token')}`
-                },
-                body: JSON.stringify({ connectionCode: code })
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                // Успешное подключение
+            // Initialize cloud API with the credentials
+            const cloudApi = new WindexsCloudAPI({username, password}, 'http://localhost:8080/api');
+            
+            // Test the connection
+            const testResult = await cloudApi.testConnection();
+            
+            if (testResult.success) {
+                // Initialize cloud file manager
+                cloudManager = new CloudFileManager(cloudApi);
+                await cloudManager.init();
+                
+                // Hide connection modal and show cloud manager
                 this.hideConnectModal();
-                this.addMessage('assistant', `✅ Подключение к чату "${result.chatName || 'Внешний чат'}" установлено!`);
-                showNotification('Подключение к чату установлено', 'success');
+                cloudManager.show();
+                
+                this.addMessageToChat('assistant', `✅ Подключение к облаку установлено! Теперь вы можете управлять файлами в облаке.`);
+                showNotification('Подключение к облаку установлено', 'success');
             } else {
-                showNotification(result.message || 'Ошибка подключения', 'error');
+                showNotification('Ошибка подключения к облаку: ' + testResult.message, 'error');
             }
 
         } catch (error) {
             console.error('Connect error:', error);
-            showNotification('Ошибка подключения к чату', 'error');
+            showNotification('Ошибка подключения к облаку: ' + error.message, 'error');
         }
     }
 }
@@ -2178,4 +2509,31 @@ async function checkProSubscription() {
         return false;
     }
 }
+// Global functions for HTML onclick handlers
+function handleDocument() {
+    if (window.windexAI && window.windexAI.documentInput) {
+        window.windexAI.documentInput.click();
+    }
+}
+
+function handleVoice() {
+    if (window.windexAI) {
+        window.windexAI.toggleVoiceRecording();
+    }
+}
+
+function handleConnect() {
+    if (window.windexAI) {
+        window.windexAI.showConnectModal();
+    }
+}
+
+function openCloudManager() {
+    if (cloudManager) {
+        cloudManager.show();
+    } else {
+        showNotification('Сначала подключитесь к облаку', 'error');
+    }
+}
+
 // Force cache refresh 1760126317

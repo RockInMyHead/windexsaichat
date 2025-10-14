@@ -163,24 +163,30 @@ def format_messages_for_openai(messages: List[Dict[str, str]]) -> List[Dict[str,
 def transcribe_audio(audio_file_path: str) -> str:
     """Transcribe audio file using OpenAI Whisper"""
     if not openai_client:
+        print("❌ OpenAI client not available for transcription")
         return None
 
     try:
+        print(f"🎤 Transcribing audio file: {audio_file_path}")
         with open(audio_file_path, "rb") as audio_file:
             transcript = openai_client.audio.transcriptions.create(
                 model="whisper-1", file=audio_file, language="ru"  # Russian language
             )
+        print(f"✅ Transcription successful: {transcript.text[:100]}...")
         return transcript.text
     except Exception as e:
+        print(f"❌ Transcription error: {e}")
         return None
 
 
 def text_to_speech(text: str, voice: str = "alloy") -> str:
     """Convert text to speech using OpenAI TTS"""
     if not openai_client:
+        print("❌ OpenAI client not available for text-to-speech")
         return None
 
     try:
+        print(f"🔊 Generating speech for text: {text[:50]}...")
         response = openai_client.audio.speech.create(
             model="tts-1", voice=voice, input=text
         )
@@ -190,6 +196,8 @@ def text_to_speech(text: str, voice: str = "alloy") -> str:
         temp_file.write(response.content)
         temp_file.close()
 
+        print(f"✅ Speech generated successfully: {temp_file.name}")
         return temp_file.name
     except Exception as e:
+        print(f"❌ Text-to-speech error: {e}")
         return None

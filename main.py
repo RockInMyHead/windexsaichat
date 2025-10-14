@@ -12,6 +12,7 @@ from database import create_tables
 # Import routers
 from routes import (admin, ai_editor, auth, chat, conversations, dashboard,
                     deploy, documents, profile, voice)
+from routes.cloud_mock import router as cloud_mock_router
 
 # Create tables on startup
 create_tables()
@@ -41,6 +42,7 @@ app.include_router(voice.router)
 app.include_router(documents.router)
 app.include_router(dashboard.router)
 app.include_router(profile.router)
+app.include_router(cloud_mock_router)
 
 
 # Pydantic models for API documentation

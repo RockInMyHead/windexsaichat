@@ -36,13 +36,21 @@ class ProjectsManager {
 
         if (userAvatar) {
             userAvatar.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
             });
         }
 
         if (userName) {
             userName.addEventListener('click', () => {
-                this.showProfileModal();
+                this.openUserProfile();
+            });
+        }
+        
+        // Also add click handler to the entire user-info container
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.addEventListener('click', () => {
+                this.openUserProfile();
             });
         }
 
@@ -123,9 +131,7 @@ class ProjectsManager {
             year: 'numeric'
         });
 
-        const preview = project.preview.length > 150
-            ? project.preview.substring(0, 150) + '...'
-            : project.preview;
+        const preview = this.getProjectDescription(project);
 
         return `
             <div class="project-card" data-project-id="${project.id}">
@@ -136,12 +142,15 @@ class ProjectsManager {
                 <div class="project-preview">${preview}</div>
                 <div class="project-stats">
                     <span>💬 ${project.message_count} сообщений</span>
-                    <span>📁 Next.js проект</span>
+                    <span>📁 ${this.getProjectType(project)}</span>
                 </div>
                 <div class="project-actions">
                     <a href="/static/editor.html?project=${project.id}" class="project-btn primary">
                         Открыть
                     </a>
+                    <button class="project-btn chat" onclick="projectsManager.returnToChat(${project.id})">
+                        💬 Вернуться к чату
+                    </button>
                     <button class="project-btn secondary" onclick="projectsManager.downloadProject(${project.id})">
                         📥 Скачать
                     </button>
@@ -195,6 +204,50 @@ class ProjectsManager {
             console.error('Error deleting project:', error);
             this.showError('Не удалось удалить проект');
         }
+    }
+
+    getProjectType(project) {
+        // Определяем тип проекта на основе содержимого
+        if (project.preview && project.preview.includes('HTML_START')) {
+            return 'Lite проект';
+        } else if (project.preview && (project.preview.includes('PACKAGE_JSON_START') || project.preview.includes('LAYOUT_TSX_START'))) {
+            return 'Pro проект';
+        } else {
+            return 'Проект';
+        }
+    }
+
+    getProjectDescription(project) {
+        // Извлекаем описание проекта из содержимого
+        let description = project.preview || '';
+        
+        // Если есть описание в начале, используем его
+        if (description.includes('✅ Создан') || description.includes('Создан')) {
+            const match = description.match(/(✅ Создан[^.]*\.|Создан[^.]*\.)/);
+            if (match) {
+                return match[1];
+            }
+        }
+        
+        // Если есть план разработки, используем его
+        if (description.includes('📋 ПЛАН РАЗРАБОТКИ:')) {
+            const match = description.match(/📋 ПЛАН РАЗРАБОТКИ:\s*([^\n]+)/);
+            if (match) {
+                return match[1];
+            }
+        }
+        
+        // Иначе обрезаем обычное описание
+        if (description.length > 150) {
+            return description.substring(0, 150) + '...';
+        }
+        
+        return description || 'Описание проекта недоступно';
+    }
+
+    returnToChat(projectId) {
+        // Navigate to the editor with the specific project loaded
+        window.location.href = `/static/editor.html?project=${projectId}&returnToChat=true`;
     }
 
     async downloadProject(projectId) {
@@ -330,6 +383,11 @@ class ProjectsManager {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+
+    openUserProfile() {
+        // Navigate to the user's profile/dashboard page
+        window.location.href = '/profile';
     }
 
     showProfileModal() {

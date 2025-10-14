@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WindexsAI - Искусственный интеллект нового поколения</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
-    <link rel="stylesheet" href="/static/style.css?v=20241225-7">
+    <link rel="icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/style.css?v=20241225-16">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -257,7 +257,7 @@
                                 <!-- Универсальный -->
                                 <div class="specialist-card card" data-specialist="general" data-model="gpt-4o-mini">
                                     <div class="card-body text-center">
-                                        <div class="specialist-icon mb-3">🤖</div>
+                                        <div class="specialist-icon mb-3"></div>
                                         <h3 class="mb-2">Универсальный AI</h3>
                                         <p class="text-muted mb-3">Многофункциональный помощник для любых задач</p>
                                         <div class="specialist-skills">
@@ -280,34 +280,6 @@
                         <!-- Messages will be added here dynamically -->
                     </div>
 
-                    <!-- Typing Indicator -->
-                    <div id="typing-indicator" class="typing-indicator hidden">
-                        <div class="chat-avatar">🤖</div>
-                        <div class="typing-bubble">
-                            <div class="typing-text">
-                                <span class="typing-char">W</span>
-                                <span class="typing-char">i</span>
-                                <span class="typing-char">n</span>
-                                <span class="typing-char">d</span>
-                                <span class="typing-char">e</span>
-                                <span class="typing-char">x</span>
-                                <span class="typing-char">A</span>
-                                <span class="typing-char">I</span>
-                                <span class="typing-char">.</span>
-                                <span class="typing-char">.</span>
-                                <span class="typing-char">.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Voice Recording Indicator -->
-                    <div id="voice-recording-indicator" class="voice-recording-indicator hidden">
-                        <div class="recording-content">
-                            <div class="recording-icon">🎤</div>
-                            <div class="recording-text">Запись голосового сообщения...</div>
-                            <div class="recording-timer">00:00</div>
-                        </div>
-                    </div>
 
                     <!-- Document Upload Indicator -->
                     <div id="document-upload-indicator" class="document-upload-indicator hidden">
@@ -342,18 +314,29 @@
 
                                 <div id="tools-dropdown" class="tools-dropdown">
                                     <button id="document-btn" class="dropdown-item" onclick="handleDocument()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important; border-bottom: 1px solid #eee !important;">
-                                        📄 Документ
-                            </button>
-
-                                    <button id="voice-btn" class="dropdown-item" onclick="handleVoice()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important; border-bottom: 1px solid #eee !important;">
-                                        🎤 Голос
+                                        Документ
                             </button>
 
                                     <button id="connect-btn" class="dropdown-item" onclick="handleConnect()" style="display: flex !important; align-items: center !important; gap: 10px !important; width: 100% !important; padding: 12px 16px !important; border: none !important; background: none !important; color: #333 !important; font-size: 14px !important; text-align: left !important; cursor: pointer !important;">
-                                        🔗 Подключение
+                                        Подключение к облаку
                             </button>
                                 </div>
                             </div>
+                            
+                            <!-- Voice Button -->
+                            <button id="voice-btn" class="btn btn-outline" title="Голосовое сообщение">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                                    <line x1="8" y1="22" x2="16" y2="22"></line>
+                                </svg>
+                            </button>
+                            <button id="cloud-btn" class="btn btn-outline" onclick="openCloudManager()" title="Облако">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                                </svg>
+                            </button>
                             <button id="send-btn" class="btn btn-primary" disabled>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -403,23 +386,42 @@
         <div class="connect-modal-content card">
             <div class="card-header">
                 <div class="d-flex align-items-center justify-content-between">
-                    <h2 class="mb-0">🔗 Подключение к чату</h2>
+                    <h2 class="mb-0">☁️ Подключение к облаку</h2>
                     <button class="close-connect btn btn-outline" title="Закрыть">×</button>
                 </div>
             </div>
             <div class="card-body">
                 <div class="mb-4">
-                    <p class="text-muted mb-3">Введите код подключения для доступа к внешнему чату:</p>
-                    <div class="form-group">
-                        <label for="connection-code" class="form-label">Код подключения</label>
+                    <p class="text-muted mb-3">Введите учетные данные для доступа к облачному сервису:</p>
+                    <div class="form-group mb-3">
+                        <label for="connection-username" class="form-label">Имя пользователя</label>
                         <input
                             type="text"
-                            id="connection-code"
+                            id="connection-username"
                             class="form-control"
-                            placeholder="Введите код подключения..."
-                            maxlength="50"
+                            placeholder="Введите имя пользователя..."
+                            value="admin"
                         >
-                        <div class="form-text">Код должен содержать только буквы и цифры</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="connection-password" class="form-label">Пароль</label>
+                        <input
+                            type="password"
+                            id="connection-password"
+                            class="form-control"
+                            placeholder="Введите пароль..."
+                            value="admin123"
+                        >
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-muted small mb-2">Нет аккаунта в облаке?</p>
+                        <a href="https://cloud.windexai.com/register" target="_blank" class="btn btn-outline btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            </svg>
+                            Зарегистрироваться в облаке
+                        </a>
                     </div>
                 </div>
 
@@ -442,21 +444,22 @@
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22,4 12,14.01 9,11.01"></polyline>
                         </svg>
-                        Проверить подключение
+                        Проверить подключение к облаку
                     </button>
                     <button id="connect-btn-modal" class="btn btn-success flex-fill" disabled>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
                             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                             <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                         </svg>
-                        Подключиться
+                        Подключиться к облаку
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/static/script.js?v=20241225-16"></script>
+    <script src="/static/script.js?v=20241225-24"></script>
+    <script src="/static/cloud-api.js"></script>
 
     <!-- Mermaid.js для диаграмм -->
     <script type="module">

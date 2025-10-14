@@ -233,6 +233,7 @@
   border: 1px solid rgba(16, 185, 129, 0.12);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  cursor: pointer;
 }
 
 .user-info:hover {
@@ -365,6 +366,7 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
 /* Контейнер */
@@ -1240,6 +1242,8 @@ a:hover {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 .welcome-icon {
@@ -1778,6 +1782,112 @@ a:hover {
   min-height: 0;
 }
 
+/* Стили для текста чата */
+.chat-text {
+  font-size: 0.925rem;
+  line-height: 1.5;
+  margin: 0;
+  word-wrap: break-word;
+}
+
+/* Стили для двухэтапного процесса */
+.chat-text strong {
+  font-weight: 600;
+  color: var(--primary-green);
+}
+
+.chat-text br {
+  margin: 0.5rem 0;
+}
+
+/* Стили для мыслей LLM (как в Cursor) */
+.llm-thinking {
+  color: var(--gray-500);
+  font-style: italic;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--gray-300);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.llm-thinking::before {
+  content: "💭 ";
+  margin-right: 0.25rem;
+}
+
+.llm-step {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+  padding: 0.25rem 0.5rem;
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--primary-green-light);
+  animation: slideIn 0.3s ease-out;
+}
+
+.llm-step::before {
+  content: "⚡ ";
+  margin-right: 0.25rem;
+}
+
+.llm-planning {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.llm-planning::before {
+  content: "🏗️ ";
+  margin-right: 0.25rem;
+  font-size: 1rem;
+}
+
+.llm-generating {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+  padding: 0.5rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-green);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.llm-generating::before {
+  content: "⚙️ ";
+  margin-right: 0.25rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .message {
     display: flex;
   gap: 0.75rem;
@@ -1805,8 +1915,29 @@ a:hover {
 }
 
 .message.assistant .message-avatar {
-  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
-    color: var(--gray-700);
+  background: linear-gradient(45deg, #10b981, #3b82f6, #10b981, #3b82f6);
+  background-size: 600% 600%;
+  animation: gradientShift 20s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .message-content {
@@ -2464,6 +2595,23 @@ a:hover {
     gap: 0.75rem;
     margin: 1rem 0;
     animation: fadeIn 0.3s ease-in-out;
+    padding: 0 1rem;
+}
+
+.typing-indicator .chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #10b981, #3b82f6, #10b981, #3b82f6);
+    background-size: 600% 600%;
+    animation: gradientShift 20s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
 .typing-bubble {
@@ -3020,60 +3168,15 @@ a:hover {
   }
 }
 
-/* Голосовые сообщения */
-.voice-recording-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-4);
-  background: var(--gray-50);
-  border-radius: var(--radius-lg);
-  margin: var(--spacing-2) 0;
-  border: 2px solid var(--primary-green);
-}
 
-.recording-content {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  color: var(--primary-green);
-}
-
-.recording-icon {
-  font-size: 1.5rem;
-  animation: recordingPulse 1s infinite;
-}
-
-.recording-text {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.recording-timer {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: var(--primary-green);
-  color: var(--white);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
-}
-
-/* Голосовые сообщения в чате */
-.message.voice .message-bubble {
+/* Голосовые сообщения пользователя в чате */
+.message.user.voice .message-bubble {
   position: relative;
-  padding: var(--spacing-3);
-  background: var(--primary-green-light);
-  border: 1px solid var(--primary-green);
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
-.message.voice .message-bubble::before {
-  content: "🎤";
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  font-size: 0.8rem;
-}
 
 .voice-controls {
   display: flex;
@@ -3308,15 +3411,207 @@ a:hover {
   background: var(--white);
   border: 1px solid var(--gray-200);
   color: var(--gray-800);
+  border-bottom-left-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
 
-  .preview-frame {
-    height: 250px;
-  }
+/* Audio Visualization Styles */
+.audio-visualization {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--gray-700);
+  min-width: 200px;
+  max-width: 300px;
+  transition: transform 0.15s ease;
+}
 
-  .btn {
-    padding: 0.625rem 1rem;
-    font-size: 0.8125rem;
+.audio-visualization:hover {
+  transform: translateY(-1px);
+}
+
+.waveform-container {
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.waveform-svg {
+  width: 100%;
+  height: 60px;
+  display: block;
+}
+
+.waveform-path {
+  fill: var(--primary);
+  stroke: var(--primary);
+  stroke-width: 0.5;
+  opacity: 0.8;
+}
+
+.audio-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.audio-duration {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+/* User voice message styling */
+.message.user.voice .message-bubble {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Action text styling */
+.action-text {
+  margin-left: 0.5rem;
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  transition: color 0.2s ease;
+}
+
+.action-text:hover {
+  color: var(--primary);
+}
+
+
+.voice-text:hover {
+  color: var(--warning);
+}
+
+/* Animation for the waveform */
+@keyframes waveformPulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.audio-visualization:hover .waveform-path {
+  animation: waveformPulse 2s ease-in-out infinite;
+}
+
+/* Cloud File Manager Styles */
+.cloud-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.cloud-modal-content {
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.cloud-toolbar {
+  border-bottom: 1px solid var(--gray-200);
+  padding-bottom: 1rem;
+}
+
+.cloud-files-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.cloud-files-list {
+  padding: 0.5rem;
+}
+
+.cloud-file-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background-color 0.2s ease;
+}
+
+.cloud-file-item:hover {
+  background-color: var(--gray-50);
+}
+
+.cloud-file-item:last-child {
+  border-bottom: none;
+}
+
+.cloud-file-icon {
+  font-size: 1.5rem;
+  width: 2rem;
+  text-align: center;
+}
+
+.cloud-file-name {
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.cloud-file-meta {
+  margin-top: 0.25rem;
+}
+
+.cloud-file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cloud-upload-progress {
+  margin-top: 1rem;
+}
+
+.cloud-upload-progress .progress {
+  height: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.cloud-upload-progress .progress-bar {
+  background: var(--primary-green);
+  transition: width 0.3s ease;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .audio-visualization {
+    min-width: 150px;
+    max-width: 250px;
+    padding: 0.75rem;
+  }
+  
+  .cloud-modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .cloud-file-actions {
+    flex-direction: column;
+  }
+  
+  .waveform-svg {
+    height: 50px;
   }
 }
 
@@ -3422,60 +3717,15 @@ a:hover {
   }
 }
 
-/* Голосовые сообщения */
-.voice-recording-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-4);
-  background: var(--gray-50);
-  border-radius: var(--radius-lg);
-  margin: var(--spacing-2) 0;
-  border: 2px solid var(--primary-green);
-}
 
-.recording-content {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  color: var(--primary-green);
-}
-
-.recording-icon {
-  font-size: 1.5rem;
-  animation: recordingPulse 1s infinite;
-}
-
-.recording-text {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.recording-timer {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: var(--primary-green);
-  color: var(--white);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
-}
-
-/* Голосовые сообщения в чате */
-.message.voice .message-bubble {
+/* Голосовые сообщения пользователя в чате */
+.message.user.voice .message-bubble {
   position: relative;
-  padding: var(--spacing-3);
-  background: var(--primary-green-light);
-  border: 1px solid var(--primary-green);
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
-.message.voice .message-bubble::before {
-  content: "🎤";
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  font-size: 0.8rem;
-}
 
 .voice-controls {
   display: flex;
@@ -3710,6 +3960,8 @@ a:hover {
   background: var(--white);
   border: 1px solid var(--gray-200);
   color: var(--gray-800);
+  border-bottom-left-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Адаптивные стили для AI Specialists */
@@ -5921,9 +6173,7 @@ a:hover {
   display: inline-block !important;
 }
 
-.tools-dropdown {
-  /* Базовые стили переопределены inline стилями */
-}
+/* Tools dropdown styles are defined inline in HTML */
 
 .dropdown-item {
   display: flex !important;
