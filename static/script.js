@@ -36,14 +36,14 @@ class AuthManager {
         }
     }
 
-    async login(username, password) {
+    async login(email, password) {
         try {
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ email, password })
             });
 
             if (response.ok) {
@@ -2101,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('login-username').value;
+        const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
         const submitBtn = loginForm.querySelector('button[type="submit"]');
 
@@ -2116,7 +2116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Вход...';
 
         try {
-            await authManager.login(username, password);
+            await authManager.login(email, password);
         } catch (error) {
             showNotification(error.message, 'error');
         } finally {
@@ -2170,6 +2170,32 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
         }
+        });
+    }
+
+    // Agreement modal handlers
+    const agreementLink = document.getElementById('agreement-link');
+    const agreementModal = document.getElementById('agreement-modal');
+    const agreementOverlay = document.getElementById('agreement-overlay');
+    const agreementClose = document.getElementById('agreement-close');
+
+    if (agreementLink && agreementModal) {
+        agreementLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            agreementModal.classList.remove('hidden');
+        });
+    }
+
+    if (agreementOverlay) {
+        agreementOverlay.addEventListener('click', () => {
+            agreementModal.classList.add('hidden');
+        });
+    }
+
+    if (agreementClose) {
+        agreementClose.addEventListener('click', () => {
+            agreementModal.classList.add('hidden');
         });
     }
 
@@ -2525,6 +2551,8 @@ function handleVoice() {
 function handleConnect() {
     if (window.windexAI) {
         window.windexAI.showConnectModal();
+    } else {
+        showNotification('Сначала подключитесь к облаку', 'error');
     }
 }
 

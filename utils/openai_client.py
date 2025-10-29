@@ -36,11 +36,11 @@ if OPENAI_API_KEY and OPENAI_API_KEY != "sk-demo-key-replace-with-real-openai-ke
                     "http://": proxy_url,
                     "https://": proxy_url,
                 }, 
-                timeout=30.0
+                timeout=120.0
             )
             print(f"✅ OpenAI client initialized successfully with proxy {proxy_url}")
         else:
-            http_client = httpx.Client(timeout=30.0)
+            http_client = httpx.Client(timeout=120.0)
             print("✅ OpenAI client initialized successfully")
         openai_client = OpenAI(api_key=OPENAI_API_KEY, http_client=http_client)
     except Exception as e:

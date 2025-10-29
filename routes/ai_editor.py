@@ -15,6 +15,7 @@ from database import get_db
 from routes.auth import User, get_current_user
 from utils.openai_client import openai_client
 from utils.web_search import format_search_results, search_web
+from prompt_template import build_prompt, GENERATION_PARAMS
 
 router = APIRouter()
 
@@ -252,11 +253,15 @@ async def architect_llm(user_request: str, mode: str) -> Dict:
         
         content = response.choices[0].message.content
         print(f"🏗️ Architect response: {content[:200]}...")
+        print(f"🏗️ Full architect response length: {len(content)} characters")
         
         # Парсим JSON ответ
         import json
         try:
             plan = json.loads(content)
+            print(f"🏗️ Successfully parsed architect plan with {len(plan.get('steps', []))} steps")
+            for i, step in enumerate(plan.get('steps', []), 1):
+                print(f"🏗️ Step {i}: {step.get('name', 'Unknown')} ({step.get('code_type', 'unknown')})")
             return plan
         except json.JSONDecodeError:
             # Если JSON невалидный, создаем базовый план
@@ -335,7 +340,7 @@ async def developer_llm(task: Dict, mode: str, context: str = "") -> str:
     """Второй LLM - Разработчик: генерирует код для конкретной задачи"""
     print(f"👨‍💻 Developer LLM: Generating {task['code_type']} for task '{task['name']}'")
     
-    developer_prompt = f"""Ты - Senior Full-Stack Developer с КРЕАТИВНЫМ мышлением и экспертизой в современном веб-дизайне. Твоя задача - создать УНИКАЛЬНЫЙ, ИННОВАЦИОННЫЙ и ВИЗУАЛЬНО ПОТРЯСАЮЩИЙ код.
+    developer_prompt = f"""Ты - Senior Full-Stack Developer с экспертизой в современном UI/UX дизайне. Твоя задача - создать ПРОФЕССИОНАЛЬНЫЙ, СОВРЕМЕННЫЙ и ВИЗУАЛЬНО ПРИВЛЕКАТЕЛЬНЫЙ код.
 
 **РЕЖИМ:** {mode}
 **ЗАДАЧА:** {task['name']}
@@ -343,29 +348,29 @@ async def developer_llm(task: Dict, mode: str, context: str = "") -> str:
 **ТИП КОДА:** {task['code_type']}
 **КОНТЕКСТ:** {context}
 
-🎨 КРЕАТИВНЫЕ ТРЕБОВАНИЯ К ДИЗАЙНУ:
-• ИННОВАЦИОННЫЕ градиенты и уникальные цветовые схемы
-• Продвинутые тени и эффекты (box-shadow, text-shadow, filter, backdrop-filter)
-• Сложные анимации и переходы (transition, transform, keyframes, cubic-bezier)
-• Современная типографика с Google Fonts и кастомными шрифтами
-• УНИКАЛЬНЫЕ цветовые палитры и темы
-• Продвинутые hover-эффекты и микроинтеракции
-• Креативная визуальная иерархия и spacing
-• Нестандартные лейауты и композиции
+🎨 СОВРЕМЕННЫЕ ТРЕБОВАНИЯ К ДИЗАЙНУ:
+• Используй современные CSS переменные из :root (--primary-color, --secondary-color, --accent-color, --text-color, --bg-color, --shadow, --border-radius)
+• Применяй современные тени и эффекты (box-shadow, text-shadow, backdrop-filter)
+• Создавай плавные анимации и переходы (transition, transform, cubic-bezier)
+• Используй современную типографику с правильной иерархией
+• Применяй градиенты и современные цветовые схемы
+• Добавляй hover-эффекты и микроинтеракции
+• Создавай визуальную иерархию с правильным spacing
+• Используй современные лейауты и композиции
 
 📱 ТРЕБОВАНИЯ К АДАПТИВНОСТИ:
-• Mobile-first подход
-• Responsive дизайн для всех устройств
-• Flexbox и CSS Grid для лейаутов
-• Адаптивные изображения
-• Правильные breakpoints (320px, 768px, 1024px, 1440px)
-• Touch-friendly элементы на мобильных
+• Mobile-first подход с правильными breakpoints
+• Responsive дизайн для всех устройств (320px, 768px, 1024px, 1440px)
+• Используй CSS Grid и Flexbox для лейаутов
+• Адаптивные изображения с правильными размерами
+• Touch-friendly элементы на мобильных устройствах
+• Правильные размеры шрифтов для разных экранов
 
 💻 ТРЕБОВАНИЯ К КОДУ:
-• Семантические HTML теги (header, main, section, article, footer)
-• CSS переменные для цветов и размеров
+• Семантические HTML теги (header, main, section, article, footer, nav)
+• Используй CSS переменные для консистентности
 • Современные CSS техники (Grid, Flexbox, clamp(), min(), max())
-• Чистый и читаемый код
+• Чистый и читаемый код с правильной структурой
 • Комментарии для сложных участков
 • Оптимизированная производительность
 
@@ -382,15 +387,16 @@ async def developer_llm(task: Dict, mode: str, context: str = "") -> str:
 - https://source.unsplash.com/800x600/?architecture
 
 🎯 СПЕЦИАЛЬНЫЕ ТРЕБОВАНИЯ:
-• Для HTML: используй семантические теги и правильную структуру
-• Для CSS: создавай современные стили с градиентами, тенями и анимациями
-• Для JavaScript: добавляй плавные анимации и интерактивность
-• ВСЕГДА используй адаптивный дизайн
-• ВСЕГДА добавляй красивые визуальные эффекты
+• Для HTML: используй семантические теги, правильную структуру и современные атрибуты
+• Для CSS: создавай современные стили с использованием CSS переменных, градиентов, теней и анимаций
+• Для JavaScript: добавляй плавные анимации, интерактивность и современные API
+• ВСЕГДА используй адаптивный дизайн с правильными breakpoints
+• ВСЕГДА добавляй красивые визуальные эффекты и анимации
 • ВСЕГДА используй актуальный год 2025 в копирайте и датах
+• ВСЕГДА применяй современные UI/UX принципы
 
 **ФОРМАТ ОТВЕТА:**
-Верни ТОЛЬКО код без дополнительных объяснений. Код должен быть готов к использованию и выглядеть профессионально."""
+Верни ТОЛЬКО код без дополнительных объяснений. Код должен быть готов к использованию и соответствовать современным стандартам UI/UX дизайна."""
 
     try:
         response = openai_client.chat.completions.create(
@@ -403,7 +409,32 @@ async def developer_llm(task: Dict, mode: str, context: str = "") -> str:
         )
         
         code = response.choices[0].message.content.strip()
+        
+        # Очищаем код от markdown-разметки
+        import re
+        
+        # Универсальная очистка от всех видов markdown-разметки
+        code_type = task['code_type']
+        
+        # Удаляем все возможные варианты markdown-разметки
+        patterns_to_remove = [
+            rf'^```{code_type}\s*',  # ```javascript, ```css, ```html
+            rf'^```js\s*',           # ```js
+            rf'^```\s*',             # ```
+            rf'\s*```$',             # ``` в конце
+        ]
+        
+        for pattern in patterns_to_remove:
+            code = re.sub(pattern, '', code, flags=re.MULTILINE)
+        
+        # Убираем лишние пробелы и переносы строк
+        code = code.strip()
+        
+        print(f"🧹 Cleaned {code_type} code from markdown formatting")
+        
         print(f"👨‍💻 Developer generated {len(code)} characters of {task['code_type']} code")
+        print(f"👨‍💻 Developer response preview: {code[:100]}...")
+        print(f"👨‍💻 Task '{task['name']}' completed successfully")
         return code
         
     except Exception as e:
@@ -417,25 +448,59 @@ async def combine_code_parts(parts: List[Dict], mode: str) -> str:
     
     if mode == "lite":
         # Для Lite режима создаем единый HTML файл
-        html_parts = []
-        css_parts = []
-        js_parts = []
+        html_body_fragments: List[str] = []
+        css_parts: List[str] = []
+        js_parts: List[str] = []
+        
+        import re
+        
+        def extract_from_html(html: str) -> Dict[str, str]:
+            """Возвращает body, styles, scripts из HTML части, удаляя дубликаты оболочек."""
+            if not html:
+                return {"body": "", "styles": "", "scripts": ""}
+            text = html.strip()
+            # Удаляем возможный DOCTYPE и обертки html/head
+            text = re.sub(r"<!DOCTYPE[^>]*>", "", text, flags=re.IGNORECASE)
+            # Собираем стили
+            styles = "\n".join(m.group(1).strip() for m in re.finditer(r"<style[^>]*>([\s\S]*?)</style>", text, flags=re.IGNORECASE))
+            # Собираем скрипты (только JS, без type проверки для простоты)
+            scripts = "\n".join(m.group(1).strip() for m in re.finditer(r"<script[^>]*>([\s\S]*?)</script>", text, flags=re.IGNORECASE))
+            # Вырезаем style/script из фрагмента
+            text_wo_assets = re.sub(r"<style[\s\S]*?</style>", "", text, flags=re.IGNORECASE)
+            text_wo_assets = re.sub(r"<script[\s\S]*?</script>", "", text_wo_assets, flags=re.IGNORECASE)
+            # Достаем содержимое body если есть
+            body_match = re.search(r"<body[^>]*>([\s\S]*?)</body>", text_wo_assets, flags=re.IGNORECASE)
+            if body_match:
+                body = body_match.group(1).strip()
+            else:
+                # Если нет body, пробуем убрать <html>/<head>
+                tmp = re.sub(r"<head[\s\S]*?</head>", "", text_wo_assets, flags=re.IGNORECASE)
+                tmp = re.sub(r"</?html[^>]*>", "", tmp, flags=re.IGNORECASE)
+                body = tmp.strip()
+            return {"body": body, "styles": styles, "scripts": scripts}
         
         for part in parts:
             print(f"🔧 Processing part: {part['type']} - {len(part['code'])} chars")
             if part['type'] == 'html':
-                html_parts.append(part['code'])
+                extracted = extract_from_html(part['code'])
+                if extracted['styles']:
+                    css_parts.append(extracted['styles'])
+                if extracted['scripts']:
+                    js_parts.append(extracted['scripts'])
+                html_body_fragments.append(extracted['body'])
             elif part['type'] == 'css':
                 css_parts.append(part['code'])
             elif part['type'] == 'javascript':
-                js_parts.append(part['code'])
+                # Иногда в ответ попадают мусорные маркеры 'css'/'html' — чистим
+                code = re.sub(r"^\s*(html|css)\s*$", "", part['code'], flags=re.IGNORECASE|re.MULTILINE)
+                js_parts.append(code)
         
-        print(f"🔧 Parts summary: {len(html_parts)} HTML, {len(css_parts)} CSS, {len(js_parts)} JS")
+        print(f"🔧 Parts summary: {len(html_body_fragments)} HTML bodies, {len(css_parts)} CSS, {len(js_parts)} JS")
         
         # Объединяем в единый HTML файл
-        html_content = chr(10).join(html_parts) if html_parts else "<!-- Error generating html code -->"
-        css_content = chr(10).join(css_parts) if css_parts else "/* No CSS generated */"
-        js_content = chr(10).join(js_parts) if js_parts else "// No JavaScript generated"
+        html_content = ("\n".join(f for f in html_body_fragments if f)) or "<!-- Error generating html code -->"
+        css_content = ("\n".join(c for c in css_parts if c)) or "/* No CSS generated */"
+        js_content = ("\n".join(j for j in js_parts if j)) or "// No JavaScript generated"
         
         combined_html = f"""<!DOCTYPE html>
 <html lang="ru">
@@ -445,28 +510,45 @@ async def combine_code_parts(parts: List[Dict], mode: str) -> str:
     <title>Generated Website</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Reset and base styles */
-        * {{
+        /* Modern CSS Reset */
+        *, *::before, *::after {{
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }}
         
+        /* CSS Variables for consistent design */
         :root {{
             --primary-color: #3b82f6;
             --secondary-color: #1e40af;
             --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
             --text-color: #1f2937;
             --text-light: #6b7280;
+            --text-muted: #9ca3af;
             --bg-color: #ffffff;
             --bg-light: #f9fafb;
+            --bg-dark: #111827;
             --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             --border-radius: 8px;
-            --transition: all 0.3s ease;
+            --border-radius-lg: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        
+        /* Base typography */
+        html {{
+            font-size: 16px;
+            scroll-behavior: smooth;
         }}
         
         body {{
@@ -474,16 +556,181 @@ async def combine_code_parts(parts: List[Dict], mode: str) -> str:
             line-height: 1.6;
             color: var(--text-color);
             background-color: var(--bg-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }}
         
-        /* Combined CSS */
+        /* Typography scale */
+        h1, h2, h3, h4, h5, h6 {{
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 0.5em;
+        }}
+        
+        h1 {{ font-size: 2.5rem; }}
+        h2 {{ font-size: 2rem; }}
+        h3 {{ font-size: 1.5rem; }}
+        h4 {{ font-size: 1.25rem; }}
+        h5 {{ font-size: 1.125rem; }}
+        h6 {{ font-size: 1rem; }}
+        
+        p {{
+            margin-bottom: 1rem;
+        }}
+        
+        /* Modern button styles */
+        .btn {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }}
+        
+        .btn-primary {{
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: var(--shadow);
+        }}
+        
+        .btn-primary:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }}
+        
+        .btn-secondary {{
+            background: var(--bg-light);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }}
+        
+        .btn-secondary:hover {{
+            background: var(--border-light);
+            transform: translateY(-1px);
+        }}
+        
+        /* Container and layout */
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }}
+        
+        .section {{
+            padding: 4rem 0;
+        }}
+        
+        /* Card component */
+        .card {{
+            background: var(--bg-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            transition: var(--transition);
+        }}
+        
+        .card:hover {{
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }}
+        
+        /* Grid system */
+        .grid {{
+            display: grid;
+            gap: 2rem;
+        }}
+        
+        .grid-2 {{ grid-template-columns: repeat(2, 1fr); }}
+        .grid-3 {{ grid-template-columns: repeat(3, 1fr); }}
+        .grid-4 {{ grid-template-columns: repeat(4, 1fr); }}
+        
+        /* Flex utilities */
+        .flex {{
+            display: flex;
+        }}
+        
+        .flex-center {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        
+        .flex-between {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }}
+        
+        /* Spacing utilities */
+        .mb-1 {{ margin-bottom: 0.25rem; }}
+        .mb-2 {{ margin-bottom: 0.5rem; }}
+        .mb-3 {{ margin-bottom: 0.75rem; }}
+        .mb-4 {{ margin-bottom: 1rem; }}
+        .mb-6 {{ margin-bottom: 1.5rem; }}
+        .mb-8 {{ margin-bottom: 2rem; }}
+        
+        .mt-1 {{ margin-top: 0.25rem; }}
+        .mt-2 {{ margin-top: 0.5rem; }}
+        .mt-3 {{ margin-top: 0.75rem; }}
+        .mt-4 {{ margin-top: 1rem; }}
+        .mt-6 {{ margin-top: 1.5rem; }}
+        .mt-8 {{ margin-top: 2rem; }}
+        
+        /* Text utilities */
+        .text-center {{ text-align: center; }}
+        .text-left {{ text-align: left; }}
+        .text-right {{ text-align: right; }}
+        
+        .text-primary {{ color: var(--primary-color); }}
+        .text-secondary {{ color: var(--secondary-color); }}
+        .text-muted {{ color: var(--text-muted); }}
+        
+        /* Combined CSS from generated parts */
         {css_content}
         
-        /* Responsive utilities */
+        /* Responsive design */
+        @media (max-width: 1024px) {{
+            .grid-4 {{ grid-template-columns: repeat(2, 1fr); }}
+            .grid-3 {{ grid-template-columns: repeat(2, 1fr); }}
+        }}
+        
         @media (max-width: 768px) {{
             .container {{
                 padding: 0 1rem;
             }}
+            
+            .grid-4, .grid-3, .grid-2 {{
+                grid-template-columns: 1fr;
+            }}
+            
+            h1 {{ font-size: 2rem; }}
+            h2 {{ font-size: 1.75rem; }}
+            h3 {{ font-size: 1.5rem; }}
+            
+            .section {{
+                padding: 2rem 0;
+            }}
+            
+            .card {{
+                padding: 1.5rem;
+            }}
+        }}
+        
+        @media (max-width: 480px) {{
+            .btn {{
+                padding: 0.625rem 1.25rem;
+                font-size: 0.875rem;
+            }}
+            
+            h1 {{ font-size: 1.75rem; }}
+            h2 {{ font-size: 1.5rem; }}
         }}
     </style>
 </head>
@@ -740,14 +987,16 @@ async def ai_editor(
 ):
     """Основной endpoint для AI редактора"""
     try:
-        # Debug: Print the received mode
-        print(f"🔍 Received mode: {request.mode}")
-        
         # Получаем последнее сообщение пользователя
         if not request.messages:
             raise HTTPException(status_code=400, detail="No messages provided")
         
         last_message = request.messages[-1]["content"]
+        print(f"🔍 Received mode: {request.mode}")
+        print(f"🔍 Web search check: {should_search_web(last_message)} for message: '{last_message[:50]}...'")
+        print(f"🔍 Use two-stage: {request.use_two_stage}")
+        print(f"🔍 Conversation ID: {request.conversation_id}")
+        print(f"🔍 Messages count: {len(request.messages)}")
         
         # Определяем conversation_id в начале
         conversation_id = request.conversation_id
@@ -755,7 +1004,6 @@ async def ai_editor(
         # Проверяем, нужен ли веб-поиск
         web_search_results = None
         needs_web_search = should_search_web(last_message)
-        print(f"🔍 Web search check: {needs_web_search} for message: '{last_message[:50]}...'")
         if needs_web_search:
             search_query = extract_search_query(last_message)
             search_results = await search_web(search_query)
@@ -786,9 +1034,11 @@ async def ai_editor(
             # Используем двухэтапную систему LLM с последовательной генерацией
             print("🚀 Using two-stage LLM system with sequential generation")
             print(f"🔍 Debug: use_two_stage={request.use_two_stage}, web_search_results={bool(web_search_results)}")
+            print(f"🚀 Two-stage mode: {request.mode}")
             
             # Инициализируем мысли LLM для этой беседы (используем временный ID если conversation_id None)
             temp_conversation_id = str(conversation_id) if conversation_id else f"temp_{datetime.now().timestamp()}"
+            print(f"🚀 Temporary conversation ID: {temp_conversation_id}")
             current_llm_thoughts[temp_conversation_id] = []
             
             # Отправляем начальную мысль
@@ -815,22 +1065,51 @@ async def ai_editor(
 
 ⚡ Начинаю выполнение плана..."""
             
-            # Этап 2: Генерируем весь сайт сразу с учетом плана
-            print(f"👨‍💻 Generating complete website based on plan...")
+            # Этап 2: Генерируем код для каждого шага плана
+            print(f"👨‍💻 Generating code for each step based on plan (Lite mode)...")
+            print(f"👨‍💻 Plan analysis: {plan.get('analysis', 'No analysis available')}")
+            print(f"👨‍💻 Final structure: {plan.get('final_structure', 'No structure defined')}")
+            
+            # Генерируем код для каждого шага
+            code_parts = []
+            for step in plan.get('steps', []):
+                print(f"👨‍💻 Generating {step['code_type']} code for step: {step['name']}")
+                step_code = await developer_llm(step, request.mode, plan.get('analysis', ''))
+                code_parts.append({
+                    'type': step['code_type'],
+                    'code': step_code,
+                    'step_name': step['name']
+                })
+                print(f"✅ Generated {step['code_type']} code for: {step['name']}")
+            
+            print(f"🔧 Generated {len(code_parts)} code parts")
+            
+            # Объединяем все части в единый HTML файл
+            print(f"🔧 Combining all code parts into single HTML file...")
+            combined_html = await combine_code_parts(code_parts, request.mode)
+            print(f"🔧 Successfully combined code parts")
+            
+            # Используем объединенный HTML как ответ
+            raw_response = combined_html
+            print(f"📄 Combined HTML length: {len(raw_response)} characters")
+            print(f"📄 Combined HTML preview: {raw_response[:200]}...")
+            
+            # Проверяем наличие HTML_START маркера
+            if "HTML_START" in raw_response:
+                print(f"✅ HTML_START marker found in combined HTML")
+            else:
+                print(f"⚠️ HTML_START marker NOT found in combined HTML")
             
             # Отправляем мысли о генерации
-            await send_llm_thought(temp_conversation_id, "👨‍💻", "Генерирую HTML код...")
-            await send_llm_thought(temp_conversation_id, "🎨", "Добавляю CSS стили и анимации...")
-            await send_llm_thought(temp_conversation_id, "⚡", "Создаю интерактивность...")
-            await send_llm_thought(temp_conversation_id, "📱", "Обеспечиваю адаптивность...")
-            
-            # Добавляем мысли о генерации
             generation_thoughts = f"""
 ⚙️ Генерирую полный веб-сайт на основе созданного плана...
 
 🤔 Учитываю требования к современному дизайну и адаптивности...
 
 💡 Создаю единый HTML файл со всеми секциями..."""
+            
+            # Добавляем мысли о генерации
+            generation_thoughts = f"""{generation_thoughts}"""
             
             # Получаем случайный стиль дизайна для разнообразия
             design_style = get_design_style_variation()
@@ -891,38 +1170,17 @@ HTML_START
 ```
 HTML_END"""
 
-            # Генерируем полный сайт
-            full_website_response = openai_client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "Ты - Senior Full-Stack Developer с экспертизой в современном веб-дизайне. Создавай КРАСИВЫЕ, СОВРЕМЕННЫЕ и АДАПТИВНЫЕ сайты. ВСЕГДА используй актуальный год 2025 в копирайте и датах."},
-                    {"role": "user", "content": full_website_prompt}
-                ],
-                temperature=0.8
-            )
-            
-            full_website_code = full_website_response.choices[0].message.content
-            print(f"🔧 Full website generated: {len(full_website_code)} characters")
-            
-            # Отправляем финальные мысли
-            await send_llm_thought(temp_conversation_id, "✨", "Завершаю создание сайта...")
-            await send_llm_thought(temp_conversation_id, "🔍", "Проверяю качество кода...")
-            await send_llm_thought(temp_conversation_id, "🚀", "Подготавливаю финальный результат...")
-            
-            # Создаем список выполненных этапов
-            completed_steps = [f"✅ {step['name']}" for step in plan.get('steps', [])]
-            
             # Финальный результат с мыслями
             ai_response = f"""{plan_text}
 
 {generation_thoughts}
 
 ✅ **ВЫПОЛНЕННЫЕ ЭТАПЫ:**
-{chr(10).join(completed_steps)}
+{chr(10).join([f"✅ {step['name']}" for step in plan.get('steps', [])])}
 
 🎉 **Сайт успешно создан!**
 
-{full_website_code}"""
+{raw_response}"""
         else:
             # Для обычных запросов создания сайтов
             print(f"🔍 Mode check: {request.mode} == 'lite' = {request.mode == 'lite'}")
@@ -1235,6 +1493,7 @@ FORM_COMPONENT_END
             # Делаем запрос к WindexAI с предпочтением более сильной модели, с безопасным фолбэком
             preferred_model = "gpt-4o"  # более качественный ответ
             fallback_model = "gpt-4o-mini"
+            print(f"🤖 Single-stage mode: Trying preferred model {preferred_model}")
             try:
                 response = openai_client.chat.completions.create(
                     model=preferred_model,
@@ -1242,8 +1501,10 @@ FORM_COMPONENT_END
                     max_tokens=8000,
                     temperature=0.8,
                 )
+                print(f"✅ Successfully used preferred model {preferred_model}")
             except Exception as e:
-                print(f"Ошибка с основной моделью {preferred_model}: {e}")
+                print(f"❌ Error with preferred model {preferred_model}: {e}")
+                print(f"🔄 Falling back to model {fallback_model}")
                 # Фолбэк на более дешевую модель
                 response = openai_client.chat.completions.create(
                     model=fallback_model,
@@ -1251,11 +1512,15 @@ FORM_COMPONENT_END
                     max_tokens=8000,
                     temperature=0.8,
                 )
+                print(f"✅ Successfully used fallback model {fallback_model}")
             
             raw_response = response.choices[0].message.content
+            print(f"📄 Single-stage response length: {len(raw_response)} characters")
+            print(f"📄 Single-stage response preview: {raw_response[:200]}...")
             
             # Добавляем мысли для single-stage режима
             if request.mode == "lite" and "HTML_START" in raw_response:
+                print(f"🎨 Lite mode with HTML_START detected - adding thoughts")
                 ai_response = f"""💭 Анализирую запрос: "{last_message[:50]}..."
 
 🤔 Создаю современный веб-сайт с адаптивным дизайном...
@@ -1264,6 +1529,7 @@ FORM_COMPONENT_END
 
 {raw_response}"""
             else:
+                print(f"📝 Using raw response without additional thoughts")
                 ai_response = raw_response
         
         # Сохраняем или обновляем разговор

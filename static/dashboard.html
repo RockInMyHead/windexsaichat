@@ -15,32 +15,32 @@
         <!-- Header -->
         <header class="unified-header">
             <div class="header-container">
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Открыть меню">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
                 <a href="/" class="header-logo">
                     <img src="/static/round_logo-07.svg" alt="WindexsAI" width="32" height="32">
                     <span class="logo-text">WindexsAI</span>
                 </a>
 
-                <nav class="nav-links">
-                    <a href="/" class="nav-link">
-                        <i class="fas fa-home"></i>
-                        Главная
-                    </a>
-                    <a href="/editor.html" class="nav-link">
-                        <i class="fas fa-code"></i>
-                        Редактор
-                    </a>
-                    <a href="/dashboard.html" class="nav-link active">
-                        <i class="fas fa-tachometer-alt"></i>
-                        Кабинет
-                    </a>
+                <nav class="header-nav">
+                    <div class="nav-links">
+                        <a href="/editor" class="nav-link">Создание сайтов</a>
+                        <a href="/dashboard" class="nav-link active">Кабинет</a>
+                    </div>
                 </nav>
 
+                <div class="header-actions">
                     <div class="user-info">
-                    <span class="user-name" id="user-name">Загрузка...</span>
-                    <div class="user-avatar" id="user-avatar">
-                        <i class="fas fa-user"></i>
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <span class="user-name" id="user-name">Загрузка...</span>
                     </div>
-                    <button class="logout-btn" id="logout-btn" title="Выйти">
+                    <button class="logout-btn btn btn-outline" id="logout-btn" title="Выйти">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>

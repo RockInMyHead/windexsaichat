@@ -31,7 +31,7 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    username: str
+    email: str
     password: str
 
 
@@ -54,9 +54,9 @@ def get_user_by_email(db: Session, email: str) -> Optional[DBUser]:
     return db.query(DBUser).filter(DBUser.email == email).first()
 
 
-def authenticate_user(db: Session, username: str, password: str) -> Optional[DBUser]:
-    """Authenticate user with username and password"""
-    user = get_user_by_username(db, username)
+def authenticate_user(db: Session, email: str, password: str) -> Optional[DBUser]:
+    """Authenticate user with email and password"""
+    user = get_user_by_email(db, email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -128,18 +128,18 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         username=db_user.username,
         email=db_user.email,
         created_at=db_user.created_at,
-        role="user",
+        role="user"
     )
 
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Login user and return access token"""
-    user = authenticate_user(db, user_credentials.username, user_credentials.password)
+    user = authenticate_user(db, user_credentials.email, user_credentials.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

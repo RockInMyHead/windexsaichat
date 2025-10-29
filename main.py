@@ -172,11 +172,17 @@ async def serve_public_deployment(deploy_url: str):
         db.close()
 
 
+@app.get("/user-agreement", response_class=HTMLResponse)
+async def serve_user_agreement():
+    """Serve the user agreement page"""
+    return FileResponse("static/user-agreement.html")
+
+
 if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=1107,
+        port=9000,
         timeout_keep_alive=300,  # 5 минут для долгих запросов
         timeout_graceful_shutdown=30
     )

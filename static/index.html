@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WindexsAI - Искусственный интеллект нового поколения</title>
     <link rel="icon" href="/static/favicon.ico">
-    <link rel="stylesheet" href="/static/style.css?v=20241225-16">
+    <link rel="stylesheet" href="/static/style.css?v=20251027-01">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -26,8 +26,8 @@
                     <h2 class="text-center mb-4">Вход в систему</h2>
                     <form id="login-form-element">
                         <div class="form-group">
-                            <label for="login-username" class="form-label">Имя пользователя</label>
-                            <input type="text" id="login-username" class="form-input" required>
+                            <label for="login-email" class="form-label">Email</label>
+                            <input type="email" id="login-email" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label for="login-password" class="form-label">Пароль</label>
@@ -332,11 +332,6 @@
                                     <line x1="8" y1="22" x2="16" y2="22"></line>
                                 </svg>
                             </button>
-                            <button id="cloud-btn" class="btn btn-outline" onclick="openCloudManager()" title="Облако">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-                                </svg>
-                            </button>
                             <button id="send-btn" class="btn btn-primary" disabled>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -458,7 +453,48 @@
         </div>
     </div>
 
-    <script src="/static/script.js?v=20241225-24"></script>
+    <!-- Agreement Modal -->
+    <div id="agreement-modal" class="modal hidden">
+      <div class="modal-overlay" id="agreement-overlay"></div>
+      <div class="modal-content">
+        <button class="modal-close" id="agreement-close">&times;</button>
+        <h2>Пользовательское соглашение</h2>
+        <div class="modal-body">
+          <p>1. Общие положения</p>
+          <p>Настоящее Пользовательское соглашение (далее – Соглашение) является договором между Пользователем и компанией-владельцем сервиса WIndexsAI (далее – Сервис). Используя Сервис, вы соглашаетесь с условиями этого Соглашения.</p>
+          <p>2. Определения</p>
+          <p>«Пользователь» – физическое или юридическое лицо, использующее Сервис. «Контент» – информация, размещаемая или генерируемая через Сервис.</p>
+          <p>3. Регистрация и аккаунт</p>
+          <p>Для использования функционала Сервиса необходимо зарегистрироваться и создать аккаунт. Вы несете ответственность за сохранность логина и пароля и обязуетесь не передавать их третьим лицам.</p>
+          <p>4. Права и обязанности Пользователя</p>
+          <ul>
+            <li>Пользователь вправе использовать Сервис для личных и коммерческих целей согласно функционалу.</li>
+            <li>Пользователь обязуется использовать Сервис добросовестно и не нарушать действующее законодательство.</li>
+          </ul>
+          <p>5. Запрещенные действия</p>
+          <ul>
+            <li>Не допускается распространение вирусов, спама, фишинга и других вредоносных материалов.</li>
+            <li>Запрещается нарушать права третьих лиц, включая авторские права и право на конфиденциальность.</li>
+          </ul>
+          <p>6. Интеллектуальная собственность</p>
+          <p>Все права на программный код, дизайн и контент, предоставляемый Сервисом, принадлежат его правообладателям. Пользователь получает лишь неисключительное право использования.</p>
+          <p>7. Обработка персональных данных</p>
+          <p>Сбор и обработка персональных данных осуществляется в соответствии с Политикой конфиденциальности, доступной на сайте.</p>
+          <p>8. Ответственность сторон</p>
+          <p>Сервис не несет ответственности за непрерывность работы и возможные технические сбои. Пользователь несет ответственность за сохранение данных и конфиденциальность.</p>
+          <p>9. Изменение условий</p>
+          <p>Сервис оставляет за собой право изменять условия Соглашения. Об изменениях Пользователь будет уведомлен на сайте или по электронной почте.</p>
+          <p>10. Прекращение действия</p>
+          <p>Соглашение действует до момента удаления аккаунта Пользователя или прекращения работы Сервиса.</p>
+          <p>11. Применимое право и юрисдикция</p>
+          <p>Настоящее Соглашение регулируется законодательством юрисдикции компании-владельца Сервиса. Все споры разрешаются в суде по месту нахождения правообладателя.</p>
+          <p>12. Контактная информация</p>
+          <p>По вопросам Соглашения обращайтесь: support@windexsai.com.</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/script.js?v=20251027-08"></script>
     <script src="/static/cloud-api.js"></script>
 
     <!-- Mermaid.js для диаграмм -->

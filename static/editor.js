@@ -9,6 +9,7 @@ class AIEditor {
         this.thinkingStep = 0;
         this.thinkingInterval = null;
         this.thinkingPollingInterval = null;
+        this.hasGeneratedContent = false;
         console.log('🎯 Initial mode set to:', this.currentMode);
         console.log('🎯 Two-stage LLM system enabled:', this.useTwoStage);
         this.initializeElements();
@@ -101,10 +102,17 @@ class AIEditor {
         if (this.currentConversationId && this.previewIframe) {
             console.log('🔄 Restoring project content for conversation:', this.currentConversationId);
             
+            // Проверяем, есть ли уже сгенерированный HTML
+            if (this.hasGeneratedContent && this.lastGeneratedHtml) {
+                console.log('✅ Already has generated content, skipping restore');
+                return;
+            }
+            
             // Получаем последнее сообщение из истории беседы
             if (this.conversationHistory.length > 0) {
                 const lastMessage = this.conversationHistory[this.conversationHistory.length - 1];
                 if (lastMessage.role === 'assistant' && lastMessage.content) {
+                    console.log('🔄 Restoring from conversation history...');
                     // Обновляем превью с последним сгенерированным контентом
                     this.updatePreview(lastMessage.content);
                 }
@@ -674,6 +682,9 @@ class AIEditor {
             // Сохраняем HTML для деплоя
             this.lastGeneratedHtml = htmlContent;
             
+            // Устанавливаем флаг, что контент был сгенерирован
+            this.hasGeneratedContent = true;
+            
             this.updateStatus('HTML сайт создан');
         } else {
             console.log('❌ HTML не найден в ответе');
@@ -686,6 +697,7 @@ class AIEditor {
                 var htmlContent = altMatch[1].trim();
                 this.previewIframe.srcdoc = htmlContent;
                 this.lastGeneratedHtml = htmlContent;
+                this.hasGeneratedContent = true;
                 this.updateStatus('HTML сайт создан');
             } else {
                 console.log('❌ Альтернативный паттерн тоже не сработал');
@@ -735,8 +747,8 @@ class AIEditor {
             var controller = new AbortController();
             var timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут
             
-            console.log('🚀 Sending request with mode:', this.currentMode);
-            
+            // Replace fetch handling with streaming reader
+            console.log('🚀 Sending streaming request with mode:', this.currentMode);
             var response = await fetch('/api/ai-editor', {
                 method: 'POST',
                 headers: {
@@ -751,7 +763,6 @@ class AIEditor {
                     use_two_stage: this.useTwoStage
                 }),
                 signal: controller.signal,
-                // Увеличиваем таймаут keep-alive
                 keepalive: true
             });
 
@@ -761,12 +772,28 @@ class AIEditor {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            var data = await response.json();
-
-            if (data.error) {
-                throw new Error(data.error);
+            // Read streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let result = '';
+            console.log('🟢 Начало чтения потоковых данных');
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                console.log('🔹 Chunk from server:', chunk);
+                result += chunk;
             }
-
+            console.log('✅ Поток завершен, итоговый ответ:', result);
+            // Попытаться распарсить результат как JSON, чтобы получить поля content и conversation_id
+            let data;
+            try {
+                data = JSON.parse(result);
+                console.log('🔍 Parsed JSON data:', data);
+            } catch (e) {
+                console.warn('⚠️ Не удалось распарсить JSON, используем текст как content');
+                data = { content: result, conversation_id: null };
+            }
             var content = data.content || 'Ответ получен без содержания';
 
             // Сохраняем conversation_id
