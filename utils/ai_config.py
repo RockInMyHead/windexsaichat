@@ -31,20 +31,23 @@ MODEL_CONFIGS = {
     "gpt-4o-mini": {
         "name": "WIndexAI Lite",
         "description": "Быстрая и эффективная модель для повседневных задач",
-        "max_tokens": 4000,  # Увеличено для более развернутых ответов
+        "max_tokens": 16000,  # Увеличено для длинных ответов (минимум 1000 слов)
         "temperature": 0.7,
-        "top_p": 0.95,  # Увеличено для лучшего качества
+        "top_p": 0.95,
         "focus": "развернутые и подробные ответы с примерами"
     },
     "gpt-4o": {
-        "name": "WIndexAI Pro", 
+        "name": "WIndexAI Pro",
         "description": "Продвинутая модель с расширенными возможностями",
-        "max_tokens": 8000,  # Значительно увеличено для глубокого анализа
-        "temperature": 0.7,  # Оптимально для аналитического стиля
-        "top_p": 0.95,  # Максимальное качество
+        "max_tokens": 20000,  # Увеличено для очень длинных ответов (1500-2000 слов)
+        "temperature": 0.7,
+        "top_p": 0.95,
         "focus": "подробные и информативные ответы с примерами"
     }
 }
+
+# Единая модель для генерации ответов
+DEFAULT_MODEL = "gpt-4o-mini"
 
 def get_model_config(model_name: str) -> dict:
     """Получить конфигурацию модели"""
@@ -59,10 +62,14 @@ def get_enhanced_user_prompt(user_question: str) -> str:
     return user_question
 
 def get_generation_params(model: str) -> dict:
-    """Получить параметры генерации для модели"""
+    """Получить параметры генерации для модели.
+
+    Всегда используем модель DEFAULT_MODEL для LLM (глобальная замена на gpt5-nano),
+    сохраняя прочие параметры в зависимости от выбранного профиля UI.
+    """
     config = get_model_config(model)
     return {
-        "model": model,
+        "model": DEFAULT_MODEL,
         "max_tokens": config["max_tokens"],
         "temperature": config["temperature"],
         "top_p": config["top_p"]

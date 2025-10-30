@@ -205,7 +205,7 @@ async def upload_document(
         try:
             print(f"Sending {len(messages)} messages to OpenAI API")
             print(f"System message length: {len(messages[0]['content'])} characters")
-            ai_response = generate_response(messages, model)
+            ai_response = await generate_response(messages, model)
         except Exception as e:
             print(f"OpenAI API error: {e}")
             ai_response = f"Извините, произошла ошибка при обращении к OpenAI API. Проверьте настройки API ключа. Ошибка: {str(e)}"
