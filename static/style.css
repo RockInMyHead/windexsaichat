@@ -1623,6 +1623,8 @@ a:hover {
   overflow-x: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
 }
 
 /* Утилиты */
@@ -1790,6 +1792,86 @@ a:hover {
   word-wrap: break-word;
 }
 
+/* Индикатор поиска в интернете */
+.web-search-indicator {
+  display: flex;
+  margin: 1rem 0;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.web-search-indicator .chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.search-bubble {
+  background: var(--gray-100);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  max-width: 70%;
+  border: 1px solid var(--gray-200);
+  position: relative;
+}
+
+.search-bubble::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 15px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid var(--gray-200);
+}
+
+.search-bubble::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 15px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 7px solid var(--gray-100);
+}
+
+.search-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-icon {
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+.search-text span {
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* Стили для двухэтапного процесса */
 .chat-text strong {
   font-weight: 600;
@@ -1941,13 +2023,14 @@ a:hover {
 }
 
 .message-content {
-  max-width: 70%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Стили для форматирования текста в сообщениях */
@@ -2516,14 +2599,15 @@ a:hover {
 .message-bubble {
   padding: 0.75rem 1rem;
   border-radius: var(--radius-lg);
-    word-wrap: break-word;
+  word-wrap: break-word;
   line-height: 1.5;
-    position: relative;
-  max-width: 100%;
+  position: relative;
+  max-width: min(80vw, 800px);
   overflow: hidden;
   box-sizing: border-box;
   overflow-wrap: break-word;
   word-break: break-word;
+  hyphens: auto;
 }
 
 .message.user .message-bubble {

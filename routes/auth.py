@@ -22,6 +22,8 @@ class User(BaseModel):
     email: str
     created_at: datetime
     role: str = "user"  # Default role
+    subscription_plan: str = "free"
+    subscription_expires_at: Optional[datetime] = None
 
 
 class UserCreate(BaseModel):
@@ -87,12 +89,25 @@ async def get_current_user(
     if db_user is None:
         raise credentials_exception
 
+    # Проверяем и обновляем статус подписки, если она истекла
+    plan = db_user.subscription_plan or "free"
+    expires_at = db_user.subscription_expires_at
+
+    if expires_at and expires_at < datetime.now():
+        # Подписка истекла, обновляем статус
+        plan = "free"
+        db_user.subscription_plan = "free"
+        db_user.subscription_expires_at = None
+        db.commit()
+
     return User(
         id=db_user.id,
         username=db_user.username,
         email=db_user.email,
         created_at=db_user.created_at,
         role="user",  # Default role for now
+        subscription_plan=plan,
+        subscription_expires_at=expires_at,
     )
 
 
@@ -228,7 +243,7 @@ async def activate_subscription(
         )
 
 
-@router.get("/api/auth/subscription-status")
+@router.get("/subscription-status")
 async def get_subscription_status(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):

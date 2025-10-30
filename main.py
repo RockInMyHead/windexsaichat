@@ -10,7 +10,7 @@ from pydantic import BaseModel
 # Import database
 from database import create_tables
 # Import routers
-from routes import (admin, ai_editor, auth, chat, conversations, dashboard,
+from routes import (admin, auth, chat, conversations, dashboard,
                     deploy, documents, profile, voice)
 from routes.cloud_mock import router as cloud_mock_router
 
@@ -36,7 +36,6 @@ app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(admin.router)
-app.include_router(ai_editor.router)
 app.include_router(deploy.router)
 app.include_router(voice.router)
 app.include_router(documents.router)
