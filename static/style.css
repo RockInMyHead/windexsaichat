@@ -5029,16 +5029,11 @@ a:hover {
   height: 20px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .mobile-menu-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .mobile-menu-btn {
     right: 0.75rem;
     padding: 0.4rem;
   }
