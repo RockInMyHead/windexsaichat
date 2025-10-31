@@ -308,7 +308,6 @@ class WindexAI {
         this.showSelectedModel();
         this.hideWelcomeMessage();
 
-        showNotification(`Выбрана модель: ${modelInfo.name}`, 'success');
         this.messageInput.focus();
     }
 
@@ -328,7 +327,6 @@ class WindexAI {
         this.showSelectedModel();
         this.hideWelcomeMessage();
 
-        showNotification(`Выбран специалист: ${specialistInfo.name}`, 'success');
         this.messageInput.focus();
     }
 
