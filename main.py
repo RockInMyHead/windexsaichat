@@ -10,7 +10,7 @@ from pydantic import BaseModel
 # Import database
 from database import create_tables
 # Import routers
-from routes import (admin, auth, chat, conversations, dashboard,
+from routes import (admin, auth, chat, conversations,
                     deploy, documents, voice)
 from routes.cloud_mock import router as cloud_mock_router
 
@@ -39,7 +39,6 @@ app.include_router(admin.router)
 app.include_router(deploy.router)
 app.include_router(voice.router)
 app.include_router(documents.router)
-app.include_router(dashboard.router)
 app.include_router(cloud_mock_router)
 
 
@@ -109,10 +108,6 @@ async def read_minimal_test():
     return FileResponse("static/minimal-test.html")
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def read_dashboard():
-    """Serve the dashboard HTML page"""
-    return FileResponse("static/dashboard.html")
 
 
 @app.get("/style.css")
