@@ -7269,6 +7269,17 @@ a:hover {
 #tools-btn {
   position: relative;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tools-text {
+  display: inline;
+}
+
+.tools-icon {
+  display: none;
 }
 
 #tools-btn:hover {
@@ -7279,6 +7290,25 @@ a:hover {
 
 #tools-btn:hover svg {
   color: var(--white);
+}
+
+/* Мобильная версия - показываем только иконку */
+@media (max-width: 768px) {
+  .tools-text {
+    display: none;
+  }
+
+  .tools-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #tools-btn {
+    min-width: 40px;
+    padding: 0.5rem;
+    gap: 0;
+  }
 }
 /* Tools dropdown completed */
 /* Force cache refresh 1760126313 */
