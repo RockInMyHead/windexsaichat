@@ -7646,6 +7646,189 @@ a:hover {
   overflow: visible !important;
 }
 
+/* Дополнительные улучшения мобильной адаптивности для страницы приветствия */
+
+/* Улучшения для AI Specialists Gallery на мобильных */
+@media (max-width: 768px) {
+  .ai-specialists-gallery h4,
+  .ai-specialists-gallery > p {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .specialists-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 2.5rem;
+  }
+
+  .specialists-grid {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+  }
+
+  .specialist-card {
+    scroll-snap-align: start;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+  }
+
+  .specialist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .specialist-icon {
+    text-align: center;
+  }
+
+  .specialist-card h3,
+  .specialist-card p {
+    text-align: center;
+  }
+
+  .specialist-skills {
+    justify-content: center;
+  }
+
+  .skill-tag {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+  }
+
+  /* Улучшенные кнопки прокрутки для touch */
+  .scroll-btn {
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    box-shadow: var(--shadow-md);
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 10;
+  }
+
+  .scroll-btn:hover {
+    background: var(--primary-green-dark);
+    transform: scale(1.05);
+  }
+
+  .scroll-btn:active {
+    transform: scale(0.95);
+  }
+
+  .scroll-btn.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
+/* Очень маленькие экраны (480px и меньше) - дополнительные улучшения */
+@media (max-width: 480px) {
+  .welcome-message {
+    padding: 1rem 0.75rem;
+    max-height: calc(100vh - 140px);
+  }
+
+  .specialists-container {
+    padding: 0 2rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 220px;
+    min-width: 220px;
+    padding: 1rem;
+  }
+
+  .specialist-icon {
+    font-size: 1.75rem;
+  }
+
+  .specialist-card h3 {
+    font-size: 1rem;
+  }
+
+  .specialist-card p {
+    font-size: 0.8rem;
+  }
+
+  .scroll-btn {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  .scroll-btn i {
+    font-size: 0.9rem;
+  }
+}
+
+/* Landscape ориентация на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+  .welcome-message {
+    max-height: calc(100vh - 120px);
+    padding: 1rem 1.5rem;
+  }
+
+  .model-cards {
+    flex-direction: row;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+  }
+
+  .model-card {
+    flex: 0 0 320px;
+    min-width: 320px;
+    margin-bottom: 0;
+  }
+
+  .specialists-container {
+    padding: 0 1.5rem;
+  }
+
+  .specialists-grid {
+    gap: 0.75rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 240px;
+    min-width: 240px;
+  }
+}
+
+/* Улучшения для touch-интерфейса */
+@media (max-width: 768px) {
+  .model-card,
+  .specialist-card {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .model-card:active,
+  .specialist-card:active {
+    transform: scale(0.98);
+  }
+
+  .welcome-message {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .specialists-grid {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Modal styles */
 .modal {
   position: fixed;
