@@ -4989,6 +4989,10 @@ a:hover {
 /* Мобильная кнопка меню */
 .mobile-menu-btn {
   display: none;
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
   background: var(--primary-green);
   color: white;
   border: none;
@@ -5002,16 +5006,17 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1001;
 }
 
 .mobile-menu-btn:hover {
   background: var(--primary-green-dark);
-  transform: scale(1.05);
+  transform: translateY(-50%) scale(1.05);
   box-shadow: var(--shadow-md);
 }
 
 .mobile-menu-btn:active {
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .mobile-menu-btn svg {
@@ -5029,6 +5034,7 @@ a:hover {
 
 @media (max-width: 480px) {
   .mobile-menu-btn {
+    right: 0.75rem;
     padding: 0.4rem;
   }
 
