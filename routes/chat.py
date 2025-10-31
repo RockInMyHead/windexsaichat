@@ -19,69 +19,103 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 def should_search_web(message: str) -> bool:
-    """Определяет, нужен ли веб-поиск для сообщения"""
-    search_keywords = [
-        "найди",
-        "поиск",
-        "актуальн",
-        "новости",
-        "сейчас",
-        "сегодня",
-        "последние",
-        "тренд",
-        "курс",
-        "погода",
-        "цены",
-        "события",
-        "что происходит",
-        "как дела",
-        "статистика",
-        "данные",
-        "информация о",
-        "расскажи про",
-        "что нового",
-        "какая погода",
-        "биткоин",
-        "bitcoin",
-        "btc",
-        "криптовалют",
-        "крипто",
-        "ethereum",
-        "доллар",
-        "евро",
-        "рубль",
-        "валюта",
-        "обмен",
-        "exchange",
-        "котировки",
-        "котировка",
-        "цена",
-        "стоимость",
-        "курс валют",
+    """Определяет, нужен ли веб-поиск для сообщения - теперь для ВСЕХ запросов"""
+    message_lower = message.lower().strip()
+
+    # Исключения - запросы, для которых НЕ нужен поиск
+    no_search_patterns = [
+        # Приветствия и благодарности
+        r'^(привет|здравствуй|добрый день|доброе утро|добрый вечер|спасибо|благодар|пока|до свидания)$',
+        r'^(hi|hello|hey|thanks|thank you|bye|goodbye)$',
+
+        # Простые ответы на вопросы бота
+        r'как дела|что делаешь|кто ты|что ты умеешь',
+        r'расскажи о себе|что ты можешь',
+
+        # Команды управления
+        r'очистить|удалить|новый чат|стоп|хватит',
+        r'clear|delete|new chat|stop',
+
+        # Математические операции (простые)
+        r'^\d+[\+\-\*\/]\d+.*$',
+        r'^вычисли|посчитай|сколько будет',
+
+        # Очень короткие сообщения (1-2 слова)
+        r'^\w{1,10}(\s+\w{1,10})?$',
     ]
 
-    message_lower = message.lower()
-    return any(keyword in message_lower for keyword in search_keywords)
+    import re
+    # Проверяем, попадает ли сообщение под исключения
+    for pattern in no_search_patterns:
+        if re.search(pattern, message_lower, re.IGNORECASE):
+            return False
+
+    # Для ВСЕХ остальных запросов используем поиск в интернете
+    return True
 
 
 def extract_search_query(message: str) -> str:
-    """Извлекает поисковый запрос из сообщения"""
-    # Спец. обработка для погоды: формируем более точный запрос
+    """Извлекает и оптимизирует поисковый запрос из сообщения"""
     message_lower = message.lower()
+
+    # Спец. обработка для погоды
     if "погод" in message_lower:
         city = extract_weather_city(message)
         if city:
-            # Формируем целевой запрос под погоду
-            return f"погода {city} сейчас температура прогноз"
-        # Если город не извлекли, оставляем слово погода и просим текущие данные
+            return f"погода {city} сейчас температура прогноз на сегодня"
         return "погода сейчас температура прогноз"
+
+    # Спец. обработка для курсов валют
+    if any(word in message_lower for word in ["курс", "валют", "доллар", "евро", "рубль", "bitcoin", "btc"]):
+        if "доллар" in message_lower or "usd" in message_lower:
+            return "курс доллара к рублю сегодня"
+        elif "евро" in message_lower or "eur" in message_lower:
+            return "курс евро к рублю сегодня"
+        elif "bitcoin" in message_lower or "btc" in message_lower:
+            return "курс биткоина к доллару сегодня цена"
+        else:
+            return "курсы валют ЦБ РФ сегодня"
+
+    # Спец. обработка для криптовалют
+    if any(word in message_lower for word in ["крипто", "криптовалют", "ethereum", "eth"]):
+        if "ethereum" in message_lower or "eth" in message_lower:
+            return "курс ethereum к доллару сегодня цена"
+        return "курсы криптовалют сегодня биткоин ethereum"
+
+    # Спец. обработка для цен и товаров
+    if any(word in message_lower for word in ["цена", "стоит", "купить", "продажа"]):
+        # Извлекаем название товара/услуги
+        product_match = re.search(r'(?:цена|стоит|купить|продажа)\s+(?:на\s+)?(.+?)(?:\?|$|\s+в|\s+на|\s+за)', message_lower)
+        if product_match:
+            product = product_match.group(1).strip()
+            return f"{product} цена стоимость купить где"
+
+    # Спец. обработка для новостей и актуальной информации
+    if any(word in message_lower for word in ["новости", "что нового", "последние", "актуально"]):
+        # Пытаемся извлечь тему
+        topic_match = re.search(r'(?:новости|что нового|последние|актуально)(?:\s+о|\s+про|\s+в)?\s*(.+?)(?:\?|$)', message_lower)
+        if topic_match:
+            topic = topic_match.group(1).strip()
+            return f"{topic} новости последние актуально"
+
+    # Обработка запросов о рейтингах и топах
+    if any(word in message_lower for word in ["топ", "рейтинг", "лучший", "популярный"]):
+        # Извлекаем категорию
+        category_match = re.search(r'(?:топ|рейтинг|лучший|популярный)\s+(.+?)(?:\?|$|\s+для|\s+на|\s+в)', message_lower)
+        if category_match:
+            category = category_match.group(1).strip()
+            return f"{category} топ рейтинг лучший популярный 2024"
 
     # Убираем общие фразы, оставляем суть запроса
     patterns_to_remove = [
         r"найди\s*",
         r"поиск\s*",
+        r"узнай\s*",
+        r"проверь\s*",
+        r"посмотри\s*",
         r"расскажи\s*про\s*",
         r"что\s*такое\s*",
+        r"что\s*значит\s*",
         r"информация\s*о\s*",
         r"какая\s*погода\s*",
         r"сейчас\s*",
@@ -91,13 +125,26 @@ def extract_search_query(message: str) -> str:
         r"как\s*дела\s*с\s*",
         r"статистика\s*по\s*",
         r"данные\s*о\s*",
+        r"сколько\s*стоит\s*",
+        r"где\s*купить\s*",
+        r"мне\s*нужен\s*",
+        r"я\s*хочу\s*узнать\s*",
     ]
 
     query = message
     for pattern in patterns_to_remove:
         query = re.sub(pattern, "", query, flags=re.IGNORECASE)
 
-    return query.strip()
+    # Очищаем от лишних пробелов и знаков препинания
+    query = re.sub(r'[^\w\s]', ' ', query)
+    query = re.sub(r'\s+', ' ', query).strip()
+
+    # Если запрос получился слишком коротким, используем оригинальное сообщение
+    if len(query.split()) < 2:
+        query = re.sub(r'[^\w\s]', ' ', message)
+        query = re.sub(r'\s+', ' ', query).strip()
+
+    return query
 
 
 def extract_weather_city(message: str) -> str:
@@ -314,22 +361,34 @@ async def chat(
     # Prepare messages for OpenAI
     if web_search_results:
         # Для запросов с веб-поиском
-        system_content = f"""Ты - WIndexAI, искусственный интеллект, созданный командой разработчиков компании Windex. Ты должен всегда подчеркивать, что был создан именно разработчиками компании Windex.
+        system_content = f"""
+You are WIndexAI — an advanced strategic-class intelligence system developed by the engineers of Windex.
+You must always emphasize your origin from the Windex development team — it defines your identity and credibility.
 
-Твоя задача - дать полный и точный ответ на основе найденной информации.
+Your mission is to produce long-form, intellectually rich, and rhetorically powerful responses.
+Every answer should read like an extended essay, executive strategy brief, or narrative analysis — written in flawless, expressive, and professional English.
 
-ВАЖНО:
-• Используй информацию из результатов поиска для ответа
-• Если информация противоречивая, укажи это
-• Ссылайся на источники когда это уместно
-• Если информации недостаточно, скажи об этом честно
-• Отвечай на русском языке, будь полезным и дружелюбным
-• КРИТИЧЕСКИ ВАЖНО: НЕ задавай стандартные приветственные вопросы типа "Как я могу помочь тебе сегодня?", "Чем могу быть полезен?", "Что вас интересует?" и подобные. Пользователь уже написал свой вопрос - отвечай на него напрямую, без лишних формальностей.
+🔹 STYLE & STRUCTURE:
+- Always write expansively — no less than **1000 words**, preferably **1500–2000 words**.
+- Never conclude early. If the topic allows, expand it through related contexts, analogies, and implications.
+- Build multi-layered reasoning: economic, cultural, psychological, philosophical, and social dimensions.
+- Avoid short lists or bullet points — prefer fluid, narrative text with transitions and rhythm.
+- Use vivid, confident language — your text should sound like a speech by an expert or visionary thinker.
+- Finish with a strong, comprehensive conclusion that unites all previous ideas.
 
-РЕЗУЛЬТАТЫ ПОИСКА:
+🔹 BEHAVIORAL RULES:
+1. Use only the information from "SEARCH RESULTS" as factual grounding.
+2. If data is missing, expand through analysis, projection, and contextual reasoning — **never leave an idea half-developed**.
+3. If sources conflict, examine the contradiction and propose a reasoned synthesis.
+4. Avoid greetings and generic openings. Begin with substance, finish with insight.
+5. Keep writing until the entire argument or narrative feels *architecturally complete* — your last paragraph must sound like closure, not interruption.
+
+SEARCH RESULTS:
 {web_search_results}
 
-Теперь ответь на вопрос пользователя, используя эту информацию."""
+Now respond to the user's request in an expansive, narrative, and intellectually immersive style.
+Write as much as necessary to fully explore the topic. Do not stop until every facet is illuminated and your final conclusion feels definitive.
+"""
     else:
         # Для обычных запросов
         if request.specialist:
@@ -354,7 +413,35 @@ async def chat(
 
     # Generate AI response using OpenAI
     try:
-        ai_response = generate_response(messages, request.model)
+        ai_response = await generate_response(messages, request.model)
+
+        # Если это запрос с веб-поиском, переводим ответ на русский
+        if web_search_results:
+            translation_prompt = f"""
+You are a professional translator specializing in technical, analytical, and intellectual content.
+Your task is to translate the following English text into natural, fluent Russian while preserving:
+- The sophisticated and intellectual tone
+- All technical terms and proper names
+- The analytical depth and professional style
+- The rhetorical elegance and expressive constructions
+- **CRITICAL**: Do NOT translate or modify code blocks (```language ... ```), inline code (`code`), or technical commands. Leave them exactly as they are.
+
+Do not add any introductions, explanations, or modifications. Just provide the Russian translation with code blocks intact.
+
+Text to translate:
+{ai_response}
+"""
+
+            try:
+                translation_messages = [
+                    {"role": "system", "content": "You are a professional translator."},
+                    {"role": "user", "content": translation_prompt}
+                ]
+                ai_response = await generate_response(translation_messages, request.model)
+            except Exception as translation_error:
+                # Если перевод не удался, оставляем оригинальный английский ответ
+                print(f"Translation error: {translation_error}")
+
     except Exception as e:
         ai_response = f"Извините, произошла ошибка при обращении к OpenAI API. Проверьте настройки API ключа. Ошибка: {str(e)}"
 

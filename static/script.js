@@ -443,6 +443,11 @@ class WindexAI {
         // Show typing indicator
         this.showTypingIndicator();
 
+        // Check if web search will be performed and show search indicator
+        if (this.shouldShowWebSearchIndicator(message)) {
+            this.showWebSearchIndicator();
+        }
+
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -468,6 +473,7 @@ class WindexAI {
 
             // Hide typing indicator and add AI response
             this.hideTypingIndicator();
+            this.hideWebSearchIndicator();
             this.addMessageToChat('assistant', data.response);
 
             // Update conversations list
@@ -476,6 +482,7 @@ class WindexAI {
         } catch (error) {
             console.error('Error:', error);
             this.hideTypingIndicator();
+            this.hideWebSearchIndicator();
             this.addMessageToChat('assistant', 'Извините, произошла ошибка. Попробуйте еще раз.');
         } finally {
             this.isLoading = false;
@@ -483,9 +490,102 @@ class WindexAI {
         }
     }
 
+    // Проверка, нужно ли показывать индикатор поиска в интернете
+    shouldShowWebSearchIndicator(message) {
+        const message_lower = message.toLowerCase().trim();
+
+        // Исключения - запросы, для которых НЕ нужен поиск
+        const no_search_patterns = [
+            // Приветствия и благодарности
+            /^(привет|здравствуй|добрый день|доброе утро|добрый вечер|спасибо|благодар|пока|до свидания)$/,
+            /^(hi|hello|hey|thanks|thank you|bye|goodbye)$/,
+
+            // Простые ответы на вопросы бота
+            /как дела|что делаешь|кто ты|что ты умеешь/,
+            /расскажи о себе|что ты можешь/,
+
+            // Команды управления
+            /очистить|удалить|новый чат|стоп|хватит/,
+            /clear|delete|new chat|stop/,
+
+            // Математические операции (простые)
+            /^\d+[\+\-\*\/]\d+.*$/,
+            /^вычисли|посчитай|сколько будет/,
+
+            // Очень короткие сообщения (1-2 слова)
+            /^\w{1,10}(\s+\w{1,10})?$/
+        ];
+
+        // Проверяем, попадает ли сообщение под исключения
+        for (const pattern of no_search_patterns) {
+            if (pattern.test(message_lower)) {
+                return false;
+            }
+        }
+
+        // Для ВСЕХ остальных запросов показываем индикатор поиска
+        return true;
+    }
+
+    // Показать индикатор поиска в интернете
+    showWebSearchIndicator() {
+        // Remove existing search indicator if any
+        this.hideWebSearchIndicator();
+
+        // Create new search indicator
+        const searchDiv = document.createElement('div');
+        searchDiv.id = 'web-search-indicator';
+        searchDiv.className = 'web-search-indicator';
+
+        searchDiv.innerHTML = `
+            <div class="chat-avatar"></div>
+            <div class="search-bubble">
+                <div class="search-content">
+                    <div class="search-icon">🔍</div>
+                    <div class="search-text">
+                        <span>Ищу актуальную информацию в интернете...</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add to chat messages
+        this.chatMessages.appendChild(searchDiv);
+
+        // Scroll to bottom
+        setTimeout(() => this.scrollToBottom(), 50);
+    }
+
+    // Скрыть индикатор поиска в интернете
+    hideWebSearchIndicator() {
+        const searchIndicator = document.getElementById('web-search-indicator');
+        if (searchIndicator) {
+            searchIndicator.remove();
+        }
+    }
+
     // Функция для конвертации Markdown в HTML
     convertMarkdownToHtml(text) {
         if (!text) return '';
+
+        // Специальная обработка математических выражений - сохраняем их в HTML комментариях
+        // Блочные математические выражения $$...$$ или \[...\]
+        const blockMathRegex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g;
+        text = text.replace(blockMathRegex, (match) => {
+            // Сохраняем в HTML комментариях, которые не будут обрабатываться markdown
+            return `<!-- MATH_BLOCK_START -->${match}<!-- MATH_BLOCK_END -->`;
+        });
+
+        // Inline математические выражения - только если содержат LaTeX команды или операторы
+        const inlineMathRegex = /(\$[^\$\n]*\$|\\\(.*\)\))/g;
+        text = text.replace(inlineMathRegex, (match) => {
+            // Проверяем, что это действительно математическое выражение
+            const hasMathSymbols = /\\[a-zA-Z]+|[-+=×÷∑∫√^_]/.test(match);
+            if (match.length > 2 && hasMathSymbols) {
+                return `<!-- MATH_INLINE_START -->${match}<!-- MATH_INLINE_END -->`;
+            }
+            return match;
+        });
 
         // Экранируем HTML теги
         text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -663,6 +763,10 @@ class WindexAI {
         text = text.replace(/<p><\/p>/g, '');
         text = text.replace(/<p>\s*<\/p>/g, '');
 
+        // Восстанавливаем математические выражения из HTML комментариев
+        text = text.replace(/<!-- MATH_BLOCK_START -->(.*?)<!-- MATH_BLOCK_END -->/g, '$1');
+        text = text.replace(/<!-- MATH_INLINE_START -->(.*?)<!-- MATH_INLINE_END -->/g, '$1');
+
         return text;
     }
 
@@ -729,6 +833,9 @@ class WindexAI {
 
         this.chatMessages.appendChild(messageDiv);
         setTimeout(() => this.scrollToBottom(), 50);
+
+        // Рендерим математические выражения в новом сообщении
+        setTimeout(() => renderMathInChat(), 100);
     }
 
 
@@ -951,6 +1058,9 @@ class WindexAI {
             conversation.messages.forEach(message => {
                 this.addMessageToChat(message.role, message.content);
             });
+
+            // Рендерим математические выражения во всех загруженных сообщениях
+            setTimeout(() => renderMathInChat(), 200);
         } else {
             this.hideChatMessages();
             this.showWelcomeMessage();
@@ -2200,9 +2310,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Мобильное меню
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    let mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    let sidebar = document.getElementById('sidebar');
+    let sidebarOverlay = document.getElementById('sidebar-overlay');
     
     if (mobileMenuBtn && sidebar) {
         // Открытие/закрытие мобильного меню
@@ -2288,10 +2398,97 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Предотвращаем зум при двойном тапе на кнопках
     document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.btn, .nav-link, .conversation-item')) {
+        if (e.target.closest('.btn, .nav-link, .conversation-item, .model-card, .specialist-card, .action-btn, .send-btn')) {
             e.preventDefault();
         }
     }, { passive: false });
+
+    // Добавляем мобильное меню для чата
+    mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    sidebar = document.getElementById('sidebar');
+    sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (mobileMenuBtn && sidebar) {
+        // Обработка клика по кнопке мобильного меню
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+
+        // Закрытие меню при клике на overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                closeMobileMenu();
+            });
+        }
+
+        // Закрытие меню при клике на элемент списка чатов
+        const conversationItems = sidebar.querySelectorAll('.conversation-item');
+        conversationItems.forEach(item => {
+            item.addEventListener('click', () => {
+                closeMobileMenu();
+            });
+        });
+
+        // Закрытие меню при изменении размера окна (если переходим на десктоп)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                closeMobileMenu();
+            }
+        });
+    }
+
+    function toggleMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            const isOpen = sidebar.classList.contains('mobile-open');
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        }
+    }
+
+    function openMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.add('mobile-open');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Предотвращаем скролл фона
+        }
+    }
+
+    function closeMobileMenu() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.remove('mobile-open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Восстанавливаем скролл
+        }
+    }
+
+    // Обработка свайпов для закрытия мобильного меню
+    touchStartX = 0;
+    touchEndX = 0;
+
+    if (sidebar) {
+        sidebar.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        sidebar.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+    }
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const swipeDistance = touchStartX - touchEndX;
+
+        // Свайп влево для закрытия меню
+        if (swipeDistance > swipeThreshold && sidebar.classList.contains('mobile-open')) {
+            closeMobileMenu();
+        }
+    }
     
     // Улучшенная обработка клавиатуры на мобильных
     const messageInput = document.getElementById('message-input');

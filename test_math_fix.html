@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест исправления математических выражений</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .message { margin: 20px 0; padding: 15px; border-radius: 8px; background: #f5f5f5; }
+        .assistant { background: #e8f4fd; }
+    </style>
+</head>
+<body>
+    <h1>Тест исправления математических выражений</h1>
+
+    <div class="message assistant">
+        <p>Тест 1: Примерно 50,000 рублей в месяц.</p>
+        <p>Итого за 3 месяца: \( 50,000 \times 3 = 150,000 \) рублей</p>
+    </div>
+
+    <div class="message assistant">
+        <p>Тест 2: Формула площади круга: $ A = \pi r^2 $</p>
+        <p>$$ \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi} $$</p>
+    </div>
+
+    <div class="message assistant">
+        <p>Тест 3: 6. Организационная структура</p>
+        <p>Команда:</p>
+        <p>Директор (главный менеджер).</p>
+        <p>Бариста (специалист по кофе).</p>
+        <p>Помощники (ассистенты).</p>
+        <p>Формула: \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)</p>
+    </div>
+
+    <script>
+        // Функция convertMarkdownToHtml (копия из основного кода)
+        function convertMarkdownToHtml(text) {
+            if (!text) return '';
+
+            // Специальная обработка математических выражений - сохраняем их в HTML комментариях
+            // Блочные математические выражения $$...$$ или \[...\]
+            const blockMathRegex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g;
+            text = text.replace(blockMathRegex, (match) => {
+                // Сохраняем в HTML комментариях, которые не будут обрабатываться markdown
+                return `<!-- MATH_BLOCK_START -->${match}<!-- MATH_BLOCK_END -->`;
+            });
+
+            // Inline математические выражения - только если содержат LaTeX команды или операторы
+            const inlineMathRegex = /(\$[^\$\n]*(\\[^)]*|[=\+\-\×\÷∑∫√^_])[^\$\n]*\$|\\\(.*(\\[^)]*|[=\+\-\×\÷∑∫√^_]).*\)\)/g;
+            text = text.replace(inlineMathRegex, (match) => {
+                // Дополнительная проверка для безопасности
+                if (match.length > 2 && (match.includes('\\') || match.includes('=') || match.includes('+') ||
+                    match.includes('-') || match.includes('×') || match.includes('÷') ||
+                    match.includes('∑') || match.includes('∫') || match.includes('√') ||
+                    match.includes('^') || match.includes('_'))) {
+                    return `<!-- MATH_INLINE_START -->${match}<!-- MATH_INLINE_END -->`;
+                }
+                return match;
+            });
+
+            // Экранируем HTML теги
+            text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Простая обработка жирного текста
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Переносы строк в параграфы
+            text = text.replace(/\n\n/g, '</p><p>');
+            text = '<p>' + text + '</p>';
+
+            // Восстанавливаем математические выражения из HTML комментариев
+            text = text.replace(/<!-- MATH_BLOCK_START -->(.*?)<!-- MATH_BLOCK_END -->/g, '$1');
+            text = text.replace(/<!-- MATH_INLINE_START -->(.*?)<!-- MATH_INLINE_END -->/g, '$1');
+
+            return text;
+        }
+
+        // Тестируем функцию
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.message p');
+            messages.forEach(p => {
+                const original = p.textContent;
+                const processed = convertMarkdownToHtml(original);
+                console.log('Original:', original);
+                console.log('Processed:', processed);
+                p.innerHTML = processed;
+            });
+        });
+    </script>
+</body>
+</html>

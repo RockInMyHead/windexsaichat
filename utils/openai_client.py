@@ -3,7 +3,7 @@ import tempfile
 from typing import Any, Dict, List
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 import httpx
 
 load_dotenv()
@@ -27,7 +27,7 @@ if PROXY_ENABLED and PROXY_HOST and PROXY_PORT:
         proxy_url = f"http://{PROXY_HOST}:{PROXY_PORT}"
     print(f"🌐 Proxy enabled: {PROXY_HOST}:{PROXY_PORT}")
 
-# Initialize OpenAI client always using a simple httpx Client
+# Initialize OpenAI clients
 if OPENAI_API_KEY and OPENAI_API_KEY != "sk-demo-key-replace-with-real-openai-key":
     try:
         if proxy_url:
@@ -35,20 +35,32 @@ if OPENAI_API_KEY and OPENAI_API_KEY != "sk-demo-key-replace-with-real-openai-ke
                 proxies={
                     "http://": proxy_url,
                     "https://": proxy_url,
-                }, 
+                },
                 timeout=120.0
             )
-            print(f"✅ OpenAI client initialized successfully with proxy {proxy_url}")
+            async_http_client = httpx.AsyncClient(
+                proxies={
+                    "http://": proxy_url,
+                    "https://": proxy_url,
+                },
+                timeout=120.0
+            )
+            print(f"✅ OpenAI clients initialized successfully with proxy {proxy_url}")
         else:
             http_client = httpx.Client(timeout=120.0)
-            print("✅ OpenAI client initialized successfully")
+            async_http_client = httpx.AsyncClient(timeout=120.0)
+            print("✅ OpenAI clients initialized successfully")
+
         openai_client = OpenAI(api_key=OPENAI_API_KEY, http_client=http_client)
+        async_openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY, http_client=async_http_client)
     except Exception as e:
-        print(f"❌ Warning: Failed to initialize OpenAI client: {e}")
+        print(f"❌ Warning: Failed to initialize OpenAI clients: {e}")
         openai_client = None
+        async_openai_client = None
 else:
     print("⚠️ OpenAI API key not configured")
     openai_client = None
+    async_openai_client = None
 
 # Import new AI configuration
 try:
@@ -93,11 +105,11 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
     return get_ai_model_config(model_name)
 
 
-def generate_response(
+async def generate_response(
     messages: List[Dict[str, str]], model: str = "gpt-4o-mini"
 ) -> str:
     """Generate AI response using OpenAI API with enhanced analytical system"""
-    if not openai_client:
+    if not async_openai_client:
         return "⚠️ OpenAI API ключ не настроен. Пожалуйста, добавьте ваш API ключ в файл .env"
 
     try:
@@ -123,7 +135,7 @@ def generate_response(
                 # Keep other messages as is
                 enhanced_messages.append(msg)
 
-        response = openai_client.chat.completions.create(
+        response = await async_openai_client.chat.completions.create(
             model=gen_params["model"],
             messages=enhanced_messages,
             max_tokens=gen_params["max_tokens"],

@@ -9,6 +9,16 @@ class DashboardManager {
 
     async init() {
         this.setupEventListeners();
+
+        // Проверяем, была ли активирована подписка
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('subscription_activated') === 'pro') {
+            // Очищаем URL параметр
+            window.history.replaceState(null, null, window.location.pathname);
+            // Показываем уведомление об успешной активации
+            this.showSuccess('Pro подписка успешно активирована!');
+        }
+
         await this.loadUserData();
         await this.loadProfileData();
         await this.loadStatsData();
