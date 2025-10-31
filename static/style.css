@@ -453,39 +453,13 @@
     gap: 0.5rem;
   }
 
-  /* Адаптация приветственного сообщения */
-  .welcome-message {
-    padding: 2rem 1rem;
-  }
-
-  .model-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .model-card {
-    padding: 1.5rem;
-    text-align: center;
-  }
-
-  .specialists-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .specialist-card {
-    padding: 1rem;
-  }
-
   /* Адаптация модальных окон */
-  .auth-modal,
   .connect-modal {
     margin: 1rem;
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
   }
 
-  .auth-modal .card,
   .connect-modal .card {
     margin: 0;
   }
@@ -592,35 +566,7 @@
     padding: 0.5rem 0.75rem;
   }
 
-  /* Адаптация приветственного сообщения */
-  .welcome-message {
-    padding: 1.5rem 0.75rem;
-  }
-
-  .welcome-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .welcome-subtitle {
-    font-size: 1rem;
-  }
-
-  /* Адаптация карточек моделей */
-  .model-card,
-  .specialist-card {
-    padding: 1rem;
-  }
-
-  .model-name,
-  .specialist-name {
-    font-size: 1.1rem;
-  }
-
-  .model-description,
-  .specialist-description {
-    font-size: 0.85rem;
-  }
+  /* Старые правила удалены, используются новые консолидированные правила ниже */
 
   /* Адаптация списка разговоров */
   .conversations-list {
@@ -751,37 +697,9 @@
     min-height: 40px;
   }
 
-  /* Адаптация приветственного сообщения */
-  .welcome-message {
-    padding: 1rem 0.5rem;
-  }
-
-  .welcome-title {
-    font-size: 1.25rem;
-  }
-
-  .welcome-subtitle {
-    font-size: 0.9rem;
-  }
-
-  /* Адаптация карточек */
-  .model-card,
-  .specialist-card {
-    padding: 0.75rem;
-  }
-
-  .model-name,
-  .specialist-name {
-    font-size: 1rem;
-  }
-
-  .model-description,
-  .specialist-description {
-    font-size: 0.8rem;
-  }
+  /* Старые правила удалены, используются новые консолидированные правила ниже */
 
   /* Адаптация модальных окон */
-  .auth-modal,
   .connect-modal {
     margin: 0.25rem;
   }
@@ -1484,7 +1402,6 @@
     -webkit-overflow-scrolling: touch;
   }
 }
-}
 
 /* Исправления для дублированного кода */
 .auth-modal .auth-form {
@@ -1627,17 +1544,28 @@
 }
 
 /* Основные стили */
+html {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 400;
   line-height: 1.6;
   color: var(--gray-800);
   background: linear-gradient(135deg, var(--gray-50) 0%, var(--accent-green) 100%);
-    min-height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
 }
 
 /* Контейнер */
@@ -2072,8 +2000,12 @@ a:hover {
 /* Основное приложение */
 .app {
   min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Модальные окна */
@@ -4195,33 +4127,7 @@ a:hover {
     max-width: 100%;
   }
 
-  /* Приветственное сообщение */
-  .welcome-message {
-    padding: 1rem 0.5rem;
-  }
-
-  .welcome-icon {
-    font-size: 2.5rem;
-  }
-
-  /* AI Specialists */
-  .specialists-container {
-    gap: 0.5rem;
-  }
-
-  .scroll-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .specialists-grid {
-    gap: 1rem;
-    padding: 0.5rem 0;
-  }
-
-  .specialist-card {
-    min-width: 260px;
-  }
+  /* Старые правила удалены, используются новые консолидированные правила ниже */
 
   /* Превью */
   .preview-frame {
@@ -4355,14 +4261,7 @@ a:hover {
     padding: 0.6rem;
   }
 
-  /* Приветственное сообщение */
-  .welcome-message {
-    padding: 0.75rem 0.25rem;
-  }
-
-  .welcome-icon {
-    font-size: 2rem;
-  }
+  /* Старые правила удалены, используются новые консолидированные правила ниже */
 
   /* Карточки моделей */
   .model-cards {
