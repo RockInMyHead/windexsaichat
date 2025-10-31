@@ -2502,39 +2502,42 @@ function showProSubscriptionModal() {
     modal.id = 'pro-subscription-modal';
     modal.className = 'connect-modal';
     modal.innerHTML = `
-        <div class="connect-modal-content card">
-            <div class="card-header">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h2 class="mb-0">🚀 WindexAI Pro</h2>
-                    <button class="close-pro-modal btn btn-outline" title="Закрыть">×</button>
+        <div class="pro-modal-overlay">
+            <div class="pro-modal-content">
+                <div class="pro-modal-header">
+                    <h2 class="pro-modal-title">🚀 WindexAI Pro</h2>
+                    <button class="close-pro-modal" title="Закрыть">×</button>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="mb-4">
-                    <p class="text-muted mb-3">Для использования WindexAI Pro требуется активная подписка:</p>
-                    <ul class="list-unstyled">
-                        <li>✅ Расширенные возможности</li>
-                        <li>✅ Безлимитные запросы</li>
-                        <li>✅ Приоритетная поддержка</li>
-                        <li>✅ Голосовые сообщения</li>
-                        <li>✅ Обработка документов</li>
-                    </ul>
-                </div>
+                <div class="pro-modal-body">
+                    <p class="pro-modal-subtitle">Для использования WindexAI Pro требуется активная подписка:</p>
 
-                <div class="d-flex gap-3">
-                    <button id="upgrade-to-pro-btn" class="btn btn-primary flex-fill">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                        </svg>
-                        Перейти к тарифам
-                    </button>
-                    <button id="use-lite-model-btn" class="btn btn-outline flex-fill">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
-                            <path d="M9 12l2 2 4-4"></path>
-                            <circle cx="12" cy="12" r="10"></circle>
-                        </svg>
-                        Использовать Lite
-                    </button>
+                    <div class="pro-features-list">
+                        <div class="pro-feature-item">
+                            <span class="pro-feature-check">✅</span>
+                            <span class="pro-feature-text">Расширенные возможности</span>
+                        </div>
+                        <div class="pro-feature-item">
+                            <span class="pro-feature-check">✅</span>
+                            <span class="pro-feature-text">Безлимитные запросы</span>
+                        </div>
+                        <div class="pro-feature-item">
+                            <span class="pro-feature-check">✅</span>
+                            <span class="pro-feature-text">Приоритетная поддержка</span>
+                        </div>
+                        <div class="pro-feature-item">
+                            <span class="pro-feature-check">✅</span>
+                            <span class="pro-feature-text">Голосовые сообщения</span>
+                        </div>
+                        <div class="pro-feature-item">
+                            <span class="pro-feature-check">✅</span>
+                            <span class="pro-feature-text">Обработка документов</span>
+                        </div>
+                    </div>
+
+                    <div class="pro-modal-actions">
+                        <button id="upgrade-to-pro-btn" class="pro-upgrade-btn">Перейти к тарифам</button>
+                        <button id="use-lite-model-btn" class="pro-lite-btn">Использовать Lite</button>
+                    </div>
                 </div>
             </div>
         </div>
