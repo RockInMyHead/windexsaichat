@@ -398,8 +398,6 @@ class AIEditor {
         this.userNameSpan = document.getElementById('user-name');
         this.userAvatar = document.getElementById('user-avatar');
         this.userName = document.getElementById('user-name');
-        this.profileModal = document.getElementById('profile-modal');
-        this.closeProfileBtn = document.querySelector('.close-profile');
 
         // History elements
         this.conversationsList = document.getElementById('conversations-list');
@@ -561,33 +559,7 @@ class AIEditor {
         // Load saved panel sizes
         this.loadPanelSizes();
 
-        // User info click handlers - navigate to profile page
-        if (this.userAvatar) {
-            this.userAvatar.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
 
-        if (this.userName) {
-            this.userName.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
-        
-        // Also add click handler to the entire user-info container
-        const userInfo = document.querySelector('.user-info');
-        if (userInfo) {
-            userInfo.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
-
-        // Close profile modal
-        if (this.closeProfileBtn) {
-            this.closeProfileBtn.addEventListener('click', () => {
-                this.hideProfileModal();
-            });
-        }
 
         // Restore content button
         if (this.restoreContentBtn) {
