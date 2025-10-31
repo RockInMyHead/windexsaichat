@@ -4991,58 +4991,6 @@ a:hover {
   }
 }
 
-/* Мобильная кнопка меню */
-.mobile-menu-btn {
-  display: none;
-  position: absolute;
-  top: 50%;
-  right: 1rem;
-  transform: translateY(-50%);
-  background: var(--primary-green);
-  color: white;
-  border: none;
-  padding: 0.5rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-}
-
-.mobile-menu-btn:hover {
-  background: var(--primary-green-dark);
-  transform: translateY(-50%) scale(1.05);
-  box-shadow: var(--shadow-md);
-}
-
-.mobile-menu-btn:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-.mobile-menu-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-@media (max-width: 480px) {
-  .mobile-menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    right: 0.75rem;
-    padding: 0.4rem;
-  }
-
-  .mobile-menu-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-}
 
 /* Адаптивность страницы приветствия */
 @media (max-width: 768px) {
