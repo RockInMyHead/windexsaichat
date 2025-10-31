@@ -2586,22 +2586,12 @@ async function checkProSubscription() {
 }
 // Global functions for HTML onclick handlers
 function handleDocument() {
-    console.log('handleDocument called');
-    console.log('window.windexAI:', window.windexAI);
-
-    // Try to get the element directly if windexAI is not initialized yet
-    let documentInput = document.getElementById('document-input');
-
-    if (window.windexAI && window.windexAI.documentInput) {
-        console.log('Using windexAI.documentInput');
-        window.windexAI.documentInput.click();
-        console.log('documentInput.click() called via windexAI');
-    } else if (documentInput) {
-        console.log('Using direct document.getElementById');
+    // Get the document input element directly from DOM
+    const documentInput = document.getElementById('document-input');
+    if (documentInput) {
         documentInput.click();
-        console.log('documentInput.click() called directly');
     } else {
-        console.error('documentInput not found anywhere');
+        console.error('Document input element not found');
     }
 }
 
