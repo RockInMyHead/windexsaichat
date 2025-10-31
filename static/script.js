@@ -142,7 +142,6 @@ class WindexAI {
         this.conversationsList = document.getElementById('conversations-list');
         this.clearHistoryBtn = document.getElementById('clear-history-btn');
         this.loadingOverlay = document.getElementById('loading-overlay');
-        this.charCount = document.querySelector('.char-count');
         this.modelCards = document.querySelectorAll('.model-card');
         this.userAvatar = document.getElementById('user-avatar');
         this.userName = document.getElementById('user-name');
@@ -170,7 +169,6 @@ class WindexAI {
     bindEvents() {
         // Message input
         this.messageInput.addEventListener('input', () => {
-            this.updateCharCount();
             this.toggleSendButton();
             this.autoResize();
         });
@@ -408,7 +406,6 @@ class WindexAI {
         // Add user message to chat
         this.addMessageToChat('user', message);
         this.messageInput.value = '';
-        this.updateCharCount();
         this.toggleSendButton();
 
         // Show typing indicator
@@ -1138,16 +1135,6 @@ class WindexAI {
     }
 
 
-    updateCharCount() {
-        const count = this.messageInput.value.length;
-        this.charCount.textContent = `${count}/4000`;
-
-        if (count > 3500) {
-            this.charCount.style.color = 'var(--primary-green)';
-        } else {
-            this.charCount.style.color = 'var(--gray-500)';
-        }
-    }
 
     toggleSendButton() {
         const hasText = this.messageInput.value.trim().length > 0;
