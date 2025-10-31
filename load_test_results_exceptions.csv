@@ -1,0 +1,21 @@
+Count,Message,Traceback,Nodes
+4,'SimpleWindexAIUser' object has no attribute 'user_id',"  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 347, in run
+    self.execute_next_task()
+  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 372, in execute_next_task
+    self.execute_task(self._task_queue.pop(0))
+  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 493, in execute_task
+    task(self.user)
+  File ""/Users/artembutko/.cursor/worktrees/WindexAIchat/bEsmN/tests/load/locustfile_simple.py"", line 39, in register_user
+    username = f""user_{self.fake.user_name()}_{self.user_id}""
+                                               ^^^^^^^^^^^^
+",local
+4,,"  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 347, in run
+    self.execute_next_task()
+  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 372, in execute_next_task
+    self.execute_task(self._task_queue.pop(0))
+  File ""/Users/artembutko/.pyenv/versions/3.11.9/lib/python3.11/site-packages/locust/user/task.py"", line 493, in execute_task
+    task(self.user)
+  File ""/Users/artembutko/.cursor/worktrees/WindexAIchat/bEsmN/tests/load/locustfile_simple.py"", line 34, in invalid_auth
+    assert response.status_code == 401
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+",local

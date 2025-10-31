@@ -146,8 +146,6 @@ class WindexAI {
         this.modelCards = document.querySelectorAll('.model-card');
         this.userAvatar = document.getElementById('user-avatar');
         this.userName = document.getElementById('user-name');
-        this.profileModal = document.getElementById('profile-modal');
-        this.closeProfileBtn = document.querySelector('.close-profile');
 
         // Connect modal elements
         this.connectModal = document.getElementById('connect-modal');
@@ -268,33 +266,6 @@ class WindexAI {
             this.clearHistory();
         });
 
-        // User info click handler - navigate to profile page
-        if (this.userAvatar) {
-            this.userAvatar.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
-
-        if (this.userName) {
-            this.userName.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
-        
-        // Also add click handler to the entire user-info container
-        const userInfo = document.querySelector('.user-info');
-        if (userInfo) {
-            userInfo.addEventListener('click', () => {
-                this.openUserProfile();
-            });
-        }
-
-        // Close profile modal
-        if (this.closeProfileBtn) {
-            this.closeProfileBtn.addEventListener('click', () => {
-                this.hideProfileModal();
-            });
-        }
 
         // Connect modal handlers
         if (this.closeConnectBtn) {
@@ -1900,29 +1871,6 @@ class WindexAI {
         window.open(`/api/documents/${documentId}`, '_blank');
     }
 
-    openUserProfile() {
-        // Navigate to the user's profile/dashboard page
-        window.location.href = '/profile';
-    }
-
-    showProfileModal() {
-        if (this.profileModal) {
-            // Populate profile data
-            const usernameSpan = document.getElementById('profile-username');
-            const emailSpan = document.getElementById('profile-email');
-            if (this.authManager.user) {
-                if (usernameSpan) usernameSpan.textContent = this.authManager.user.username;
-                if (emailSpan) emailSpan.textContent = this.authManager.user.email;
-            }
-            this.profileModal.classList.remove('hidden');
-        }
-    }
-
-    hideProfileModal() {
-        if (this.profileModal) {
-            this.profileModal.classList.add('hidden');
-        }
-    }
 
     // Connect Modal Functions
     showConnectModal() {

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from database import create_tables
 # Import routers
 from routes import (admin, auth, chat, conversations, dashboard,
-                    deploy, documents, profile, voice)
+                    deploy, documents, voice)
 from routes.cloud_mock import router as cloud_mock_router
 
 # Create tables on startup
@@ -40,7 +40,6 @@ app.include_router(deploy.router)
 app.include_router(voice.router)
 app.include_router(documents.router)
 app.include_router(dashboard.router)
-app.include_router(profile.router)
 app.include_router(cloud_mock_router)
 
 
@@ -90,10 +89,6 @@ async def read_editor():
     return FileResponse("static/editor.html")
 
 
-@app.get("/profile", response_class=HTMLResponse)
-async def read_profile():
-    """Serve the profile HTML page"""
-    return FileResponse("static/profile.html")
 
 
 @app.get("/test-dropdown", response_class=HTMLResponse)
