@@ -2403,6 +2403,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: false });
 
+    
+    // Улучшенная обработка клавиатуры на мобильных
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('focus', () => {
+            // Небольшая задержка для корректного позиционирования
+            setTimeout(() => {
+                messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+    }
 });
 
 // Add some utility functions
