@@ -4989,19 +4989,25 @@ a:hover {
 /* Мобильная кнопка меню */
 .mobile-menu-btn {
   display: none;
-  background: transparent;
-  color: var(--gray-600);
+  background: var(--primary-green);
+  color: white;
   border: none;
   padding: 0.5rem;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
-  margin-left: 1rem;
+  box-shadow: var(--shadow-sm);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-menu-btn:hover {
-  background: rgba(16, 185, 129, 0.08);
-  color: var(--primary-green);
+  background: var(--primary-green-dark);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .mobile-menu-btn:active {
@@ -5018,12 +5024,6 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
   }
 }
 
