@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+GET,/api/auth/me,HTTPError('403 Client Error: Forbidden for url: /api/auth/me'),4

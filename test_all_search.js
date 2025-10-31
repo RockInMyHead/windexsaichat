@@ -92,4 +92,3 @@ console.log(`   📈 Процент поиска: ${Math.round((searchCount / te
 
 
 
-
