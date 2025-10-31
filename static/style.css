@@ -4989,29 +4989,23 @@ a:hover {
 /* Мобильная кнопка меню */
 .mobile-menu-btn {
   display: none;
-  position: absolute;
-  top: 50%;
-  left: 1rem;
-  transform: translateY(-50%);
-  background: var(--primary-green);
-  color: white;
+  background: transparent;
+  color: var(--gray-600);
   border: none;
   padding: 0.5rem;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
-  z-index: 1001;
-  box-shadow: var(--shadow-sm);
+  margin-left: 1rem;
 }
 
 .mobile-menu-btn:hover {
-  background: var(--primary-green-dark);
-  transform: translateY(-50%) scale(1.05);
-  box-shadow: var(--shadow-md);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--primary-green);
 }
 
 .mobile-menu-btn:active {
-  transform: translateY(-50%) scale(0.95);
+  transform: scale(0.95);
 }
 
 .mobile-menu-btn svg {
@@ -5025,25 +5019,22 @@ a:hover {
     align-items: center;
     justify-content: center;
   }
-  
-  .header-logo {
-    margin-left: 3rem;
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .mobile-menu-btn {
-    left: 0.75rem;
     padding: 0.4rem;
   }
-  
+
   .mobile-menu-btn svg {
     width: 18px;
     height: 18px;
-  }
-  
-  .header-logo {
-    margin-left: 2.5rem;
   }
 }
 
