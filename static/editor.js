@@ -2705,29 +2705,6 @@ project-name/
         }, 1000);
     }
 
-    openUserProfile() {
-        // Navigate to the user's profile/dashboard page
-        window.location.href = '/profile';
-    }
-
-    showProfileModal() {
-        if (this.profileModal) {
-            // Populate profile data
-            var usernameSpan = document.getElementById('profile-username');
-            var emailSpan = document.getElementById('profile-email');
-            if (this.user) {
-                if (usernameSpan) usernameSpan.textContent = this.user.username;
-                if (emailSpan) emailSpan.textContent = this.user.email;
-            }
-            this.profileModal.classList.remove('hidden');
-        }
-    }
-
-    hideProfileModal() {
-        if (this.profileModal) {
-            this.profileModal.classList.add('hidden');
-        }
-    }
     
     showProjectLaunchInfo(content) {
         console.log('🚀 Showing project launch info');
