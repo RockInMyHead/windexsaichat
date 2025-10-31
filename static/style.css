@@ -7574,6 +7574,11 @@ a:hover {
 #tools-btn {
   position: relative;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 #tools-btn:hover {
@@ -7584,6 +7589,20 @@ a:hover {
 
 #tools-btn:hover svg {
   color: var(--white);
+}
+
+/* Мобильная версия кнопки инструментов */
+@media (max-width: 768px) {
+  #tools-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
+  }
+
+  #tools-btn svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 /* Tools dropdown completed */
 /* Force cache refresh 1760126313 */
