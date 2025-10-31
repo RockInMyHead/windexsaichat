@@ -8024,6 +8024,304 @@ a:hover {
   }
 }
 
+/* Сверх-адаптивные улучшения для страницы приветствия */
+
+/* Ультра-компактные экраны (320px и меньше) */
+@media (max-width: 320px) {
+  .welcome-message {
+    padding: 0.375rem 0.1875rem;
+    max-height: calc(100vh - 110px);
+  }
+
+  .welcome-icon {
+    font-size: 1.125rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .welcome-message h2 {
+    font-size: 0.875rem;
+    margin-bottom: 0.1875rem;
+    line-height: 1.1;
+  }
+
+  .welcome-message > p {
+    font-size: 0.75rem;
+    margin-bottom: 0.625rem;
+    line-height: 1.2;
+  }
+
+  .welcome-message h4 {
+    font-size: 0.8125rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .classic-models-section {
+    margin-bottom: 0.5rem;
+  }
+
+  .model-cards {
+    gap: 0.375rem;
+  }
+
+  .model-card {
+    padding: 0.5625rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .model-card h3 {
+    font-size: 0.8125rem;
+    margin-bottom: 0.1875rem;
+  }
+
+  .model-card p {
+    font-size: 0.6875rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .capabilities {
+    gap: 0.1875rem !important;
+    flex-wrap: wrap;
+  }
+
+  .capability {
+    font-size: 0.5625rem;
+    padding: 0.125rem 0.3125rem;
+    border-radius: var(--radius-xs);
+  }
+
+  .specialists-container {
+    padding: 0 0.75rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 150px;
+    min-width: 150px;
+    padding: 0.375rem;
+  }
+
+  .specialist-icon {
+    font-size: 1rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .specialist-card h3 {
+    font-size: 0.6875rem;
+    margin-bottom: 0.1875rem;
+  }
+
+  .specialist-card p {
+    font-size: 0.625rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .specialist-skills {
+    gap: 0.125rem;
+  }
+
+  .skill-tag {
+    font-size: 0.5rem;
+    padding: 0.09375rem 0.1875rem;
+  }
+
+  .scroll-btn {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  .scroll-btn i {
+    font-size: 0.625rem;
+  }
+}
+
+/* Специфические улучшения для iPhone SE и подобных устройств */
+@media (max-width: 375px) and (max-height: 667px) {
+  .welcome-message {
+    padding: 0.5rem 0.25rem;
+    max-height: calc(100vh - 140px);
+  }
+
+  .model-card.pro-model::before {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.25rem;
+  }
+
+  .specialists-grid {
+    padding-bottom: 0.5rem;
+  }
+
+  /* Оптимизация для iOS Safari */
+  .model-card,
+  .specialist-card {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Улучшения для устройств с высоким PPI (Retina) */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+  .welcome-message h2 {
+    font-weight: 700;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .model-card,
+  .specialist-card {
+    border-width: 0.5px;
+  }
+
+  .skill-tag {
+    border-width: 0.5px;
+  }
+}
+
+/* Специфические улучшения для планшетов в портретной ориентации */
+@media (max-width: 768px) and (min-width: 600px) {
+  .welcome-message {
+    padding: 2rem 1.5rem;
+    max-height: calc(100vh - 200px);
+  }
+
+  .model-cards {
+    gap: 2rem;
+  }
+
+  .model-card {
+    flex: 1;
+    min-width: 280px;
+    max-width: 320px;
+    padding: 2rem;
+  }
+
+  .specialists-container {
+    padding: 0 3rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 220px;
+    min-width: 220px;
+    padding: 1.5rem;
+  }
+
+  .specialist-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .specialist-card h3 {
+    font-size: 1.125rem;
+  }
+
+  .specialist-card p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Улучшения для устройств с безопасной зоной (notch, dynamic island) */
+@media (max-width: 768px) and (max-height: 900px) {
+  .welcome-message {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Оптимизации для разных соотношений сторон */
+@media (max-width: 768px) and (orientation: portrait) {
+  .welcome-message {
+    justify-content: flex-start;
+    padding-top: 1rem;
+  }
+
+  .model-cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .model-card {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .welcome-message {
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .model-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .model-card {
+    flex: 1;
+    min-width: 250px;
+    max-width: 300px;
+  }
+
+  .specialists-container {
+    padding: 0 1rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 180px;
+    min-width: 180px;
+  }
+}
+
+/* Адаптивность для очень широких мобильных устройств */
+@media (max-width: 768px) and (min-width: 500px) {
+  .model-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .model-card {
+    flex: 1;
+    min-width: 300px;
+    max-width: 350px;
+  }
+
+  .specialists-grid {
+    gap: 1.25rem;
+  }
+
+  .specialist-card {
+    flex: 0 0 200px;
+    min-width: 200px;
+  }
+}
+
+/* Финальные оптимизации производительности */
+@media (max-width: 768px) {
+  .welcome-message {
+    contain: layout style paint;
+  }
+
+  .specialists-grid {
+    will-change: transform;
+  }
+
+  .model-card,
+  .specialist-card {
+    contain: layout style;
+  }
+
+  /* Предзагрузка шрифтов для лучшей производительности */
+  .welcome-message h2,
+  .welcome-message h4 {
+    font-display: swap;
+  }
+}
+
 /* Modal styles */
 .modal {
   position: fixed;
